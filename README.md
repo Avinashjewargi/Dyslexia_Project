@@ -510,3 +510,13 @@ Send a POST request to /api/speech/tts with JSON: { "text": "Hello world" }
 Confirm JSON response returns audioUrl.
 
 Access http://localhost:5000/audio/<filename>.mp3 to verify audio plays.
+
+Next Steps
+
+Step 20: Frontend Integration of TTS (update Pronunciation.jsx to play audio).
+
+Step 21: Persistent user system (login, progress tracking).
+
+Step 22: Advanced NLP model (semantic difficulty, contextual analysis).
+
+Step 23: Accessibility refinements and UI polish.
