@@ -1,4 +1,3 @@
-Here’s a complete README.md for your Adaptive Reading Assistant for Dyslexia project, combining all the steps you provided in a clear, structured way:
 
 # Adaptive Reading Assistant for Dyslexia
 
