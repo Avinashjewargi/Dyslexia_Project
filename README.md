@@ -10,44 +10,40 @@ A full-stack web application designed to assist students with dyslexia by provid
 
 ## Project Structure
 
-
-
 Adaptive-Reading-Assistant-for-Dyslexia-main/
-├── backend/ # Node.js/Express backend
-│ ├── routes/
-│ │ └── api.js
-│ ├── server.js
-│ └── package.json
-├── frontend/ # React frontend
-│ ├── components/
-│ │ ├── Footer.jsx
-│ │ ├── Navbar.jsx
-│ │ ├── ProgressBar.jsx
-│ │ └── Settings.jsx
-│ ├── dashboard/
-│ │ ├── StudentDashboard.jsx
-│ │ └── TeacherDashboard.jsx
-│ ├── reader/
-│ │ ├── Gamification.jsx
-│ │ ├── OverlayText.jsx
-│ │ ├── Pronunciation.jsx
-│ │ └── ReaderPage.jsx
-│ ├── src/
-│ │ ├── App.jsx
-│ │ ├── main.jsx
-│ │ ├── App.css
-│ │ └── index.css
-│ ├── package.json
-│ └── vite.config.js
-├── ml/ # Machine Learning services
-│ ├── ocr/
-│ ├── speech/
-│ └── nlp/
-├── package.json
-└── README.md
+├─ backend/
+│  ├─ routes/
+│  │  └─ api.js
+│  ├─ server.js
+│  └─ package.json
+├─ frontend/
+│  ├─ components/
+│  │  ├─ Footer.jsx
+│  │  ├─ Navbar.jsx
+│  │  ├─ ProgressBar.jsx
+│  │  └─ Settings.jsx
+│  ├─ dashboard/
+│  │  ├─ StudentDashboard.jsx
+│  │  └─ TeacherDashboard.jsx
+│  ├─ reader/
+│  │  ├─ Gamification.jsx
+│  │  ├─ OverlayText.jsx
+│  │  ├─ Pronunciation.jsx
+│  │  └─ ReaderPage.jsx
+│  ├─ src/
+│  │  ├─ App.jsx
+│  │  ├─ main.jsx
+│  │  ├─ App.css
+│  │  └─ index.css
+│  ├─ package.json
+│  └─ vite.config.js
+├─ ml/
+│  ├─ ocr/
+│  ├─ speech/
+│  └─ nlp/
+├─ package.json
+└─ README.md
 
-
----
 
 ## Step 1: Project Initialization and Base Structure
 
