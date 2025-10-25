@@ -1,34 +1,36 @@
-# ml/speech/recognition.py
+# ml/speech/recognition.py (FINAL CORRECTED VERSION with pathlib)
 
 from gtts import gTTS
 import sys
 import os
 import json
+from pathlib import Path # NEW IMPORT for robust path handling
 
-# Define a temporary folder relative to the project root for audio files
-# The '..' is necessary to navigate out of the ml directory and into the backend directory
-AUDIO_DIR = os.path.join(os.path.dirname(__file__), '..', 'backend', 'audio_temp')
+# Define the absolute path to the project root and then to the audio_temp folder.
+# This guarantees the path is correct regardless of where the script is run from.
+# Path(__file__).resolve() gets the absolute location of this script.
+# .parent.parent.parent navigates up to the root 'Adaptive-Reading-Assistant-for-Dyslexia-main'.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent 
+AUDIO_DIR = PROJECT_ROOT / 'backend' / 'audio_temp' # Navigate to the final folder
 
 def text_to_speech(text):
     """
     Generates an MP3 file from the given text using gTTS.
-    Returns the path to the generated file relative to the backend static folder.
     """
     if not os.path.exists(AUDIO_DIR):
         os.makedirs(AUDIO_DIR)
-
+        
     # Create a safe, unique filename using text hash
     safe_filename = f"{hash(text) & 0xFFFFFFFF}.mp3" 
-    output_path = os.path.join(AUDIO_DIR, safe_filename)
-
+    output_path = AUDIO_DIR / safe_filename # Use Path object for joining
+    
     try:
         tts = gTTS(text=text, lang='en')
-        tts.save(output_path)
-
-        # Return the filename so the backend knows which URL to serve
+        tts.save(str(output_path)) # Convert back to string for gTTS.save()
+        
+        # Return only the filename so the backend can construct the URL
         return safe_filename 
     except Exception as e:
-        # Print error to stderr so the Node.js process can capture it
         print(f"Error generating TTS: {e}", file=sys.stderr)
         return None
 
@@ -45,4 +47,5 @@ if __name__ == '__main__':
     if filename:
         print(json.dumps({"success": True, "audio_filename": filename}))
     else:
-        print(json.dumps({"success": False, "error": "TTS failed."}))
+        # Note: Added the 'error' key here for clearer handling in Node.js
+        print(json.dumps({"success": False, "error": "TTS failed during generation."}))
