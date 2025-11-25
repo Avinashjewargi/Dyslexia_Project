@@ -3,6 +3,7 @@
 import sys
 import json
 import os
+import traceback
 
 try:
     from PIL import Image
@@ -13,16 +14,13 @@ except ImportError:
 
 
 def extract_text_from_image(image_path: str) -> dict:
-    """
-    Extract text from an image using Tesseract OCR.
-    Returns a JSON-serializable dict.
-    """
-
+    """Extract text from an image using Tesseract OCR."""
+    
     # 1) Dependency check
     if Image is None or pytesseract is None:
         return {
             "success": False,
-            "error": "Server Error: Missing libraries. Please install with `pip install pytesseract Pillow`.",
+            "error": "Missing libraries. Install: pip install pytesseract Pillow",
         }
 
     # 2) File existence check
@@ -33,31 +31,46 @@ def extract_text_from_image(image_path: str) -> dict:
         }
 
     try:
-        # 3) Open image
+        # 3) Open and process image
         img = Image.open(image_path)
+        
+        # Convert to RGB if needed
+        if img.mode not in ('RGB', 'L'):
+            img = img.convert('RGB')
 
-        # 4) PERFORMANCE: resize very large images
+        # Resize large images
         max_size = (1800, 1800)
         if img.width > max_size[0] or img.height > max_size[1]:
-            img.thumbnail(max_size)
+            img.thumbnail(max_size, Image.Resampling.LANCZOS)
 
-        # 5) If needed on Windows, set explicit tesseract path
-        # pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+        # 4) Check Tesseract
+        try:
+            pytesseract.get_tesseract_version()
+        except Exception:
+            return {
+                "success": False,
+                "error": "Tesseract not installed. Install from: https://github.com/tesseract-ocr/tesseract",
+            }
 
-        # 6) Run OCR
-        extracted_text = pytesseract.image_to_string(img)
+        # 5) Run OCR with timeout
+        extracted_text = pytesseract.image_to_string(
+            img,
+            timeout=30,
+            config='--psm 3'
+        )
+        
         clean_text = extracted_text.strip()
 
         if not clean_text:
             return {
                 "success": True,
-                "extracted_text": "No text detected in image.",
+                "extractedText": "No text detected in image.",
                 "source": "OCR (Empty)",
             }
 
         return {
             "success": True,
-            "extracted_text": clean_text,
+            "extractedText": clean_text,
             "source": "OCR Upload",
         }
 
@@ -65,16 +78,27 @@ def extract_text_from_image(image_path: str) -> dict:
         return {
             "success": False,
             "error": f"OCR Failed: {str(e)}",
+            "traceback": traceback.format_exc(),
         }
 
 
 if __name__ == "__main__":
-    # Node passes image path as first argument
-    if len(sys.argv) > 1:
-        result = extract_text_from_image(sys.argv[1])
-        print(json.dumps(result))
-    else:
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+        
+        if len(sys.argv) > 1:
+            result = extract_text_from_image(sys.argv[1])
+            print(json.dumps(result), flush=True)
+        else:
+            print(json.dumps({
+                "success": False,
+                "error": "No image path provided.",
+            }), flush=True)
+    except Exception as e:
         print(json.dumps({
             "success": False,
-            "error": "No image path provided.",
-        }))
+            "error": f"Unexpected error: {str(e)}",
+            "traceback": traceback.format_exc(),
+        }), flush=True)
+    
+    sys.exit(0)

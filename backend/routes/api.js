@@ -3,7 +3,7 @@ const router = express.Router();
 
 // Export a function that accepts the 'upload' middleware
 // (Even if we don't use 'upload' here right now, we keep the signature consistent)
-module.exports = (upload) => { 
+module.exports = () => { 
     
     // --- GET /api/test (Simple Health Check) ---
     router.get('/test', (req, res) => {
