@@ -29,7 +29,7 @@ if (!fs.existsSync(uploadsPath)) {
 const upload = multer({ dest: uploadsPath });
 
 // --- Import routes ---
-const apiRoutes = require("./routes/api.js");
+const apiRoutes = require("./routes/api.js")();
 const speechRoutes = require("./routes/speech.js")(upload);
 const ocrRoutes = require("./routes/ocr.js")(upload);
 
@@ -51,3 +51,4 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
+// server.js

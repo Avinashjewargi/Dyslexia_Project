@@ -12,17 +12,16 @@ except ImportError:
     pytesseract = None
 
 
-def extract_text_from_image(image_path: str) -> dict:
+def extract_text_from_image(image_path):
     """
-    Extract text from an image using Tesseract OCR.
-    Returns a JSON-serializable dict.
+    Extracts text from an image file using Tesseract.
+    Returns a dict that Node.js will JSON.stringify and send to frontend.
     """
-
     # 1) Dependency check
     if Image is None or pytesseract is None:
         return {
             "success": False,
-            "error": "Server Error: Missing libraries. Please install with `pip install pytesseract Pillow`.",
+            "error": "Missing libraries. Install: pip install pytesseract Pillow",
         }
 
     # 2) File existence check
@@ -33,18 +32,22 @@ def extract_text_from_image(image_path: str) -> dict:
         }
 
     try:
-        # 3) Open image
+        # 3) Open and process image
         img = Image.open(image_path)
 
-        # 4) PERFORMANCE: resize very large images
+        # Convert to RGB if needed
+        if img.mode not in ("RGB", "L"):
+            img = img.convert("RGB")
+
+        # Resize large images
         max_size = (1800, 1800)
         if img.width > max_size[0] or img.height > max_size[1]:
             img.thumbnail(max_size)
 
-        # 5) If needed on Windows, set explicit tesseract path
+        # If Tesseract is not in PATH on Windows, uncomment and set this:
         # pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-        # 6) Run OCR
+        # 4) Run OCR
         extracted_text = pytesseract.image_to_string(img)
         clean_text = extracted_text.strip()
 
@@ -69,12 +72,15 @@ def extract_text_from_image(image_path: str) -> dict:
 
 
 if __name__ == "__main__":
-    # Node passes image path as first argument
+    # Called from Node: python process_text.py <image_path>
     if len(sys.argv) > 1:
-        result = extract_text_from_image(sys.argv[1])
-        print(json.dumps(result))
+        image_path = sys.argv[1]
+        result = extract_text_from_image(image_path)
     else:
-        print(json.dumps({
+        result = {
             "success": False,
             "error": "No image path provided.",
-        }))
+        }
+
+    # Print JSON so Node can read it on stdout
+    print(json.dumps(result))

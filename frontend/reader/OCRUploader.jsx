@@ -11,11 +11,7 @@ import {
   FormControl,
 } from "react-bootstrap";
 
-
-
-const BACKEND_API_URL = 'http://127.0.0.1:5000/api/ocr/upload';
-
-
+const BACKEND_API_URL = "http://127.0.0.1:5000/api/ocr/upload";
 
 const OCRUploader = ({ onTextExtracted }) => {
   const [file, setFile] = useState(null);
@@ -41,13 +37,19 @@ const OCRUploader = ({ onTextExtracted }) => {
     onTextExtracted(text, "Manual Input", null);
     setManualText("");
     setFile(null);
-    setStatus({ type: "success", message: "Manual text loaded into preview." });
+    setStatus({
+      type: "success",
+      message: "Manual text loaded into preview.",
+    });
   };
 
   const handleOCRSubmit = async (e) => {
     e.preventDefault();
     if (!file) {
-      setStatus({ type: "danger", message: "Please select an image file first." });
+      setStatus({
+        type: "danger",
+        message: "Please select an image file first.",
+      });
       return;
     }
 
@@ -59,21 +61,26 @@ const OCRUploader = ({ onTextExtracted }) => {
 
     try {
       const response = await fetch(BACKEND_API_URL, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
 
-
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("Server returned a non-JSON response. Check backend logs.");
+        throw new Error(
+          "Server returned a non-JSON response. Check backend logs."
+        );
       }
 
       const result = await response.json();
 
       if (response.ok && result.success && result.extracted_text) {
         setStatus({ type: "success", message: "OCR successful!" });
-        onTextExtracted(result.extracted_text, result.source || "OCR Upload", file);
+        onTextExtracted(
+          result.extracted_text,
+          result.source || "OCR Upload",
+          file
+        );
       } else {
         console.warn("OCR server error:", result);
         setStatus({
@@ -85,7 +92,7 @@ const OCRUploader = ({ onTextExtracted }) => {
       console.error("Network error while calling OCR API:", err);
       setStatus({
         type: "danger",
-        message: `Network / server error: ${err.message}`,
+        message: "Network / server error: " + err.message,
       });
     } finally {
       setLoading(false);
@@ -95,7 +102,7 @@ const OCRUploader = ({ onTextExtracted }) => {
   return (
     <Card className="p-3 shadow-sm border-primary">
       <Card.Title className="text-primary h5 mb-3">
-        📸 OCR Image Reader
+        OCR Image Reader
       </Card.Title>
 
       {/* Option 1: OCR Image Upload */}
