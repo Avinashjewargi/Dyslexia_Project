@@ -376,6 +376,9 @@ Adaptive-Reading-Assistant-for-Dyslexia-main/
 │  │  ├─ Gamification.jsx
 │  │  └─ Pronunciation.jsx
 ├─ ml/
+|  |
+   ├─ocr/
+   |   └─process_text.py
 │  ├─ speech/
 │  │  └─ recognition.py   # Python TTS logic
 │  └─ nlp_analysis.py     # NLP logic
@@ -519,3 +522,4 @@ Step 21: Persistent user system (login, progress tracking).
 Step 22: Advanced NLP model (semantic difficulty, contextual analysis).
 
 Step 23: Accessibility refinements and UI polish.
+

@@ -1,21 +1,26 @@
-// backend/routes/api.js
-
 const express = require('express');
 const router = express.Router();
-const fs = require('fs'); // Node's File System module to delete temp file
 
-// We export a function that takes the upload middleware as an argument
+// Export a function that accepts the 'upload' middleware
+// (Even if we don't use 'upload' here right now, we keep the signature consistent)
 module.exports = (upload) => { 
-
-    // GET /api/data test route
-    router.get('/data', (req, res) => {
-        res.json({ message: "Data endpoint reached successfully." });
+    
+    // --- GET /api/test (Simple Health Check) ---
+    router.get('/test', (req, res) => {
+        res.json({ message: "API is working!" });
     });
 
-    // GET /api/student-profile (Your existing route)
+    // --- GET /api/content/sample (Sample Text for Reader) ---
+    router.get('/content/sample', (req, res) => {
+        res.json({
+            title: "Sample Reading Passage",
+            text: "The Adaptive Reading Assistant project is designed to help students with dyslexia by using tailored fonts, colors, and interactive features like text-to-speech. Our goal is to make reading a less challenging and more rewarding experience."
+        });
+    });
+
+    // --- GET /api/student-profile (Mock Student Data) ---
     router.get('/student-profile', (req, res) => {
-        // ... (Your existing student-profile data) ...
-         const studentProfile = {
+        const studentProfile = {
             id: 101,
             name: "Alex Johnson",
             readingLevel: "Grade 4 Equivalent",
@@ -27,39 +32,8 @@ module.exports = (upload) => {
         res.json(studentProfile);
     });
 
-    // POST /api/ocr - NOW USES MULTER MIDDLEWARE
-    // `upload.single('image')` tells Multer to expect one file named 'image'
-    router.post('/ocr', upload.single('image'), async (req, res) => {
-        if (!req.file) {
-            return res.status(400).json({ error: "No image file uploaded." });
-        }
+    // NOTE: The OCR route has been moved to 'routes/ocr.js' to prevent errors.
+    // Do not add router.post('/ocr'...) here.
 
-        // The file information is now in req.file
-        const filePath = req.file.path;
-        const originalName = req.file.originalname;
-
-        console.log(`Received file: ${originalName} stored at: ${filePath}`);
-
-        // --- ML INTEGRATION PLACEHOLDER ---
-        // In a real implementation, you would:
-        // 1. Call a Python script (ml/ocr/process_text.py) using 'child_process'
-        // 2. Pass the filePath to the Python script.
-        // 3. The Python script runs the OCR and returns the text result.
-
-        // Dummy OCR result:
-        const extractedText = `OCR successful! Text extracted from ${originalName}. This text is now ready for adaptive reading features.`;
-
-        // CLEANUP: IMPORTANT! Delete the temporary file after processing
-        fs.unlink(filePath, (err) => {
-            if (err) console.error("Failed to delete temp file:", err);
-        });
-
-        // Send the extracted text back to the frontend
-        res.json({ 
-            success: true, 
-            extractedText: extractedText 
-        });
-    });
-
-    return router; // Return the configured router
+    return router;
 };

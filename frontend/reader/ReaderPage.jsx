@@ -1,125 +1,250 @@
-// frontend/reader/ReaderPage.jsx (Modified for NLP Integration)
+// frontend/reader/ReaderPage.jsx
 
-import React, { useState, useEffect } from 'react'; // IMPORT useEffect
-import { Row, Col, Card, Alert, Spinner } from 'react-bootstrap';
+import React, { useState } from "react";
+import { Container, Card, Alert, Row, Col, Spinner } from "react-bootstrap";
+import Pronunciation from "./Pronunciation";
+import Gamification from "./Gamification";
+import OCRUploader from "./OCRUploader";
+import OCRSideBySidePreview from "./OCRSideBySidePreview";
+import { useAccessibility } from "../components/AccessibilityContext";
+import { saveReadingSession } from "../utils/firebase";
 
-// Import all Reader components
-import OCRUploader from './OCRUploader'; 
-import OverlayText from './OverlayText';
-import Gamification from './Gamification';
-import Pronunciation from './Pronunciation'; 
+const DEFAULT_CONTENT =
+  "The Adaptive Reading Assistant project is designed to help students with dyslexia by using tailored fonts, colors, and interactive features like text-to-speech. Our goal is to make reading a less challenging and more rewarding experience.";
 
-// Initial dummy text
-const initialSampleText = "The Adaptive Reading Assistant project is designed to help students with dyslexia by using tailored fonts, colors, and interactive features like text-to-speech. Our goal is to make reading a less challenging and more rewarding experience.";
+const MOCK_DIFFICULT_WORDS = ["Adaptive", "dyslexia", "challenging", "rewarding"];
 
-// Dummy settings (should eventually come from global context)
-const currentSettings = { font: 'OpenDyslexic, sans-serif', fontSize: 20, lineSpacing: 2.0 };
+const ReaderPage = ({ userId }) => {
+  const { settings } = useAccessibility();
 
-function ReaderPage() {
-  const [currentText, setCurrentText] = useState(initialSampleText);
-  const [challengingWords, setChallengingWords] = useState([]);
-  const [difficultyScore, setDifficultyScore] = useState(0);
-  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+  const [currentReadingContent, setCurrentReadingContent] =
+    useState(DEFAULT_CONTENT);
+  const [difficultWords, setDifficultWords] =
+    useState(MOCK_DIFFICULT_WORDS);
+  const [difficultyScore, setDifficultyScore] = useState(0.46);
+  const [contentSource, setContentSource] = useState("Default Sample");
 
-  // 1. Function to call the NLP Analysis API
-  const analyzeText = async (textToAnalyze) => {
-    setLoadingAnalysis(true);
-    setChallengingWords([]); // Clear previous highlights
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isViewingPreview, setIsViewingPreview] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
+  const [previewText, setPreviewText] = useState(null);
+  const [previewSource, setPreviewSource] = useState(null);
+
+  const [currentChallengeWord, setCurrentChallengeWord] = useState(null);
+  const [gamification, setGamification] = useState({
+    score: 1250,
+    badges: ["Focus Star"],
+    streak: 7,
+  });
+
+  // Highlight difficult words and make them clickable
+  const highlightContent = (text, wordsToHighlight) => {
+    if (!text) return null;
+    if (!wordsToHighlight || wordsToHighlight.length === 0) {
+      return <span>{text}</span>;
+    }
+
+    const lowerSet = new Set(
+      wordsToHighlight.map((w) => (w || "").toLowerCase())
+    );
+    const regex = new RegExp(`\\b(${Array.from(lowerSet).join("|")})\\b`, "gi");
+    const parts = text.split(regex);
+
+    return parts.map((part, index) => {
+      if (lowerSet.has(part.toLowerCase())) {
+        const cleaned = part.replace(/[^a-zA-Z]/g, "");
+        return (
+          <span
+            key={index}
+            className="text-danger text-decoration-underline fw-bold"
+            style={{ cursor: "pointer" }}
+            title={`Click to practice "${cleaned}"`}
+            onClick={() => setCurrentChallengeWord(cleaned)}
+          >
+            {part}
+          </span>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
+  // When OCR / manual text is returned from child
+  const handleTextExtracted = (text, source, file) => {
+    if (!text) return;
+    setPreviewText(text);
+    setPreviewSource(source);
+    setPreviewFile(file);
+    setIsViewingPreview(true);
+    setCurrentChallengeWord(null);
+  };
+
+  // Load preview text into the main reader (with ML analysis)
+  const loadExtractedText = async () => {
+    if (!previewText) return;
+
+    setIsAnalyzing(true);
 
     try {
-      // POST request to the new NLP analysis endpoint
-      const response = await fetch('/api/nlp/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textToAnalyze }),
-      });
+      const response = await fetch(
+        "http://localhost:5000/api/v1/analyze-content",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: previewText }),
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const analysis = data.analysis || {};
+        const challenging = analysis.challenging_words || [];
+        const score = analysis.difficulty_score || 0;
+
+        setCurrentReadingContent(previewText);
+        setContentSource(previewSource || "Uploaded / Manual");
+        setDifficultWords(challenging);
+        setDifficultyScore(score);
+
+        // Save reading session in Firebase
+        const sessionData = {
+          wpm: 0,
+          readingTimeSec: 0,
+          settingsUsed: settings,
+          analysis: {
+            difficult_words: challenging,
+            difficulty_score: score,
+            source: previewSource,
+          },
+        };
+
+        const uid = userId || "local-dev-user";
+        try {
+          await saveReadingSession(uid, sessionData);
+        } catch (err) {
+          console.warn("Failed to save session in Firebase:", err);
+        }
+
+        setPreviewText(null);
+        setPreviewFile(null);
+        setIsViewingPreview(false);
+      } else {
+        alert("Analysis failed. Loading text without difficulty highlights.");
+        setCurrentReadingContent(previewText);
+        setContentSource(previewSource || "Uploaded / Manual");
+        setDifficultWords([]);
+        setDifficultyScore(0);
+        setIsViewingPreview(false);
       }
-
-      const results = await response.json();
-
-      // Update state with the results from the Python script
-      setChallengingWords(results.challenging_words);
-      setDifficultyScore(results.difficulty_score);
-
     } catch (error) {
-      console.error("Error during NLP analysis:", error);
-      // Fallback if analysis fails
-      setChallengingWords(["Error"]); 
+      console.error("Error calling analyze-content:", error);
+      alert("Network error connecting to ML service.");
     } finally {
-      setLoadingAnalysis(false);
+      setIsAnalyzing(false);
     }
   };
 
-  // 2. Function to receive extracted text from the OCR component (Updated)
-  const handleTextExtracted = (extractedText) => {
-    setCurrentText(extractedText);
-    analyzeText(extractedText); // Trigger analysis for the new text
+  const handleWordPracticed = (word) => {
+    const updated = difficultWords.filter(
+      (w) => w.toLowerCase() !== word.toLowerCase()
+    );
+    setDifficultWords(updated);
+    setCurrentChallengeWord(null);
+    setGamification((prev) => ({
+      ...prev,
+      score: prev.score + 50,
+    }));
   };
 
-  // 3. Run analysis when the component first mounts (for sample text)
-  useEffect(() => {
-    analyzeText(initialSampleText);
-  }, []); // Empty array means run once on mount
+  const handleCancelPreview = () => {
+    setPreviewText(null);
+    setPreviewFile(null);
+    setIsViewingPreview(false);
+  };
 
-  // --- Determine the word for Pronunciation component ---
-  // Use the first challenging word found, or a default
-  const wordToPractice = challengingWords.length > 0 
-                         ? challengingWords[0] 
-                         : "reading";
+  const readingStyle = {
+    fontFamily: settings.fontFamily,
+    fontSize: `${settings.fontSize}px`,
+    letterSpacing: `${settings.letterSpacing}em`,
+    lineHeight: settings.lineHeight,
+    backgroundColor: settings.highContrast ? "#333" : "#fff",
+    color: settings.highContrast ? "#fff" : "#000",
+    transition: "all 0.3s ease",
+  };
 
-  // --- Render Logic ---
-  return (
-    <Row className="g-4">
-      <Col md={9}>
-        <h2 className="mb-4">Adaptive Reading Interface</h2>
-
-        {/* PRONUNCIATION TOOL INTEGRATION */}
-        <Pronunciation word={wordToPractice} /> 
-
-        {/* Loading indicator for analysis */}
-        {loadingAnalysis ? (
-            <div className="text-center p-5">
-                <Spinner animation="border" variant="info" className="me-2" />
-                <p className="mt-2">Analyzing text for difficulty...</p>
-            </div>
-        ) : (
-            <Card className="shadow-lg">
-                <Card.Body>
-                    <OverlayText 
-                        text={currentText}
-                        challengingWords={challengingWords} // Passes the analyzed words
-                        readerSettings={currentSettings}
-                    />
-                </Card.Body>
+  // If user is in preview mode (after OCR/manual), show preview page
+  if (isViewingPreview) {
+    return (
+      <Container
+        fluid
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "calc(100vh - 120px)" }}
+      >
+        <div style={{ maxWidth: "900px", width: "100%" }}>
+          {isAnalyzing ? (
+            <Card className="p-5 text-center shadow-lg border-info">
+              <Card.Body>
+                <Spinner animation="border" variant="info" className="mb-3" />
+                <h4>Analyzing Text...</h4>
+              </Card.Body>
             </Card>
-        )}
-
-        <Alert variant="info" className="mt-3 d-flex justify-content-between">
-            <div>
-                Text Loaded: {currentText.length > 50 ? 'OCR Upload' : 'Sample Text'} | 
-                Challenging Words Identified: **{challengingWords.length}**
-            </div>
-            <div>
-                Difficulty Score: **{difficultyScore}**
-            </div>
-        </Alert>
-      </Col>
-
-      <Col md={3}>
-        {/* OCR UPLOADER integration */}
-        <OCRUploader onTextExtracted={handleTextExtracted} /> 
-
-        {/* Gamification Sidebar */}
-        <div className="mt-4">
-            <Gamification />
+          ) : (
+            <OCRSideBySidePreview
+              uploadedFile={previewFile}
+              extractedText={previewText}
+              source={previewSource}
+              onLoadText={loadExtractedText}
+              onCancel={handleCancelPreview}
+            />
+          )}
         </div>
+      </Container>
+    );
+  }
 
-      </Col>
-    </Row>
+  // Normal reading interface
+  return (
+    <Container fluid>
+      <h2 className="mb-4 text-primary">Adaptive Reading Interface</h2>
+      <Row>
+        <Col lg={3} className="mb-4">
+          <OCRUploader onTextExtracted={handleTextExtracted} />
+        </Col>
+
+        <Col lg={6} className="mb-4">
+          {currentChallengeWord && (
+            <Pronunciation
+              challengingWord={currentChallengeWord}
+              onWordPracticed={handleWordPracticed}
+            />
+          )}
+
+          <Card className="p-4 shadow-lg mb-3" style={readingStyle}>
+            {highlightContent(currentReadingContent, difficultWords)}
+          </Card>
+
+          <Alert
+            variant="info"
+            className="d-flex justify-content-between small"
+          >
+            <span>Text Loaded: <strong>{contentSource}</strong></span>
+            <span>
+              Difficulty: <strong>{difficultyScore.toFixed(2)}</strong>
+            </span>
+          </Alert>
+        </Col>
+
+        <Col lg={3} className="mb-4">
+          <Gamification
+            score={gamification.score}
+            badges={gamification.badges}
+            streak={gamification.streak}
+          />
+        </Col>
+      </Row>
+    </Container>
   );
-}
+};
 
 export default ReaderPage;

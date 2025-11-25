@@ -1,61 +1,79 @@
 # ml/nlp/reading_analysis.py
-
 import json
-import nltk
-from nltk.corpus import words as nltk_words
 import sys
+import nltk
+import pyphen
 
-# Set up word lists for basic analysis
-# Use a set for fast lookup
-ENGLISH_WORDS = set(nltk_words.words())
-# Define criteria for a "challenging" word (e.g., long words, less common words)
-CHALLENGE_THRESHOLD_LENGTH = 7 
+# Ensure nltk data is present
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', quiet=True)
 
-def analyze_reading_difficulty(text):
+# Initialize Pyphen for syllable counting (English)
+dic = pyphen.Pyphen(lang='en')
+
+# Common easy words to ignore even if they have syllables
+EASY_WORDS = set([
+    'everything', 'everyone', 'information', 'understanding', 'available', 
+    'experience', 'something', 'different', 'important', 'the', 'and', 'that', 'have', 'for'
+])
+
+def count_syllables(word):
+    """Count syllables in a word using Pyphen."""
+    return len(dic.inserted(word).split('-'))
+
+def analyze_reading_content(text):
     """
-    Analyzes text to identify words that might be challenging for a student.
-
-    This is a SIMPLE heuristic: identifies words that are long or uncommon.
+    Advanced NLP analysis for Dyslexia assistance.
+    Identifies words based on syllable count (3+) and rarity.
     """
-    # Remove punctuation and split into individual words
-    clean_text = ''.join(char for char in text if char.isalpha() or char.isspace()).lower()
-    word_list = clean_text.split()
+    if not text:
+        return {"challenging_words": [], "difficulty_score": 0.0}
+    
+    words = nltk.word_tokenize(text)
+    # Filter for actual alphabetic words
+    words = [w for w in words if w.isalpha()]
+    total_words = len(words)
+    
+    difficult_candidates = []
+    total_syllables = 0
 
-    challenging_words = set()
+    for word in words:
+        clean_word = word.lower()
+        syllables = count_syllables(clean_word)
+        total_syllables += syllables
+        
+        # Logic: Words with > 2 syllables that aren't in the common list
+        # OR words that are long (> 7 chars)
+        if (syllables > 2 or len(clean_word) > 7) and clean_word not in EASY_WORDS:
+            difficult_candidates.append(word) 
 
-    for word in word_list:
-        if not word:
-            continue
+    # Get unique difficult words, limited to top 15
+    unique_difficult_words = list(set(difficult_candidates))[:15]
 
-        # Check 1: Long words are often challenging
-        is_long = len(word) >= CHALLENGE_THRESHOLD_LENGTH
-
-        # Check 2: Words not in a common English dictionary (could be uncommon/complex)
-        is_uncommon = word not in ENGLISH_WORDS
-
-        # If it meets either criteria, mark it as challenging
-        if is_long or is_uncommon:
-            challenging_words.add(word)
-
-    # Calculate a simple difficulty score (ratio of challenging words to total words)
-    if len(word_list) == 0:
-        difficulty_score = 0
+    # --- Calculate Flesch-Kincaid Readability Score ---
+    if total_words > 0:
+        score = 206.835 - 1.015 * (total_words) - 84.6 * (total_syllables / total_words)
+        normalized_difficulty = max(0.0, min(1.0, (100 - score) / 100))
     else:
-        difficulty_score = len(challenging_words) / len(word_list)
+        normalized_difficulty = 0.0
 
     return {
-        "challenging_words": list(challenging_words),
-        "difficulty_score": round(difficulty_score, 2)
+        "challenging_words": unique_difficult_words,
+        "difficulty_score": round(normalized_difficulty, 2),
+        "stats": {
+            "total_words": total_words,
+            "syllable_count": total_syllables
+        }
     }
 
 if __name__ == '__main__':
-    # Check if the script received text via command-line arguments
+    # CLI Mode
     if len(sys.argv) > 1:
         input_text = sys.argv[1]
+        results = analyze_reading_content(input_text)
+        print(json.dumps(results))
     else:
-        input_text = "The rhythm of the colonel's march was confusing."
-
-    results = analyze_reading_difficulty(input_text)
-
-    # Print the result as a JSON string so Node.js can easily read it
-    print(json.dumps(results))
+        # Test default
+        print(json.dumps(analyze_reading_content("The physiological mechanisms of dyslexia are complex.")))

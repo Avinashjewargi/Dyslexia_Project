@@ -1,125 +1,135 @@
-// frontend/dashboard/StudentDashboard.jsx
+import React, { useState, useEffect } from 'react';
+import { Container, Card, Table, Row, Col, ProgressBar } from 'react-bootstrap';
+import { fetchReadingSessions } from '../utils/firebase'; 
 
-import React, { useState, useEffect } from 'react'; // IMPORT useEffect and useState
-import { Container, Row, Col, Card, Button, Spinner, Alert } from 'react-bootstrap';
-import AppNavbar from '../components/Navbar';
-import AppFooter from '../components/Footer';
-import Settings from '../components/Settings'; 
-import AppProgressBar from '../components/ProgressBar'; // Use the real ProgressBar
+const StudentDashboard = ({ userId }) => {
+    const [sessions, setSessions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [recentSession, setRecentSession] = useState(null);
 
-function StudentDashboard() {
-  // 1. STATE MANAGEMENT: Initialize state for profile data and loading status
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+    useEffect(() => {
+        const currentUserId = userId || "local-dev-user";
 
-  // 2. DATA FETCHING: Use the useEffect hook to fetch data when the component mounts
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        // Because of the proxy setup (Step 12), we can use a relative path /api
-        const response = await fetch('/api/student-profile');
+        const loadSessions = async () => {
+            setLoading(true);
+            try {
+                const fetchedSessions = await fetchReadingSessions(currentUserId);
+                setSessions(fetchedSessions);
+                
+                if (fetchedSessions.length > 0) {
+                    const sorted = [...fetchedSessions].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    setRecentSession(sorted[0]);
+                    setSessions(sorted);
+                }
+            } catch (error) {
+                console.error("Dashboard Error:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadSessions();
+    }, [userId]);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setProfile(data); // Store the fetched data
-      } catch (e) {
-        console.error("Failed to fetch student profile:", e);
-        setError("Could not load student data. Check backend server.");
-      } finally {
-        setLoading(false); // End loading regardless of success/fail
-      }
+    const formatTime = (val) => {
+        const seconds = Number(val);
+        if (isNaN(seconds)) return '0:00';
+        const min = Math.floor(seconds / 60);
+        const sec = Math.floor(seconds % 60);
+        return `${min}:${sec < 10 ? '0' : ''}${sec}`;
     };
 
-    fetchProfile();
-  }, []); // The empty array ensures this runs only ONCE after initial render
-
-  // 3. Conditional Rendering while loading
-  if (loading) {
+    if (loading) {
+        return (
+            <Container className="my-5 text-center">
+                <ProgressBar animated now={100} label="Loading Data..." />
+            </Container>
+        );
+    }
+    
     return (
-        <div className="d-flex justify-content-center align-items-center min-vh-100">
-            <Spinner animation="border" role="status" className="me-2" />
-            <span>Loading Adaptive Assistant Data...</span>
-        </div>
+        <Container className="my-5">
+            <h2 className="mb-4 text-primary">My Reading Progress</h2>
+            
+            {sessions.length === 0 ? (
+                <Card className="p-5 text-center shadow-sm bg-light">
+                    <Card.Body>
+                        <h3>No Reading History Yet 📚</h3>
+                        <p className="text-muted">Go to the <strong>Reader</strong> page to start your first session!</p>
+                    </Card.Body>
+                </Card>
+            ) : (
+                <>
+                    {recentSession && (
+                        <Row className="mb-4">
+                            <Col md={12}>
+                                <Card className="shadow-sm border-primary">
+                                    <Card.Header className="bg-primary text-white">Last Session Overview</Card.Header>
+                                    <Card.Body>
+                                        <Row className="text-center">
+                                            <Col md={4}>
+                                                <h3>{Math.round(recentSession.wpm || 0)}</h3>
+                                                <span className="text-muted">Words Per Minute</span>
+                                            </Col>
+                                            <Col md={4}>
+                                                <h3>{formatTime(recentSession.readingTimeSec)}</h3>
+                                                <span className="text-muted">Duration</span>
+                                            </Col>
+                                            <Col md={4}>
+                                                <h3>{recentSession.analysis?.difficulty_score || 0}</h3>
+                                                <span className="text-muted">Text Difficulty</span>
+                                            </Col>
+                                        </Row>
+                                        <div className="mt-3 pt-3 border-top">
+                                            <strong>Difficult Words Found: </strong>
+                                            {recentSession.analysis?.difficult_words?.length > 0 ? (
+                                                <span className="text-danger">
+                                                    {recentSession.analysis.difficult_words.join(', ')}
+                                                </span>
+                                            ) : (
+                                                <span className="text-success">None! Great job!</span>
+                                            )}
+                                        </div>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        </Row>
+                    )}
+
+                    <Card className="shadow-sm">
+                        <Card.Header>Session History</Card.Header>
+                        <Table hover responsive className="mb-0">
+                            <thead className="bg-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Source Text</th>
+                                    <th>WPM</th>
+                                    <th>Time</th>
+                                    <th>Difficulty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {sessions.map((session) => (
+                                    <tr key={session.id}>
+                                        <td>{new Date(session.timestamp).toLocaleDateString()} {new Date(session.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                                        <td className="text-truncate" style={{maxWidth: '200px'}}>
+                                            {session.analysis?.source || 'Unknown'}
+                                        </td>
+                                        <td>{Math.round(session.wpm || 0)}</td>
+                                        <td>{formatTime(session.readingTimeSec)}</td>
+                                        <td>
+                                            <span className={`badge ${session.analysis?.difficulty_score > 0.5 ? 'bg-warning text-dark' : 'bg-success'}`}>
+                                                {session.analysis?.difficulty_score || 0}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </Card>
+                </>
+            )}
+        </Container>
     );
-  }
+};
 
-  // 4. Conditional Rendering for error
-  if (error || !profile) {
-    return <Alert variant="danger" className="m-5">{error}</Alert>;
-  }
-
-  // Destructure data for clean usage (replacing dummy data)
-  const { name, readingLevel, weeklyGoalHours, weeklyProgressHours } = profile;
-  const weeklyProgressPercent = Math.round((weeklyProgressHours / weeklyGoalHours) * 100);
-
-  // --- RENDER CONTENT (using real 'profile' data) ---
-  return (
-    <div className="d-flex flex-column min-vh-100">
-      <AppNavbar />
-
-      <Container className="my-5 flex-grow-1">
-        <h1 className="mb-4">Welcome Back, {name}! 👋</h1>
-        <p className="lead">Your personalized reading hub and progress tracking.</p>
-
-        <Row className="g-4">
-
-          {/* Column 1: Progress and Goals */}
-          <Col md={7}>
-            <Card className="shadow-sm h-100 p-3">
-              <Card.Body>
-                <Card.Title as="h3" className="mb-4">My Reading Progress</Card.Title>
-
-                <Row className="mb-4">
-                    <Col>
-                        <Card.Text>Current Reading Level: **{readingLevel}**</Card.Text>
-                    </Col>
-                    <Col>
-                        <Card.Text>Weekly Goal: **{weeklyGoalHours} Hours**</Card.Text>
-                    </Col>
-                </Row>
-
-                {/* Using the REAL AppProgressBar component */}
-                <AppProgressBar 
-                  label={`Weekly Reading Time (${weeklyProgressHours} / ${weeklyGoalHours} Hours)`} 
-                  value={weeklyProgressPercent}
-                  variant="primary"
-                />
-
-                <AppProgressBar 
-                  label="Accuracy Improvement" 
-                  value={65}
-                  variant="info"
-                />
-
-                <div className="mt-4">
-                    <Button variant="success" size="lg" className="me-3">
-                      Start New Reading Session
-                    </Button>
-                    <Button variant="outline-secondary">
-                      Review Challenging Words
-                    </Button>
-                </div>
-
-              </Card.Body>
-            </Card>
-          </Col>
-
-          {/* Column 2: Settings and Quick Tools */}
-          <Col md={5}>
-            <Settings /> 
-          </Col>
-
-        </Row>
-
-      </Container>
-
-      <AppFooter />
-    </div>
-  );
-}
-
-export default StudentDashboard;
+export default StudentDashboard; 
