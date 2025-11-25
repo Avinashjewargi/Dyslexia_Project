@@ -42,26 +42,6 @@ module.exports = (upload) => {
 
     let pythonOutput = "";
     let pythonError = "";
-    let hasResponded = false;
-    let timeoutHandle = null;
-
-    const sendResponse = (statusCode, data) => {
-      if (hasResponded) return;
-      hasResponded = true;
-      
-      if (timeoutHandle) clearTimeout(timeoutHandle);
-      if (pythonProcess && !pythonProcess.killed) {
-        pythonProcess.kill('SIGTERM');
-      }
-      
-      fs.unlink(filePath, (err) => {
-        if (err) console.error("⚠  Failed to delete temp file:", err.message);
-      });
-      
-      if (!res.headersSent) {
-        res.status(statusCode).json(data);
-      }
-    };
 
     pythonProcess.stdout.on("data", (data) => {
       const chunk = data.toString();

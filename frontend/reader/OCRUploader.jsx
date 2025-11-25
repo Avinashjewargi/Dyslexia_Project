@@ -11,7 +11,11 @@ import {
   FormControl,
 } from "react-bootstrap";
 
-const BACKEND_API_URL = "http://127.0.0.1:5000/api/ocr/upload";
+
+
+const BACKEND_API_URL = 'http://127.0.0.1:5000/api/ocr/upload';
+
+
 
 const OCRUploader = ({ onTextExtracted }) => {
   const [file, setFile] = useState(null);
@@ -74,15 +78,13 @@ const OCRUploader = ({ onTextExtracted }) => {
 
       const result = await response.json();
 
-      if (response.ok && result.success && result.extracted_text) {
+      // FIXED: Check result.success and result.extractedText (not response or extracted_text)
+      if (response.ok && result.success && result.extractedText) {
+        console.log("✅ OCR Success:", result.extractedText);
         setStatus({ type: "success", message: "OCR successful!" });
-        onTextExtracted(
-          result.extracted_text,
-          result.source || "OCR Upload",
-          file
-        );
+        onTextExtracted(result.extracted_text, result.source || "OCR Upload", file);
       } else {
-        console.warn("OCR server error:", result);
+        console.error("❌ OCR Error:", result.error || "Unknown error");
         setStatus({
           type: "danger",
           message: result.error || "OCR failed on server.",
