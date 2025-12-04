@@ -1,8 +1,29 @@
+# ml/api.py
+
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS # CRITICAL: Import the CORS extension
 import sys
 import os
 import json
+import nltk
+
+# --- SETUP NLTK DATA (Must be done before importing NLP modules) ---
+def setup_nltk():
+    """Download and setup required NLTK resources"""
+    required_resources = ['punkt_tab', 'averaged_perceptron_tagger', 'wordnet']
+    
+    for resource in required_resources:
+        try:
+            nltk.data.find(f'tokenizers/{resource}')
+        except LookupError:
+            try:
+                nltk.download(resource, quiet=True)
+                print(f"✓ Downloaded NLTK resource: {resource}")
+            except Exception as e:
+                print(f"⚠ Warning: Could not download {resource}: {e}")
+
+# Call setup before importing NLP modules
+setup_nltk()
 
 # Add the current directory to Python path to find subfolders (nlp, speech, etc.)
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))

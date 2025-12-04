@@ -1,8 +1,8 @@
-// frontend/reader/ReaderPage.jsx
-
 import React, { useState } from "react";
 import { Container, Card, Alert, Row, Col, Spinner } from "react-bootstrap";
 import Pronunciation from "./Pronunciation";
+import WordLearning from "./WordLearning";
+import TextToSpeech from "./TextToSpeech";
 import Gamification from "./Gamification";
 import OCRUploader from "./OCRUploader";
 import OCRSideBySidePreview from "./OCRSideBySidePreview";
@@ -37,7 +37,6 @@ const ReaderPage = ({ userId }) => {
     streak: 7,
   });
 
-  // Highlight difficult words and make them clickable
   const highlightContent = (text, wordsToHighlight) => {
     if (!text) return null;
     if (!wordsToHighlight || wordsToHighlight.length === 0) {
@@ -69,7 +68,6 @@ const ReaderPage = ({ userId }) => {
     });
   };
 
-  // When OCR / manual text is returned from child
   const handleTextExtracted = (text, source, file) => {
     if (!text) return;
     setPreviewText(text);
@@ -79,19 +77,23 @@ const ReaderPage = ({ userId }) => {
     setCurrentChallengeWord(null);
   };
 
-  // Load preview text into the main reader (with ML analysis)
   const loadExtractedText = async () => {
     if (!previewText) return;
 
     setIsAnalyzing(true);
 
     try {
+
       const response = await fetch(
-        "http://localhost:5000/api/v1/analyze-content",
+        "http://localhost:5000/api/ml/analyze",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: previewText }),
+          body: JSON.stringify({ 
+            text: previewText,
+            source: previewSource,
+            saveToFile: true  
+          }),
         }
       );
 
@@ -107,7 +109,6 @@ const ReaderPage = ({ userId }) => {
         setDifficultWords(challenging);
         setDifficultyScore(score);
 
-        // Save reading session in Firebase
         const sessionData = {
           wpm: 0,
           readingTimeSec: 0,
@@ -173,7 +174,6 @@ const ReaderPage = ({ userId }) => {
     transition: "all 0.3s ease",
   };
 
-  // If user is in preview mode (after OCR/manual), show preview page
   if (isViewingPreview) {
     return (
       <Container
@@ -203,7 +203,6 @@ const ReaderPage = ({ userId }) => {
     );
   }
 
-  // Normal reading interface
   return (
     <Container fluid>
       <h2 className="mb-4 text-primary">Adaptive Reading Interface</h2>
@@ -214,11 +213,14 @@ const ReaderPage = ({ userId }) => {
 
         <Col lg={6} className="mb-4">
           {currentChallengeWord && (
-            <Pronunciation
-              challengingWord={currentChallengeWord}
-              onWordPracticed={handleWordPracticed}
+            <WordLearning
+              word={currentChallengeWord}
+              onComplete={handleWordPracticed}
+              onSkip={() => setCurrentChallengeWord(null)}
             />
           )}
+
+          <TextToSpeech text={currentReadingContent} />
 
           <Card className="p-4 shadow-lg mb-3" style={readingStyle}>
             {highlightContent(currentReadingContent, difficultWords)}
