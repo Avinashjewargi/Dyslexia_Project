@@ -1,4 +1,3 @@
-# ml/ocr/process_text.py
 
 import sys
 import json

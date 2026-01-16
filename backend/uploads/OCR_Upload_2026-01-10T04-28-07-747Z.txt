@@ -1,0 +1,29 @@
+Competition Structure
+
+Round 1: Abstract Submission
+
++ Deadline: 20th August 2025
++ Participants must submit two/three pager (excluding intro) an abstract containing
+at least the following
+o Team members details
+o List of team members (team needs to contain at least 3 members)
+o Institute details
+o List of labs and facilities at your institute that will help you realize the
+prototype
+o While having a faculty mentor is not mandatory at this stage, it is
+encouraged. If you have identified faculty mentor(s), please mention their
+brief bio.
+o Rough list of components (electronic and mechanical) for your bot
+° syeren level block diagram
+Rough specifications of your bot
+» Battery sizing
+» Number and specs of motors
+« Approx. Weight of the system
+« Details of the controller
+« Details of the sensors
+« Chassis material
++ Number and specs of wheels
+- Dust storage capacity
+* Cleaning mechanism
+» Storage container sealing
+Removal and reattach mechanism for the storage container

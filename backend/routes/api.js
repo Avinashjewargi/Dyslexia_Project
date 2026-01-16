@@ -1,16 +1,12 @@
 const express = require('express');
 const router = express.Router();
 
-// Export a function that accepts the 'upload' middleware
-// (Even if we don't use 'upload' here right now, we keep the signature consistent)
 module.exports = () => { 
     
-    // --- GET /api/test (Simple Health Check) ---
     router.get('/test', (req, res) => {
         res.json({ message: "API is working!" });
     });
 
-    // --- GET /api/content/sample (Sample Text for Reader) ---
     router.get('/content/sample', (req, res) => {
         res.json({
             title: "Sample Reading Passage",
@@ -18,7 +14,6 @@ module.exports = () => {
         });
     });
 
-    // --- GET /api/student-profile (Mock Student Data) ---
     router.get('/student-profile', (req, res) => {
         const studentProfile = {
             id: 101,
@@ -32,8 +27,6 @@ module.exports = () => {
         res.json(studentProfile);
     });
 
-    // NOTE: The OCR route has been moved to 'routes/ocr.js' to prevent errors.
-    // Do not add router.post('/ocr'...) here.
 
     return router;
 };

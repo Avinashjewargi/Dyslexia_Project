@@ -1,7 +1,8 @@
 //frontend/src/App.jsx
+// At the top with other imports
 
 import React, { useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route , Navigate} from 'react-router-dom';
 import AppNavbar from '../components/Navbar';
 import StudentDashboard from '../dashboard/StudentDashboard';
 import TeacherDashboard from '../dashboard/TeacherDashboard';
@@ -9,7 +10,10 @@ import ReaderPage from '../reader/ReaderPage';
 import Settings from '../components/Settings';
 import { AccessibilityProvider, useAccessibility } from '../components/AccessibilityContext'; 
 import AppFooter from '../components/Footer';
-
+import PhonologyHub from '../phonology/PhonologyHub';
+import SpellingTest from '../phonology/SpellingTest';
+import LetterReplacement from '../phonology/LetterReplacement';
+import OddOneOut from '../phonology/OddOneOut';
 // Inner Layout component to consume Context
 const MainLayout = ({ children }) => {
     const { settings } = useAccessibility();
@@ -50,7 +54,33 @@ function App() {
                     <Route path="/" element={<Navigate to="/reader" />} /> 
                     <Route path="/reader" element={<ReaderPage userId={mockUserId} />} />
                     <Route path="/dashboard" element={<StudentDashboard userId={mockUserId} />} />
-                    <Route path="/teacher-dashboard" element={<TeacherDashboard />} /> 
+                    <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
+                    {/* NEW: Phonology routes */}
+                    <Route path="/phonology" element={<PhonologyHub />} />
+                    <Route path="/phonology/spelling" 
+                    element={
+                        <SpellingTest 
+                        onBack={() => window.location.href = '/phonology'} 
+                        updateProgress={() => {}}
+                        />
+                    } 
+                    />
+                    <Route path="/phonology/replacement" 
+                    element={
+                    <LetterReplacement 
+                    onBack={() => window.location.href = '/phonology'} 
+                    updateProgress={() => {}}
+                    />
+                    } 
+                    />
+                    <Route path="/phonology/odd-one-out" 
+                    element={
+                        <OddOneOut 
+                        onBack={() => window.location.href = '/phonology'} 
+                        updateProgress={() => {}}
+                        />
+                    } 
+                    /> 
                     <Route path="*" element={<h1>404: Page Not Found</h1>} />
                 </Routes>
             </MainLayout>

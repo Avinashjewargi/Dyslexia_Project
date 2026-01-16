@@ -1,18 +1,27 @@
 from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS # CRITICAL: Import the CORS extension
+from flask_cors import CORS
 import sys
 import os
 import json
 
-# Add the current directory to Python path to find subfolders (nlp, speech, etc.)
+# Add the current directory to Python path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-# Import the NLP analysis function (from nlp/reading_analysis.py)
+# Import the NLP analysis function
 from nlp.reading_analysis import analyze_reading_content 
 
 app = Flask(__name__)
-CORS(app) # CRITICAL: Initialize CORS to allow cross-origin requests
+CORS(app)
 PORT = 5050
+
+# --- Home/Test Route (ADD THIS) ---
+@app.route('/')
+def home():
+    return jsonify({
+        "status": "ML Service is running!",
+        "version": "1.0",
+        "endpoints": ["/api/v1/analyze-content"]
+    })
 
 # --- Core NLP Analysis Endpoint ---
 @app.route('/api/v1/analyze-content', methods=['POST'])
@@ -27,7 +36,6 @@ def analyze_content_route():
         return jsonify({"message": "Missing 'text' parameter for analysis."}), 400
 
     try:
-        # Call the function we imported from nlp/reading_analysis.py
         analysis_results = analyze_reading_content(text_content)
         
         return jsonify({
@@ -41,11 +49,11 @@ def analyze_content_route():
             "message": "Internal error during NLP processing."
         }), 500
 
-# --- Serve Static Audio Files (Required for TTS playback) ---
+# --- Serve Static Audio Files ---
 @app.route('/audio/<filename>')
 def serve_audio(filename):
     return send_from_directory('audio_temp', filename) 
 
 if __name__ == '__main__':
-    print(f"🚀 ML Service running on http://localhost:{PORT}")
+    print(f"ML Service running on http://localhost:{PORT}")
     app.run(port=PORT, debug=True)

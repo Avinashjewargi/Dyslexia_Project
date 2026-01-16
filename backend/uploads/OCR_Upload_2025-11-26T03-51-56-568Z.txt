@@ -1,0 +1,11 @@
+Ultrasonic Vacuum Motor
+
+Sensor + Brush Motor
+Arduino
+Uno
+
+Rinlc DC
+Motor
+
+Power Supply
+(Battery Pack)

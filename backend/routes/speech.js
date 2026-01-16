@@ -1,20 +1,15 @@
-// backend/routes/speech.js - FINAL CORRECTED VERSION (Fixes ReferenceError)
 
 const express = require('express');
 const router = express.Router();
 const { spawn } = require('child_process');
 const path = require('path');
-const fs = require('fs'); // Needed to delete the temp file
+const fs = require('fs'); 
 
-// Export a function that accepts the 'upload' middleware from server.js
 module.exports = (upload) => { 
     
-    // --- CRITICAL FIX: DEFINE PATHS INSIDE THE SCOPE ---
     const recognitionScriptPath = path.join(__dirname, '..', '..', 'ml', 'speech', 'recognition.py');
     const pythonExecutable = 'python'; 
-    // --- END FIX ---
-
-    // --- 1. POST /api/speech/tts (Text-to-Speech) ---
+   
     router.post('/tts', (req, res) => {
         const { text } = req.body;
 
@@ -22,10 +17,8 @@ module.exports = (upload) => {
             return res.status(400).json({ error: "Missing 'text' field for TTS." });
         }
 
-        // Use the defined paths here
         const pythonProcess = spawn(pythonExecutable, [recognitionScriptPath, text]); 
         
-        // ... (rest of the TTS logic remains the same) ...
         let pythonOutput = '';
         let pythonError = '';
 
@@ -57,7 +50,6 @@ module.exports = (upload) => {
         });
     });
 
-    // --- 2. POST /api/speech/stt (Speech-to-Text) ---
     router.post('/stt', upload.single('audio'), (req, res) => {
         if (!req.file) {
             return res.status(400).json({ error: "No audio file uploaded." });
@@ -66,7 +58,6 @@ module.exports = (upload) => {
         const filePath = req.file.path;
         const targetWord = req.body.word || ''; 
 
-        // Use the defined paths here
         const pythonProcess = spawn(pythonExecutable, [
             recognitionScriptPath, 
             'stt_mode', 
