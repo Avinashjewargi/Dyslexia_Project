@@ -26,12 +26,17 @@ function AppNavbar() {
               📖 Reader
             </Nav.Link>
             
+            {/* Stories Link - NEW */}
+            <Nav.Link href="/stories">
+              📚 Stories
+            </Nav.Link>
+            
             {/* Dashboard Link */}
             <Nav.Link href="/dashboard">
               📊 Dashboard
             </Nav.Link>
             
-            {/* Phonology Dropdown - NEW */}
+            {/* Phonology Dropdown */}
             <NavDropdown 
               title={
                 <span>

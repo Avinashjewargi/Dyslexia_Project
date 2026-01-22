@@ -14,6 +14,7 @@ import PhonologyHub from '../phonology/PhonologyHub';
 import SpellingTest from '../phonology/SpellingTest';
 import LetterReplacement from '../phonology/LetterReplacement';
 import OddOneOut from '../phonology/OddOneOut';
+import StoriesReader from '../stories/StoriesReader';
 // Inner Layout component to consume Context
 const MainLayout = ({ children }) => {
     const { settings } = useAccessibility();
@@ -48,11 +49,12 @@ function App() {
     const mockUserId = "Dyslexia-User-7890"; 
 
     return (
-        <AccessibilityProvider>
+        <AccessibilityProvider> 
             <MainLayout>
                 <Routes>
                     <Route path="/" element={<Navigate to="/reader" />} /> 
                     <Route path="/reader" element={<ReaderPage userId={mockUserId} />} />
+                    <Route path="/stories" element={<StoriesReader />} />
                     <Route path="/dashboard" element={<StudentDashboard userId={mockUserId} />} />
                     <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
                     {/* NEW: Phonology routes */}

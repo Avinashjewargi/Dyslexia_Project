@@ -104,6 +104,145 @@ router.post('/save-session', (req, res) => {
 });
 
 /**
+ * NEW: Save story progress
+ * POST /api/reading/story-progress
+ */
+router.post('/story-progress', (req, res) => {
+    const { userId, storyId, storyTitle, difficultWords, readingDuration, timestamp } = req.body;
+
+    if (!userId || !storyId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        const progressFilePath = path.join(DATA_DIR, `${userId}_story_progress.json`);
+        
+        let allProgress = {};
+        if (fs.existsSync(progressFilePath)) {
+            allProgress = JSON.parse(fs.readFileSync(progressFilePath, 'utf8'));
+        }
+
+        // Update progress for this story
+        if (!allProgress[storyId]) {
+            allProgress[storyId] = {
+                storyId,
+                storyTitle,
+                firstRead: timestamp,
+                timesRead: 0,
+                totalDuration: 0,
+                difficultWords: []
+            };
+        }
+
+        allProgress[storyId].timesRead += 1;
+        allProgress[storyId].totalDuration += readingDuration || 0;
+        allProgress[storyId].lastRead = timestamp;
+        
+        // Add new difficult words (avoid duplicates)
+        if (difficultWords && difficultWords.length > 0) {
+            const existingWords = allProgress[storyId].difficultWords || [];
+            const newWords = difficultWords.filter(w => !existingWords.includes(w));
+            allProgress[storyId].difficultWords = [...existingWords, ...newWords];
+        }
+
+        fs.writeFileSync(progressFilePath, JSON.stringify(allProgress, null, 2), 'utf8');
+
+        console.log(`✅ Saved story progress for ${userId}: ${storyTitle}`);
+
+        res.json({ 
+            success: true, 
+            message: 'Story progress saved',
+            progress: allProgress[storyId]
+        });
+
+    } catch (error) {
+        console.error('Error saving story progress:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to save story progress' 
+        });
+    }
+});
+
+/**
+ * NEW: Get story progress for a user
+ * GET /api/reading/story-progress/:userId
+ */
+router.get('/story-progress/:userId', (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const progressFilePath = path.join(DATA_DIR, `${userId}_story_progress.json`);
+        
+        if (!fs.existsSync(progressFilePath)) {
+            return res.json({ 
+                success: true, 
+                progress: {},
+                message: 'No story progress yet'
+            });
+        }
+
+        const progress = JSON.parse(fs.readFileSync(progressFilePath, 'utf8'));
+
+        res.json({
+            success: true,
+            progress: progress,
+            totalStoriesRead: Object.keys(progress).length
+        });
+
+    } catch (error) {
+        console.error('Error fetching story progress:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to fetch story progress' 
+        });
+    }
+});
+
+/**
+ * NEW: Get all students' story progress (for dashboard)
+ * GET /api/reading/all-story-progress
+ */
+router.get('/all-story-progress', (req, res) => {
+    try {
+        const files = fs.readdirSync(DATA_DIR);
+        const progressFiles = files.filter(file => file.endsWith('_story_progress.json'));
+        
+        const allStudentsProgress = progressFiles.map(file => {
+            const userId = file.replace('_story_progress.json', '');
+            const content = fs.readFileSync(path.join(DATA_DIR, file), 'utf8');
+            const progress = JSON.parse(content);
+            
+            const totalStories = Object.keys(progress).length;
+            const totalDifficultWords = Object.values(progress).reduce((sum, story) => 
+                sum + (story.difficultWords?.length || 0), 0);
+            const totalReads = Object.values(progress).reduce((sum, story) => 
+                sum + (story.timesRead || 0), 0);
+            
+            return {
+                userId,
+                totalStories,
+                totalDifficultWords,
+                totalReads,
+                stories: progress
+            };
+        });
+
+        res.json({
+            success: true,
+            students: allStudentsProgress
+        });
+
+    } catch (error) {
+        console.error('Error fetching all story progress:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to fetch all story progress' 
+        });
+    }
+});
+
+/**
  * Get all difficult words for a user
  * GET /api/reading/difficult-words/:userId
  */
@@ -270,7 +409,7 @@ router.delete('/user/:userId', (req, res) => {
             fs.unlinkSync(path.join(DATA_DIR, file));
         });
 
-        console.log(`🗑️  Deleted ${userFiles.length} files for user ${userId}`);
+        console.log(`🗑️ Deleted ${userFiles.length} files for user ${userId}`);
 
         res.json({
             success: true,

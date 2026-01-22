@@ -1,8 +1,8 @@
-// frontend/stories/StoriesReader.jsx
+// frontend/reader/StoriesReader.jsx
 
 import React, { useState } from 'react';
 import { Container, Card, Button, Row, Col, Badge, Alert } from 'react-bootstrap';
-import { ChevronLeft, ChevronRight, BookOpen, Volume2, Star, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BookOpen, Volume2, AlertCircle, X } from 'lucide-react';
 
 // 10 Default Stories
 const DEFAULT_STORIES = [
@@ -12,7 +12,7 @@ const DEFAULT_STORIES = [
     moral: "Think smart to solve problems",
     text: "A crow was thirsty. It put stones in a pot. The water came up.",
     difficulty: "easy",
-    image: "🐦"
+    image: "🦅"
   },
   {
     id: 2,
@@ -44,7 +44,7 @@ const DEFAULT_STORIES = [
     moral: "Happiness is contagious",
     text: "A bird sang every day. It felt happy. Others smiled.",
     difficulty: "easy",
-    image: "🐦"
+    image: "🦜"
   },
   {
     id: 6,
@@ -88,7 +88,7 @@ const DEFAULT_STORIES = [
   }
 ];
 
-const StoriesReader = ({ userId = 'test-user' }) => {
+const StoriesReader = ({ userId = 'test-user', onClose }) => {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [difficultWords, setDifficultWords] = useState([]);
   const [readingStartTime, setReadingStartTime] = useState(Date.now());
@@ -111,7 +111,7 @@ const StoriesReader = ({ userId = 'test-user' }) => {
   // Navigate to previous story
   const previousStory = () => {
     if (currentStoryIndex > 0) {
-      saveDifficultWords(); // Save before moving
+      saveStoryProgress(); // Save before moving
       setCurrentStoryIndex(currentStoryIndex - 1);
       setDifficultWords([]);
       setReadingStartTime(Date.now());
@@ -121,7 +121,7 @@ const StoriesReader = ({ userId = 'test-user' }) => {
   // Navigate to next story
   const nextStory = () => {
     if (currentStoryIndex < totalStories - 1) {
-      saveDifficultWords(); // Save before moving
+      saveStoryProgress(); // Save before moving
       setCurrentStoryIndex(currentStoryIndex + 1);
       setDifficultWords([]);
       setReadingStartTime(Date.now());
@@ -134,43 +134,15 @@ const StoriesReader = ({ userId = 'test-user' }) => {
     
     if (!difficultWords.includes(cleanWord)) {
       setDifficultWords([...difficultWords, cleanWord]);
-      
-      // Immediately save to backend
-      saveSingleDifficultWord(cleanWord);
     }
   };
 
-  // Save single difficult word immediately
-  const saveSingleDifficultWord = async (word) => {
-    try {
-      const response = await fetch('http://localhost:5000/api/reading/difficult-word', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: userId,
-          storyId: currentStory.id,
-          storyTitle: currentStory.title,
-          word: word,
-          timestamp: new Date().toISOString()
-        })
-      });
-
-      if (response.ok) {
-        console.log(`✅ Saved difficult word: ${word}`);
-      }
-    } catch (error) {
-      console.error('Error saving difficult word:', error);
-    }
-  };
-
-  // Save all difficult words when leaving story
-  const saveDifficultWords = async () => {
-    if (difficultWords.length === 0) return;
-
+  // Save story progress
+  const saveStoryProgress = async () => {
     const readingDuration = Math.floor((Date.now() - readingStartTime) / 1000);
 
     try {
-      const response = await fetch('http://localhost:5000/api/reading/save-session', {
+      const response = await fetch('http://localhost:5000/api/reading/story-progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -188,8 +160,14 @@ const StoriesReader = ({ userId = 'test-user' }) => {
         setTimeout(() => setShowSuccessMessage(false), 3000);
       }
     } catch (error) {
-      console.error('Error saving reading session:', error);
+      console.error('Error saving story progress:', error);
     }
+  };
+
+  // Save progress when closing
+  const handleClose = () => {
+    saveStoryProgress();
+    if (onClose) onClose();
   };
 
   // Split text into clickable words
@@ -232,6 +210,18 @@ const StoriesReader = ({ userId = 'test-user' }) => {
 
   return (
     <Container className="py-4">
+      {/* Close Button */}
+      {onClose && (
+        <Button 
+          variant="outline-secondary" 
+          className="mb-3"
+          onClick={handleClose}
+        >
+          <X size={20} className="me-2" />
+          Back to Reader
+        </Button>
+      )}
+
       {/* Header */}
       <div className="text-center mb-4">
         <h2 className="text-primary mb-2">
@@ -306,7 +296,7 @@ const StoriesReader = ({ userId = 'test-user' }) => {
                           key={idx} 
                           bg="warning" 
                           text="dark"
-                          className="p-2 cursor-pointer"
+                          className="p-2"
                           style={{ fontSize: '1rem', cursor: 'pointer' }}
                           onClick={() => speakText(word)}
                         >

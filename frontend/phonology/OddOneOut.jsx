@@ -4,6 +4,57 @@ import React, { useState } from 'react';
 import { Container, Card, Button, Alert, Row, Col, Badge, ProgressBar } from 'react-bootstrap';
 import { ArrowLeft, Sparkles, Check, X, Volume2 } from 'lucide-react';
 
+// Emoji mapping for all words
+const WORD_EMOJIS = {
+  // Animals
+  'cat': '🐱', 'dog': '🐕', 'bird': '🐦', 'sheep': '🐑', 'ant': '🐜',
+  // Food
+  'apple': '🍎', 'banana': '🍌', 'carrot': '🥕', 'orange': '🍊', 'bread': '🍞',
+  'milk': '🥛', 'juice': '🧃', 'water': '💧',
+  // Objects/Furniture
+  'table': '🪑', 'chair': '🪑', 'shoe': '👟', 'book': '📚', 'pen': '🖊️', 
+  'pencil': '✏️', 'bike': '🚲', 'house': '🏠',
+  // Vehicles
+  'car': '🚗', 'bus': '🚌', 'train': '🚆',
+  // Colors/Descriptors
+  'red': '🔴', 'blue': '🔵', 'green': '🟢', 'big': '📏', 'fast': '⚡',
+  'hot': '🔥', 'cold': '❄️', 'warm': '☀️', 'loud': '🔊',
+  // Actions
+  'run': '🏃', 'jump': '🦘', 'sleep': '😴',
+  // Emotions
+  'happy': '😊', 'sad': '😢', 'angry': '😠',
+  // Sky/Nature
+  'sun': '☀️', 'moon': '🌙', 'star': '⭐', 'tree': '🌳',
+  // Rhyming words
+  'cat': '🐱', 'hat': '🎩', 'bat': '🦇', 'dog': '🐕',
+  'run': '🏃', 'fun': '🎉', 'sun': '☀️', 'pen': '🖊️',
+  'tree': '🌳', 'free': '🆓', 'see': '👀', 'car': '🚗',
+  'ship': '🚢', 'shop': '🏪', 'sheep': '🐑', 'chip': '🍟',
+  'ball': '⚽', 'call': '📞', 'fall': '🍂', 'book': '📚',
+  'big': '📏', 'pig': '🐷', 'dig': '⛏️', 'bed': '🛏️',
+  'make': '🔨', 'take': '🤝', 'bake': '🍰', 'milk': '🥛',
+  'night': '🌙', 'light': '💡', 'bright': '✨', 'dark': '🌑',
+  'toy': '🧸', 'boy': '👦', 'joy': '😄', 'girl': '👧',
+  'car': '🚗', 'star': '⭐', 'far': '🛣️', 'cat': '🐱',
+  // Letter-based words
+  'bat': '🦇', 'ball': '⚽', 'book': '📚', 'dog': '🐕',
+  'pen': '🖊️', 'pan': '🍳', 'pin': '📌', 'hen': '🐔',
+  'jump': '🦘', 'just': '⚖️', 'fast': '⚡', 'join': '🤝',
+  'queen': '👸', 'quick': '⚡', 'quiet': '🤫', 'keep': '🔐',
+  'mad': '😡', 'sad': '😢', 'bad': '👎', 'red': '🔴',
+  'book': '📚', 'look': '👀', 'took': '🤲', 'bike': '🚲',
+  'bring': '🎁', 'string': '🧵', 'thing': '📦', 'bean': '🫘',
+  'happy': '😊', 'puppy': '🐕', 'funny': '😂', 'party': '🎉',
+  'black': '⬛', 'block': '🧱', 'blank': '⬜', 'brown': '🟤',
+  'chair': '🪑', 'check': '✅', 'chop': '🪓', 'ship': '🚢'
+};
+
+// Helper function to get emoji for a word
+const getWordEmoji = (word) => {
+  const lowerWord = word.toLowerCase();
+  return WORD_EMOJIS[lowerWord] || '📝'; // Default emoji if not found
+};
+
 // 30 Odd One Out test cases
 const ODD_ONE_OUT_TESTS = [
   // CATEGORY-BASED (1-10)
@@ -468,15 +519,7 @@ const OddOneOut = ({ onBack, updateProgress }) => {
                       >
                         <Card.Body className="text-center p-4">
                           <div className="h2 mb-3" style={{ fontSize: '3rem' }}>
-                            {word === 'cat' && '🐱'}
-                            {word === 'dog' && '🐕'}
-                            {word === 'bird' && '🐦'}
-                            {word === 'table' && '🪑'}
-                            {word === 'apple' && '🍎'}
-                            {word === 'banana' && '🍌'}
-                            {word === 'carrot' && '🥕'}
-                            {word === 'orange' && '🍊'}
-                            {/* Add more emojis as needed */}
+                            {getWordEmoji(word)}
                           </div>
                           <h4 className="mb-3" style={{ fontWeight: 'bold', letterSpacing: '0.05em' }}>
                             {word}

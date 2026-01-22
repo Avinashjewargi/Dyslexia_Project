@@ -4,28 +4,28 @@ import React, { useState } from 'react';
 import { Container, Card, Button, Form, Alert, Row, Col, Badge, ProgressBar } from 'react-bootstrap';
 import { ArrowLeft, Volume2, Check, X, RefreshCw, Lightbulb } from 'lucide-react';
 
-// 15 Letter replacement test cases
+// 15 Letter replacement test cases with emojis
 const REPLACEMENT_TESTS = [
   // Easy replacements (1-5)
-  { id: 1, original: "cat", remove: "c", add: "b", answer: "bat", difficulty: "easy", hint: "Flying animal" },
-  { id: 2, original: "dog", remove: "d", add: "l", answer: "log", difficulty: "easy", hint: "Piece of wood" },
-  { id: 3, original: "run", remove: "r", add: "s", answer: "sun", difficulty: "easy", hint: "Bright in sky" },
-  { id: 4, original: "pen", remove: "p", add: "t", answer: "ten", difficulty: "easy", hint: "Number after 9" },
-  { id: 5, original: "bad", remove: "b", add: "d", answer: "dad", difficulty: "easy", hint: "Father" },
+  { id: 1, original: "cat", remove: "c", add: "b", answer: "bat", difficulty: "easy", hint: "Flying animal", originalEmoji: "🐱", answerEmoji: "🦇" },
+  { id: 2, original: "dog", remove: "d", add: "l", answer: "log", difficulty: "easy", hint: "Piece of wood", originalEmoji: "🐕", answerEmoji: "🪵" },
+  { id: 3, original: "run", remove: "r", add: "s", answer: "sun", difficulty: "easy", hint: "Bright in sky", originalEmoji: "🏃", answerEmoji: "☀️" },
+  { id: 4, original: "pen", remove: "p", add: "t", answer: "ten", difficulty: "easy", hint: "Number after 9", originalEmoji: "🖊️", answerEmoji: "🔟" },
+  { id: 5, original: "bad", remove: "b", add: "d", answer: "dad", difficulty: "easy", hint: "Father", originalEmoji: "👎", answerEmoji: "👨" },
   
   // Medium replacements (6-10)
-  { id: 6, original: "play", remove: "l", add: "r", answer: "pray", difficulty: "medium", hint: "Talk to God" },
-  { id: 7, original: "boat", remove: "b", add: "g", answer: "goat", difficulty: "medium", hint: "Farm animal" },
-  { id: 8, original: "park", remove: "p", add: "d", answer: "dark", difficulty: "medium", hint: "No light" },
-  { id: 9, original: "pink", remove: "p", add: "l", answer: "link", difficulty: "medium", hint: "Connection" },
-  { id: 10, original: "bear", remove: "b", add: "p", answer: "pear", difficulty: "medium", hint: "Green fruit" },
+  { id: 6, original: "play", remove: "l", add: "r", answer: "pray", difficulty: "medium", hint: "Talk to God", originalEmoji: "🎮", answerEmoji: "🙏" },
+  { id: 7, original: "boat", remove: "b", add: "g", answer: "goat", difficulty: "medium", hint: "Farm animal", originalEmoji: "⛵", answerEmoji: "🐐" },
+  { id: 8, original: "park", remove: "p", add: "d", answer: "dark", difficulty: "medium", hint: "No light", originalEmoji: "🏞️", answerEmoji: "🌑" },
+  { id: 9, original: "pink", remove: "p", add: "l", answer: "link", difficulty: "medium", hint: "Connection", originalEmoji: "💗", answerEmoji: "🔗" },
+  { id: 10, original: "bear", remove: "b", add: "p", answer: "pear", difficulty: "medium", hint: "Green fruit", originalEmoji: "🐻", answerEmoji: "🍐" },
   
   // Challenging replacements (11-15)
-  { id: 11, original: "bread", remove: "b", add: "d", answer: "dread", difficulty: "hard", hint: "Fear something" },
-  { id: 12, original: "pride", remove: "pr", add: "br", answer: "bride", difficulty: "hard", hint: "Woman getting married" },
-  { id: 13, original: "grape", remove: "g", add: "d", answer: "drape", difficulty: "hard", hint: "Curtain" },
-  { id: 14, original: "quest", remove: "qu", add: "b", answer: "best", difficulty: "hard", hint: "Number one" },
-  { id: 15, original: "clown", remove: "cl", add: "br", answer: "brown", difficulty: "hard", hint: "A color" }
+  { id: 11, original: "bread", remove: "b", add: "d", answer: "dread", difficulty: "hard", hint: "Fear something", originalEmoji: "🍞", answerEmoji: "😰" },
+  { id: 12, original: "pride", remove: "pr", add: "br", answer: "bride", difficulty: "hard", hint: "Woman getting married", originalEmoji: "🦁", answerEmoji: "👰" },
+  { id: 13, original: "grape", remove: "g", add: "d", answer: "drape", difficulty: "hard", hint: "Curtain", originalEmoji: "🍇", answerEmoji: "🪟" },
+  { id: 14, original: "quest", remove: "qu", add: "b", answer: "best", difficulty: "hard", hint: "Number one", originalEmoji: "🗺️", answerEmoji: "🏆" },
+  { id: 15, original: "clown", remove: "cl", add: "br", answer: "brown", difficulty: "hard", hint: "A color", originalEmoji: "🤡", answerEmoji: "🟤" }
 ];
 
 const LetterReplacement = ({ onBack, updateProgress }) => {
@@ -184,6 +184,11 @@ const LetterReplacement = ({ onBack, updateProgress }) => {
                 <Card.Body className="text-center p-4">
                   <h3 className="mb-4">Original Word:</h3>
                   
+                  {/* Display original word emoji */}
+                  <div className="mb-3" style={{ fontSize: '4rem' }}>
+                    {currentTest.originalEmoji}
+                  </div>
+                  
                   <div 
                     className="mb-4 p-3 bg-light rounded"
                     style={{ fontSize: '3rem', fontWeight: 'bold', letterSpacing: '0.2em' }}
@@ -213,6 +218,17 @@ const LetterReplacement = ({ onBack, updateProgress }) => {
                       <p className="mt-3 mb-0 text-muted">
                         What new word do you get?
                       </p>
+                      
+                      {/* Show answer emoji as visual hint after wrong attempts */}
+                      {feedback && feedback.type === 'error' && attempts >= 1 && (
+                        <div className="mt-3">
+                          <p className="text-success mb-2"><strong>The answer is:</strong></p>
+                          <div style={{ fontSize: '3rem' }}>
+                            {currentTest.answerEmoji}
+                          </div>
+                          <p className="text-muted mt-2">{currentTest.answer}</p>
+                        </div>
+                      )}
                     </Card.Body>
                   </Card>
 
@@ -288,10 +304,12 @@ const LetterReplacement = ({ onBack, updateProgress }) => {
             <Card.Body>
               <h6 className="text-success">💡 Strategy Tips:</h6>
               <ul className="mb-0 small">
+                <li>Look at the emoji to understand what the word means</li>
                 <li>Say the original word out loud</li>
                 <li>Remove the letter(s) mentioned</li>
                 <li>Add the new letter(s) in the same place</li>
                 <li>Say the new word - does it make sense?</li>
+                <li>If you get stuck, the emoji hint will appear!</li>
               </ul>
             </Card.Body>
           </Card>
