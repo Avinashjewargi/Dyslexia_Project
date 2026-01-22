@@ -9,40 +9,127 @@ A full-stack web application designed to assist students with dyslexia by provid
 
 ## Project Structure
 
-Adaptive-Reading-Assistant-for-Dyslexia-main/
-├─ backend/
+Adaptive-Reading-Assistant-for-Dyslexia/
+│
+├─ backend/                          # Node.js Express Server
 │  ├─ routes/
-│  │  └─ api.js
+│  │  ├─ api.js                     # Main API routes (auth, user management)
+│  │  ├─ nlp.js                     # NLP analysis routes
+│  │  ├─ ocr.js                     # OCR processing routes
+│  │  └─ speech.js                  # TTS & STT routes ⭐
+│  ├─ controllers/
+│  │  ├─ userController.js
+│  │  ├─ nlpController.js
+│  │  ├─ ocrController.js
+│  │  └─ speechController.js        # TTS & STT logic ⭐
+│  ├─ middleware/
+│  │  ├─ auth.js
+│  │  ├─ errorHandler.js
+│  │  └─ validation.js              # Validate audio/text input ⭐
+│  ├─ models/
+│  │  ├─ User.js
+│  │  ├─ ReadingSession.js
+│  │  └─ Progress.js
+│  ├─ uploads/                      # Audio file uploads ⭐
+│  │  └─ audio/
 │  ├─ server.js
-│  └─ package.json
-├─ frontend/
-│  ├─ components/
-│  │  ├─ Footer.jsx
-│  │  ├─ Navbar.jsx
-│  │  ├─ ProgressBar.jsx
-│  │  └─ Settings.jsx
-│  ├─ dashboard/
-│  │  ├─ StudentDashboard.jsx
-│  │  └─ TeacherDashboard.jsx
-│  ├─ reader/
-│  │  ├─ Gamification.jsx
-│  │  ├─ OverlayText.jsx
-│  │  ├─ Pronunciation.jsx
-│  │  └─ ReaderPage.jsx
+│  ├─ config.js
+│  ├─ .env
+│  ├─ package.json
+│  └─ package-lock.json
+│
+├─ frontend/                        # React + Vite Application
+│  ├─ public/
+│  │  ├─ index.html
+│  │  └─ assets/
+│  │     ├─ icons/
+│  │     ├─ images/
+│  │     └─ fonts/
 │  ├─ src/
 │  │  ├─ App.jsx
 │  │  ├─ main.jsx
 │  │  ├─ App.css
-│  │  └─ index.css
+│  │  ├─ index.css
+│  │  ├─ components/
+│  │  │  ├─ Navbar.jsx
+│  │  │  ├─ Footer.jsx
+│  │  │  ├─ ProgressBar.jsx
+│  │  │  ├─ Settings.jsx
+│  │  │  ├─ LoadingSpinner.jsx
+│  │  │  └─ AlertNotification.jsx
+│  │  ├─ dashboard/
+│  │  │  ├─ StudentDashboard.jsx
+│  │  │  ├─ TeacherDashboard.jsx
+│  │  │  └─ styles/
+│  │  ├─ reader/
+│  │  │  ├─ ReaderPage.jsx
+│  │  │  ├─ OCRUploader.jsx
+│  │  │  ├─ OcrSideBySidePreview.jsx
+│  │  │  ├─ TextToSpeech.jsx         # TTS UI Component ⭐
+│  │  │  ├─ SpeechToText.jsx         # STT UI Component ⭐
+│  │  │  ├─ Pronunciation.jsx
+│  │  │  ├─ WordLearning.jsx
+│  │  │  ├─ OverlayText.jsx
+│  │  │  ├─ Gamification.jsx
+│  │  │  └─ styles/
+│  │  ├─ auth/
+│  │  │  ├─ Login.jsx
+│  │  │  ├─ Register.jsx
+│  │  │  └─ styles/
+│  │  ├─ services/
+│  │  │  ├─ api.js
+│  │  │  ├─ nlpService.js
+│  │  │  ├─ ocrService.js
+│  │  │  ├─ ttsService.js            # TTS API calls ⭐
+│  │  │  └─ sttService.js            # STT API calls ⭐
+│  │  ├─ hooks/
+│  │  │  ├─ useAuth.js
+│  │  │  ├─ useReading.js
+│  │  │  ├─ useTTS.js                # TTS hook ⭐
+│  │  │  ├─ useSTT.js                # STT hook ⭐
+│  │  │  └─ useSpeech.js
+│  │  ├─ utils/
+│  │  │  ├─ formatText.js
+│  │  │  ├─ localStorage.js
+│  │  │  ├─ validators.js
+│  │  │  ├─ audioRecorder.js         # Audio recording utility ⭐
+│  │  │  └─ audioPlayer.js           # Audio playback utility ⭐
+│  │  └─ context/
+│  │     ├─ AuthContext.jsx
+│  │     ├─ ReadingContext.jsx
+│  │     └─ UserSettingsContext.jsx
 │  ├─ package.json
-│  └─ vite.config.js
-├─ ml/
+│  ├─ vite.config.js
+│  ├─ .env.example
+│  └─ index.html
+│
+├─ ml/                              # Python Machine Learning Services
 │  ├─ ocr/
+│  │  ├─ process_text.py
+│  │  ├─ requirements.txt
+│  │  └─ models/
 │  ├─ speech/
-│  └─ nlp/
+│  │  ├─ recognition.py             # TTS & STT implementation ⭐
+│  │  ├─ audio_processor.py          # Audio processing utilities ⭐
+│  │  ├─ requirements.txt
+│  │  └─ models/
+│  ├─ nlp/
+│  │  ├─ reading_analysis.py
+│  │  ├─ word_prediction_model.py
+│  │  ├─ requirements.txt
+│  │  └─ models/
+│  ├─ api.py                         # Flask server with TTS/STT routes ⭐
+│  ├─ config.py
+│  ├─ .env
+│  └─ setup.py
+│
+├─ .gitignore
+├─ README.md
+├─ SETUP.md
+├─ ARCHITECTURE.md
+├─ FEATURES.md                       # TTS/STT features guide ⭐
 ├─ package.json
-└─ README.md
-
+└─ docker-compose.yml
 
 ## Step 1: Project Initialization and Base Structure
 
