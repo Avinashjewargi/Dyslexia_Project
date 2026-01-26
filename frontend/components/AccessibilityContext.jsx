@@ -1,64 +1,84 @@
-//frontend/components/AccessibilityContext.jsx
-
+// frontend/components/AccessibilityContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
 
-// 1. Create Context
+// Create the Context
 const AccessibilityContext = createContext();
 
-// 2. Custom Hook for easy consumption
+// Default settings
+const defaultSettings = {
+  fontSize: 20,
+  fontFamily: 'OpenDyslexic',
+  letterSpacing: 0.15,
+  lineHeight: 1.8,
+  highContrast: false,
+};
+
+// Custom Hook for consuming context
 export const useAccessibility = () => {
-    const context = useContext(AccessibilityContext);
-    // If context is undefined (component used outside provider), return a safe fallback or throw error.
-    // Returning null allows us to handle it gracefully in the component if needed.
-    if (!context) {
-        console.warn("useAccessibility called outside of AccessibilityProvider");
-        return { 
-            settings: { fontSize: 20, fontFamily: 'Open Dyslexic', highContrast: false }, 
-            updateSetting: () => {}, 
-            resetSettings: () => {} 
-        };
-    }
-    return context;
+  const context = useContext(AccessibilityContext);
+  if (!context) {
+    throw new Error('useAccessibility must be used within AccessibilityProvider');
+  }
+  return context;
 };
 
-// 3. Provider Component
+// Provider Component
 export const AccessibilityProvider = ({ children }) => {
-    // Default state
-    const [settings, setSettings] = useState({
-        fontSize: 20,
-        fontFamily: 'Open Dyslexic', 
-        letterSpacing: 0.15,
-        lineHeight: 1.8,
-        highContrast: false,
-    });
+  const [settings, setSettings] = useState(() => {
+    // Load from localStorage on initialization
+    try {
+      const saved = localStorage.getItem('accessibility-settings');
+      return saved ? JSON.parse(saved) : defaultSettings;
+    } catch (error) {
+      console.error('Failed to load accessibility settings:', error);
+      return defaultSettings;
+    }
+  });
 
-    // Load from LocalStorage on mount
-    useEffect(() => {
-        try {
-            const saved = localStorage.getItem('accessibility-settings');
-            if (saved) setSettings(JSON.parse(saved));
-        } catch (e) { console.error("Failed to load settings:", e); }
-    }, []);
+  // Save to localStorage whenever settings change
+  useEffect(() => {
+    try {
+      localStorage.setItem('accessibility-settings', JSON.stringify(settings));
+    } catch (error) {
+      console.error('Failed to save accessibility settings:', error);
+    }
+  }, [settings]);
 
-    // Save to LocalStorage on change
-    useEffect(() => {
-        localStorage.setItem('accessibility-settings', JSON.stringify(settings));
-        // Apply global class for high contrast
-        if (settings.highContrast) document.body.classList.add('high-contrast-mode');
-        else document.body.classList.remove('high-contrast-mode');
-    }, [settings]);
+  // Apply styles to document root
+  useEffect(() => {
+    const root = document.documentElement;
 
-    const updateSetting = (key, value) => setSettings(prev => ({ ...prev, [key]: value }));
-    
-    const resetSettings = () => setSettings({
-        fontSize: 20, fontFamily: 'Open Dyslexic', letterSpacing: 0.15, lineHeight: 1.8, highContrast: false
-    });
+    // Apply font settings
+    root.style.setProperty('--accessibility-font-size', `${settings.fontSize}px`);
+    root.style.setProperty('--accessibility-font-family', settings.fontFamily);
+    root.style.setProperty('--accessibility-letter-spacing', `${settings.letterSpacing}em`);
+    root.style.setProperty('--accessibility-line-height', settings.lineHeight);
 
-    return (
-        <AccessibilityContext.Provider value={{ settings, updateSetting, resetSettings }}>
-            {children}
-        </AccessibilityContext.Provider>
-    );
+    // Apply high contrast mode
+    if (settings.highContrast) {
+      document.body.classList.add('high-contrast-mode');
+    } else {
+      document.body.classList.remove('high-contrast-mode');
+    }
+  }, [settings]);
+
+  const updateSetting = (key, value) => {
+    setSettings((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const resetSettings = () => {
+    setSettings(defaultSettings);
+  };
+
+  return (
+    <AccessibilityContext.Provider value={{ settings, updateSetting, resetSettings }}>
+      {children}
+    </AccessibilityContext.Provider>
+  );
 };
 
-export default AccessibilityContext;
+// Only export named exports for Fast Refresh compatibility
+export { AccessibilityContext };

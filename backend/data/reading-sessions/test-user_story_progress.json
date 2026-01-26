@@ -1,0 +1,38 @@
+{
+  "1": {
+    "storyId": 1,
+    "storyTitle": "The Thirsty Crow",
+    "firstRead": "2026-01-26T16:28:43.690Z",
+    "timesRead": 1,
+    "totalDuration": 6,
+    "difficultWords": [],
+    "lastRead": "2026-01-26T16:28:43.690Z"
+  },
+  "2": {
+    "storyId": 2,
+    "storyTitle": "The Kind Dog",
+    "firstRead": "2026-01-26T16:28:46.396Z",
+    "timesRead": 1,
+    "totalDuration": 2,
+    "difficultWords": [],
+    "lastRead": "2026-01-26T16:28:46.396Z"
+  },
+  "3": {
+    "storyId": 3,
+    "storyTitle": "The Honest Boy",
+    "firstRead": "2026-01-26T16:28:49.644Z",
+    "timesRead": 1,
+    "totalDuration": 3,
+    "difficultWords": [],
+    "lastRead": "2026-01-26T16:28:49.644Z"
+  },
+  "4": {
+    "storyId": 4,
+    "storyTitle": "The Lazy Cat",
+    "firstRead": "2026-01-26T16:28:51.999Z",
+    "timesRead": 1,
+    "totalDuration": 2,
+    "difficultWords": [],
+    "lastRead": "2026-01-26T16:28:51.999Z"
+  }
+}

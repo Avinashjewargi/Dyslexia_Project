@@ -3,16 +3,20 @@
 import React from 'react';
 import { Navbar, Container, Nav, Button, NavDropdown } from 'react-bootstrap';
 import { BookOpen, Settings as SettingsIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-function AppNavbar() {
-  const toggleAccessibility = () => {
-    window.location.href = '/settings';
+function AppNavbar({ onOpenSettings }) {
+  const handleSettingsClick = (e) => {
+    e.preventDefault();
+    if (onOpenSettings) {
+      onOpenSettings();
+    }
   };
 
   return (
     <Navbar bg="light" expand="lg" sticky="top" className="shadow-sm">
       <Container>
-        <Navbar.Brand href="/" style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
+        <Navbar.Brand as={Link} to="/" style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
           <BookOpen size={28} className="me-2" style={{ marginBottom: '4px' }} />
           Adaptive Reading Assistant
         </Navbar.Brand>
@@ -22,17 +26,17 @@ function AppNavbar() {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             {/* Reader Link */}
-            <Nav.Link href="/reader">
+            <Nav.Link as={Link} to="/reader">
               📖 Reader
             </Nav.Link>
             
-            {/* Stories Link - NEW */}
-            <Nav.Link href="/stories">
+            {/* Stories Link */}
+            <Nav.Link as={Link} to="/stories">
               📚 Stories
             </Nav.Link>
             
             {/* Dashboard Link */}
-            <Nav.Link href="/dashboard">
+            <Nav.Link as={Link} to="/dashboard">
               📊 Dashboard
             </Nav.Link>
             
@@ -47,28 +51,28 @@ function AppNavbar() {
             >
               <NavDropdown.Header>Practice Activities</NavDropdown.Header>
               
-              <NavDropdown.Item href="/phonology/spelling">
+              <NavDropdown.Item as={Link} to="/phonology/spelling">
                 📝 Spelling Practice
                 <div className="small text-muted">3 Levels • Easy to Hard</div>
               </NavDropdown.Item>
               
               <NavDropdown.Divider />
               
-              <NavDropdown.Item href="/phonology/replacement">
+              <NavDropdown.Item as={Link} to="/phonology/replacement">
                 🔄 Letter Replacement
                 <div className="small text-muted">15 Challenges</div>
               </NavDropdown.Item>
               
               <NavDropdown.Divider />
               
-              <NavDropdown.Item href="/phonology/odd-one-out">
+              <NavDropdown.Item as={Link} to="/phonology/odd-one-out">
                 ⭐ Odd One Out
                 <div className="small text-muted">30 Tests • Categories, Sounds & Letters</div>
               </NavDropdown.Item>
               
               <NavDropdown.Divider />
               
-              <NavDropdown.Item href="/phonology">
+              <NavDropdown.Item as={Link} to="/phonology">
                 <strong>🏠 Activity Hub</strong>
               </NavDropdown.Item>
             </NavDropdown>
@@ -77,7 +81,7 @@ function AppNavbar() {
           {/* Accessibility Settings Button */}
           <Button 
             variant="outline-primary" 
-            onClick={toggleAccessibility}
+            onClick={handleSettingsClick}
             className="d-flex align-items-center"
           >
             <SettingsIcon size={18} className="me-2" />

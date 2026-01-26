@@ -1,115 +1,131 @@
 // frontend/components/Settings.jsx
-
 import React from 'react';
-import { Button, Form, Card, Row, Col } from 'react-bootstrap';
-// Import the custom hook
-import { useAccessibility } from './AccessibilityContext'; 
+import { Modal, Button, Form } from 'react-bootstrap';
+import { useAccessibility } from './AccessibilityContext';
 
-function Settings() {
-  // 1. Get the current settings and the update function from the global context
-  const { settings, updateSetting } = useAccessibility();
+const Settings = ({ show, handleClose }) => {
+  const { settings, updateSetting, resetSettings } = useAccessibility();
 
-  // 2. Handler to update any setting field using the global function
-  const handleSettingChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
-    // Ensure values for range inputs are numbers
-    let newValue = type === 'checkbox' ? checked : value;
-    if (type === 'range') {
-        // Convert range values (which are strings) to numbers
-        newValue = parseFloat(value); 
-    }
-
-    // Call the global update function
-    updateSetting(name, newValue);
+  const handleFontSizeChange = (e) => {
+    updateSetting('fontSize', parseInt(e.target.value));
   };
 
-  const availableFonts = [
-    { name: 'Default Sans-Serif', value: 'default' },
-    { name: 'OpenDyslexic (Recommended)', value: 'OpenDyslexic, sans-serif' },
-    { name: 'Arial (Clear)', value: 'Arial, sans-serif' },
-  ];
+  const handleFontFamilyChange = (e) => {
+    updateSetting('fontFamily', e.target.value);
+  };
+
+  const handleLetterSpacingChange = (e) => {
+    updateSetting('letterSpacing', parseFloat(e.target.value));
+  };
+
+  const handleLineHeightChange = (e) => {
+    updateSetting('lineHeight', parseFloat(e.target.value));
+  };
+
+  const handleHighContrastToggle = (e) => {
+    updateSetting('highContrast', e.target.checked);
+  };
+
+  const handleReset = () => {
+    resetSettings();
+  };
 
   return (
-    <Card className="p-4 shadow-sm">
-      <Card.Title as="h2" className="mb-4">Accessibility Settings</Card.Title>
-      <Form>
-
-        {/* Font Selection */}
-        <Form.Group as={Row} className="mb-3" controlId="formFont">
-          <Form.Label column sm="4" style={{ fontWeight: 'bold' }}>Dyslexia-Friendly Font</Form.Label>
-          <Col sm="8">
-            <Form.Select 
-              name="font" 
-              // Read current value from global state
-              value={settings.font} 
-              // Use global handler
-              onChange={handleSettingChange}
-            >
-              {availableFonts.map(f => (
-                <option key={f.value} value={f.value}>{f.name}</option>
-              ))}
-            </Form.Select>
-          </Col>
+    <Modal show={show} onHide={handleClose} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>Accessibility Settings</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {/* Font Size */}
+        <Form.Group className="mb-3">
+          <Form.Label>Font Size: {settings.fontSize}px</Form.Label>
+          <Form.Range
+            min="14"
+            max="32"
+            step="2"
+            value={settings.fontSize}
+            onChange={handleFontSizeChange}
+          />
         </Form.Group>
 
-        {/* Font Size Adjustment */}
-        <Form.Group as={Row} className="mb-3" controlId="formFontSize">
-          <Form.Label column sm="4" style={{ fontWeight: 'bold' }}>Text Size ({settings.fontSize}px)</Form.Label>
-          <Col sm="8">
-            <Form.Range
-              name="fontSize"
-              min="14"
-              max="24"
-              step="2"
-              // Read current value from global state
-              value={settings.fontSize}
-              // Use global handler
-              onChange={handleSettingChange}
-            />
-          </Col>
+        {/* Font Family */}
+        <Form.Group className="mb-3">
+          <Form.Label>Font Family</Form.Label>
+          <Form.Select 
+            value={settings.fontFamily} 
+            onChange={handleFontFamilyChange}
+          >
+            <option value="OpenDyslexic">OpenDyslexic (Recommended)</option>
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Georgia">Georgia</option>
+            <option value="'Comic Sans MS'">Comic Sans MS</option>
+            <option value="'Courier New'">Courier New</option>
+          </Form.Select>
         </Form.Group>
 
-        {/* High Contrast Mode */}
-        <Form.Group as={Row} className="mb-3" controlId="formHighContrast">
-          <Col sm="4">
-            <Form.Check 
-              type="switch"
-              id="highContrastSwitch"
-              label={<span style={{ fontWeight: 'bold' }}>High Contrast Mode</span>}
-              name="highContrast"
-              // Read current value from global state
-              checked={settings.highContrast}
-              // Use global handler
-              onChange={handleSettingChange}
-            />
-          </Col>
+        {/* Letter Spacing */}
+        <Form.Group className="mb-3">
+          <Form.Label>Letter Spacing: {settings.letterSpacing}em</Form.Label>
+          <Form.Range
+            min="0"
+            max="0.5"
+            step="0.05"
+            value={settings.letterSpacing}
+            onChange={handleLetterSpacingChange}
+          />
         </Form.Group>
 
-        {/* Line Spacing (Crucial for Dyslexia) */}
-        <Form.Group as={Row} className="mb-3" controlId="formLineSpacing">
-          <Form.Label column sm="4" style={{ fontWeight: 'bold' }}>Line Spacing ({settings.lineSpacing}x)</Form.Label>
-          <Col sm="8">
-            <Form.Range
-              name="lineSpacing"
-              min="1.0"
-              max="2.5"
-              step="0.5"
-              // Read current value from global state
-              value={settings.lineSpacing}
-              // Use global handler
-              onChange={handleSettingChange}
-            />
-          </Col>
+        {/* Line Height */}
+        <Form.Group className="mb-3">
+          <Form.Label>Line Height: {settings.lineHeight}</Form.Label>
+          <Form.Range
+            min="1.2"
+            max="2.5"
+            step="0.1"
+            value={settings.lineHeight}
+            onChange={handleLineHeightChange}
+          />
         </Form.Group>
 
-        {/* The save button is now mostly redundant since state updates live, but kept for UX */}
-        <Button variant="success" className="mt-4 w-100" onClick={() => alert("Settings saved to browser storage!")}>
-            Save Settings
+        {/* High Contrast */}
+        <Form.Group className="mb-3">
+          <Form.Check
+            type="switch"
+            id="high-contrast-switch"
+            label="High Contrast Mode"
+            checked={settings.highContrast}
+            onChange={handleHighContrastToggle}
+          />
+        </Form.Group>
+
+        {/* Preview Text */}
+        <div 
+          className="p-3 border rounded mt-4"
+          style={{
+            fontSize: `${settings.fontSize}px`,
+            fontFamily: settings.fontFamily,
+            letterSpacing: `${settings.letterSpacing}em`,
+            lineHeight: settings.lineHeight,
+            backgroundColor: settings.highContrast ? '#121212' : '#ffffff',
+            color: settings.highContrast ? '#ffffff' : '#000000',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <strong>Preview:</strong> The quick brown fox jumps over the lazy dog. 
+          This text shows how your settings will look.
+        </div>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={handleReset}>
+          Reset to Default
         </Button>
-      </Form>
-    </Card>
+        <Button variant="primary" onClick={handleClose}>
+          Save & Close
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
-}
+};
 
 export default Settings;
