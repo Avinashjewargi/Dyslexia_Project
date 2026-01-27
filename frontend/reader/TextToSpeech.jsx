@@ -1,13 +1,14 @@
-// frontend/reader/TextToSpeech.jsx
+// frontend/reader/TextToSpeech.jsx - FIXED WITH COLOR CODING
 
 import React, { useState, useEffect } from "react";
 import { Card, Badge } from "react-bootstrap";
 import { Play, Pause, RotateCcw, Volume2, VolumeX, Sparkles } from "lucide-react";
 
-const TextToSpeech = ({ text }) => {
+const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredWord }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [currentWord, setCurrentWord] = useState("");
+  const [currentWordIndex, setCurrentWordIndex] = useState(-1);
   const [progress, setProgress] = useState(0);
   const [readingSpeed, setReadingSpeed] = useState(0.8);
   const [isMuted, setIsMuted] = useState(false);
@@ -26,18 +27,21 @@ const TextToSpeech = ({ text }) => {
 
     window.speechSynthesis.cancel();
 
-    const words = text.split(" ");
+    const words = text.split(" ").filter(w => w.trim());
     let wordIndex = 0;
 
     const speakNextWord = () => {
       if (wordIndex >= words.length) {
         setIsPlaying(false);
         setProgress(100);
+        setCurrentWord("");
+        setCurrentWordIndex(-1);
         return;
       }
 
       const word = words[wordIndex];
       setCurrentWord(word);
+      setCurrentWordIndex(wordIndex);
       setProgress(Math.floor((wordIndex / words.length) * 100));
 
       const utterance = new SpeechSynthesisUtterance(word);
@@ -80,10 +84,38 @@ const TextToSpeech = ({ text }) => {
     setIsPaused(false);
     setProgress(0);
     setCurrentWord("");
+    setCurrentWordIndex(-1);
   };
 
   const toggleMute = () => {
     setIsMuted(!isMuted);
+  };
+
+  // Display current word with or without color coding
+  const displayCurrentWord = () => {
+    // If color coding is enabled AND intensity >= 50%, use colored letters
+    if (colorCodingEnabled && colorIntensity >= 50 && renderColoredWord) {
+      return (
+        <span style={{ 
+          display: 'inline-block',
+          color: 'inherit' // Let the colored spans show through
+        }}>
+          {renderColoredWord(currentWord)}
+        </span>
+      );
+    }
+    
+    // Otherwise, show with gradient (normal display when < 50% or disabled)
+    return (
+      <span style={{
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        display: 'inline-block'
+      }}>
+        {currentWord}
+      </span>
+    );
   };
 
   return (
@@ -156,7 +188,7 @@ const TextToSpeech = ({ text }) => {
           </div>
         )}
 
-        {/* Current Word Display */}
+        {/* Current Word Display with Color Coding */}
         {currentWord && (
           <div 
             className="mb-4 p-4 rounded-3 text-center position-relative overflow-hidden"
@@ -179,16 +211,19 @@ const TextToSpeech = ({ text }) => {
             />
             <h2 
               className="mb-0 fw-bold position-relative"
-              style={{
+              style={{ 
                 fontSize: "2.5rem",
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                textShadow: "0 2px 10px rgba(102, 126, 234, 0.3)",
+                minHeight: "60px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
               }}
             >
-              {currentWord}
+              {displayCurrentWord()}
             </h2>
+            <small className="text-muted d-block mt-2">
+              Word {currentWordIndex + 1} of {text.split(" ").filter(w => w.trim()).length}
+            </small>
           </div>
         )}
 
@@ -210,8 +245,8 @@ const TextToSpeech = ({ text }) => {
           <input
             type="range"
             className="form-range"
-            min="0.4"
-            max="1.2"
+            min="0.5"
+            max="2.0"
             step="0.1"
             value={readingSpeed}
             onChange={(e) => setReadingSpeed(parseFloat(e.target.value))}

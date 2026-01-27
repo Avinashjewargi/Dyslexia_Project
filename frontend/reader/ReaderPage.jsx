@@ -1,17 +1,18 @@
-// frontend/reader/ReaderPage.jsx (COMPLETE NEW VERSION)
+// frontend/reader/ReaderPage.jsx - COMPLETE FIXED VERSION
 
 import React, { useState, useRef } from "react";
-import { Container, Card, Alert, Row, Col, Button, Spinner, ProgressBar } from "react-bootstrap";
+import { Container, Card, Alert, Row, Col, Button, Spinner, ProgressBar, Form } from "react-bootstrap";
 import { Play, Square } from "lucide-react";
 import TextToSpeech from "./TextToSpeech";
 import Gamification from "./Gamification";
 import OCRUploader from "./OCRUploader";
 import OCRSideBySidePreview from "./OCRSideBySidePreview";
-import ColorCoding, { ColorCodingSettings } from "./ColorCoding";
+import ColorCoding from "./ColorCoding";
 import { useAccessibility } from "../components/AccessibilityContext";
+import { getCompleteColorMap } from '../config/colorCodingConfig';
 
 const DEFAULT_CONTENT =
-  "The Adaptive Reading Assistant project is designed to help students with dyslexia by using tailored fonts, colors, and interactive features like text-to-speech.";
+  "The boy and dog played with the ball in the park. They had fun together.";
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -19,7 +20,6 @@ const SpeechRecognition =
 const normalize = (text) =>
   text.toLowerCase().replace(/[^a-z]/g, "");
 
-// NEW: Constants for configuration
 const STT_CONFIG = {
   MAX_ATTEMPTS: 3,
   TIMEOUT_MS: 6000,
@@ -28,7 +28,6 @@ const STT_CONFIG = {
   SPEECH_RATE: 0.8
 };
 
-// NEW: Point system for different activities
 const POINT_SYSTEM = {
   CORRECT_PRONUNCIATION: 10,
   COMPLETE_READING: 50,
@@ -37,11 +36,12 @@ const POINT_SYSTEM = {
   DAILY_STREAK: 20
 };
 
-const ReaderPage = () => {
+const ReaderPage = ({ userId }) => {
   const { settings } = useAccessibility();
 
   const [currentReadingContent, setCurrentReadingContent] = useState(DEFAULT_CONTENT);
   const [colorCodingEnabled, setColorCodingEnabled] = useState(true);
+  const [colorIntensity, setColorIntensity] = useState(70);
   const [pronunciationMode, setPronunciationMode] = useState(false);
   const [contentSource, setContentSource] = useState("Default Sample");
   
@@ -59,7 +59,7 @@ const ReaderPage = () => {
   const [feedback, setFeedback] = useState(null);
   const [wordsArray, setWordsArray] = useState([]);
 
-  // NEW: Game stats state
+  // Game stats state
   const [gameStats, setGameStats] = useState({
     score: 1250,
     badges: ["Focus Star"],
@@ -73,18 +73,15 @@ const ReaderPage = () => {
     }
   });
 
-  // NEW: Points popup state for animation
   const [pointsPopup, setPointsPopup] = useState(null);
 
   const recognitionRef = useRef(null);
   const shouldContinueRef = useRef(true);
 
-  // Initialize words array when content changes
   React.useEffect(() => {
     setWordsArray(currentReadingContent.split(" ").filter(w => w.trim()));
   }, [currentReadingContent]);
 
-  // NEW: Award points function
   const awardPoints = (points, reason) => {
     setGameStats(prev => {
       const newStats = {
@@ -93,7 +90,6 @@ const ReaderPage = () => {
         sessionPoints: prev.sessionPoints + points
       };
 
-      // Update breakdown based on reason
       if (reason === 'pronunciation') {
         newStats.pointsBreakdown = {
           ...prev.pointsBreakdown,
@@ -104,30 +100,15 @@ const ReaderPage = () => {
           ...prev.pointsBreakdown,
           reading: prev.pointsBreakdown.reading + points
         };
-      } else if (reason === 'story') {
-        newStats.pointsBreakdown = {
-          ...prev.pointsBreakdown,
-          stories: prev.pointsBreakdown.stories + points
-        };
-      } else if (reason === 'game') {
-        newStats.pointsBreakdown = {
-          ...prev.pointsBreakdown,
-          games: prev.pointsBreakdown.games + points
-        };
       }
 
       return newStats;
     });
 
-    // Show floating points animation
     setPointsPopup(`+${points}`);
     setTimeout(() => setPointsPopup(null), 1000);
-
-    // TODO: Save to Firebase here
-    // saveToFirebase(userId, gameStats);
   };
 
-  // NEW: Check and award badges
   const checkAchievements = () => {
     const { score, badges } = gameStats;
     const newBadges = [];
@@ -137,9 +118,6 @@ const ReaderPage = () => {
     }
     if (score >= 3000 && !badges.includes('Super Reader')) {
       newBadges.push('Super Reader');
-    }
-    if (score >= 5000 && !badges.includes('Reading Champion')) {
-      newBadges.push('Reading Champion');
     }
 
     if (newBadges.length > 0) {
@@ -151,7 +129,6 @@ const ReaderPage = () => {
     }
   };
 
-  // Handle OCR text extraction
   const handleTextExtracted = (text, source, file) => {
     if (!text) return;
     setPreviewText(text);
@@ -160,25 +137,20 @@ const ReaderPage = () => {
     setIsViewingPreview(true);
   };
 
-  // Load extracted text from OCR preview
   const loadExtractedText = async () => {
     if (!previewText) return;
-
     setIsAnalyzing(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/ml/analyze",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            text: previewText,
-            source: previewSource,
-            saveToFile: true  
-          }),
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/ml/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          text: previewText,
+          source: previewSource,
+          saveToFile: true  
+        }),
+      });
 
       const data = await response.json();
 
@@ -189,14 +161,12 @@ const ReaderPage = () => {
         setPreviewFile(null);
         setIsViewingPreview(false);
       } else {
-        alert("Analysis failed. Loading text without analysis.");
         setCurrentReadingContent(previewText);
         setContentSource(previewSource || "Uploaded / Manual");
         setIsViewingPreview(false);
       }
     } catch (error) {
-      console.error("Error calling analyze-content:", error);
-      alert("Network error connecting to ML service. Loading text anyway.");
+      console.error("Error:", error);
       setCurrentReadingContent(previewText);
       setContentSource(previewSource || "Uploaded / Manual");
       setIsViewingPreview(false);
@@ -211,7 +181,6 @@ const ReaderPage = () => {
     setIsViewingPreview(false);
   };
 
-  // Speak a word using TTS
   const speakWord = (word) => {
     return new Promise((resolve) => {
       if (!("speechSynthesis" in window)) {
@@ -230,11 +199,9 @@ const ReaderPage = () => {
     });
   };
 
-  // Listen for student pronunciation
   const listenForWord = (expectedWord) => {
     return new Promise((resolve) => {
       if (!SpeechRecognition) {
-        console.warn("Speech Recognition not supported");
         setFeedback({
           type: "warning",
           message: "Speech Recognition not supported."
@@ -292,8 +259,6 @@ const ReaderPage = () => {
           }
         }
 
-        console.log("Student said:", spokenWord, "| Expected:", expectedWord, "| Correct:", isCorrect);
-
         if (isCorrect) {
           setFeedback({
             type: "success",
@@ -314,8 +279,6 @@ const ReaderPage = () => {
         resolved = true;
         clearTimeout(timeout);
 
-        console.error("STT error:", event.error);
-        
         let errorMsg = "Error occurred. Moving to next word...";
         if (event.error === 'no-speech') {
           errorMsg = "No speech detected. Moving on...";
@@ -341,14 +304,12 @@ const ReaderPage = () => {
         if (!resolved) {
           resolved = true;
           clearTimeout(timeout);
-          console.error("Failed to start:", error);
           resolve({ success: false, skip: true });
         }
       }
     });
   };
 
-  // MODIFIED: Process one word with points award
   const processWord = async (word, index) => {
     if (!shouldContinueRef.current) return;
 
@@ -366,9 +327,7 @@ const ReaderPage = () => {
       }
 
       if (result.success) {
-        // AWARD POINTS HERE (NEW)
         awardPoints(POINT_SYSTEM.CORRECT_PRONUNCIATION, 'pronunciation');
-        
         await new Promise(resolve => setTimeout(resolve, STT_CONFIG.SUCCESS_DELAY_MS));
         setFeedback(null);
         break;
@@ -403,7 +362,6 @@ const ReaderPage = () => {
     }
   };
 
-  // MODIFIED: Start STT reading with completion bonus
   const startSTTReading = async () => {
     if (wordsArray.length === 0) return;
 
@@ -418,9 +376,8 @@ const ReaderPage = () => {
     }
 
     if (shouldContinueRef.current) {
-      // Award completion bonus (NEW)
       awardPoints(POINT_SYSTEM.COMPLETE_READING, 'reading');
-      checkAchievements(); // Check for new badges
+      checkAchievements();
       
       setFeedback({
         type: "success",
@@ -433,7 +390,6 @@ const ReaderPage = () => {
     }
   };
 
-  // Stop STT reading
   const stopSTTReading = () => {
     shouldContinueRef.current = false;
     setIsSTTActive(false);
@@ -445,12 +401,11 @@ const ReaderPage = () => {
     setCurrentWord("");
   };
 
-  // Cleanup with proper abort
   React.useEffect(() => {
     return () => {
       shouldContinueRef.current = false;
       if (recognitionRef.current) {
-        recognitionRef.current.abort(); // Force stop
+        recognitionRef.current.abort();
       }
       window.speechSynthesis.cancel();
     };
@@ -462,7 +417,52 @@ const ReaderPage = () => {
     lineHeight: settings.lineHeight,
   };
 
-  // OCR Preview Screen
+  // Helper function to render colored single word
+  const renderColoredWord = (word) => {
+    // If not enabled OR below 50%, return PLAIN BLACK TEXT
+    if (!colorCodingEnabled || colorIntensity < 50) {
+      return <span style={{ color: '#000000' }}>{word}</span>;
+    }
+
+    const colorMap = getCompleteColorMap();
+    
+    return word.split('').map((char, index) => {
+      const lowerChar = char.toLowerCase();
+      if (colorMap[lowerChar]) {
+        const color = colorMap[lowerChar];
+        const opacity = Math.max(0.5, colorIntensity / 100);
+        const brightness = 0.7 + (colorIntensity / 100) * 0.6;
+
+        const r = parseInt(color.slice(1, 3), 16);
+        const g = parseInt(color.slice(3, 5), 16);
+        const b = parseInt(color.slice(5, 7), 16);
+
+        const newR = Math.min(255, Math.floor(r * brightness));
+        const newG = Math.min(255, Math.floor(g * brightness));
+        const newB = Math.min(255, Math.floor(b * brightness));
+
+        const style = {
+          color: `rgb(${newR}, ${newG}, ${newB})`,
+          opacity: opacity,
+          fontWeight: colorIntensity > 70 ? 'bold' : 'normal'
+        };
+
+        return <span key={index} style={style}>{char}</span>;
+      }
+      return <span key={index}>{char}</span>;
+    });
+  };
+
+  const getHelperText = () => {
+    if (colorIntensity < 50) {
+      return '⚪ Colors disabled - Normal text displayed (Below 50%)';
+    } else if (colorIntensity <= 70) {
+      return '📚 Medium - Good balance for students who are practicing';
+    } else {
+      return '🎯 Bold - High contrast with bold text for beginner students';
+    }
+  };
+
   if (isViewingPreview) {
     return (
       <Container
@@ -492,20 +492,140 @@ const ReaderPage = () => {
     );
   }
 
-  // Main Reading Screen
   return (
     <Container fluid>
       <Row>
         <Col lg={3}>
           <OCRUploader onTextExtracted={handleTextExtracted} />
-          <ColorCodingSettings
-            enabled={colorCodingEnabled}
-            onToggle={setColorCodingEnabled}
-          />
+          
+          {/* Combined Color Coding Card with Toggle, Slider, and Guide */}
+          <Card className="mb-3 shadow-sm border-primary">
+            <Card.Body>
+              {/* Toggle Switch */}
+              <Form.Check
+                type="switch"
+                id="color-coding-switch"
+                label={
+                  <span>
+                    <strong>Enable Color Coding for Confused Letters</strong>
+                    <small className="d-block text-muted mt-1">
+                      Highlights b/d, p/q, m/w, n/u in different colors
+                    </small>
+                  </span>
+                }
+                checked={colorCodingEnabled}
+                onChange={(e) => setColorCodingEnabled(e.target.checked)}
+                style={{ fontSize: '1rem' }}
+                className="mb-3"
+              />
+
+              {/* Brightness Slider - shown when enabled */}
+              {colorCodingEnabled && (
+                <>
+                  <hr />
+                  <Form.Group className="mb-3">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <Form.Label className="mb-0">
+                        <strong>🎨 Color Brightness & Contrast</strong>
+                      </Form.Label>
+                      <span className={`badge ${colorIntensity < 50 ? 'bg-secondary' : 'bg-primary'}`}>
+                        {colorIntensity}%
+                      </span>
+                    </div>
+                    
+                    {/* Custom Realistic Slider */}
+                    <div className="position-relative mb-3" style={{ height: '40px' }}>
+                      <div 
+                        className="position-absolute w-100 rounded-pill"
+                        style={{
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          height: '8px',
+                          background: 'linear-gradient(to right, #e0e0e0 0%, #4CAF50 50%, #2196F3 100%)',
+                          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.2)'
+                        }}
+                      />
+                      <input
+                        type="range"
+                        min="20"
+                        max="100"
+                        step="10"
+                        value={colorIntensity}
+                        onChange={(e) => setColorIntensity(parseInt(e.target.value))}
+                        className="position-absolute w-100"
+                        style={{
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          cursor: 'pointer',
+                          background: 'transparent',
+                          WebkitAppearance: 'none',
+                          appearance: 'none',
+                          outline: 'none',
+                          height: '40px',
+                          zIndex: 2
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="d-flex justify-content-between small text-muted mb-2">
+                      <span>🌙 Less</span>
+                      <span>⚡ More</span>
+                    </div>
+                    
+                    <Form.Text className="text-muted d-block">
+                      {getHelperText()}
+                    </Form.Text>
+                  </Form.Group>
+
+                  <hr />
+
+                  {/* Color Guide */}
+                  <div>
+                    <h6 className="mb-3">
+                      <strong>🎨 Color Guide</strong>
+                    </h6>
+                    <div className="small">
+                      <div className="mb-2">
+                        <span style={{ color: '#3498db', fontWeight: 'bold' }}>b</span>
+                        <span className="ms-2 text-muted">Blue - right →</span>
+                      </div>
+                      <div className="mb-2">
+                        <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>d</span>
+                        <span className="ms-2 text-muted">Red - left ←</span>
+                      </div>
+                      <div className="mb-2">
+                        <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>p</span>
+                        <span className="ms-2 text-muted">Green - down right</span>
+                      </div>
+                      <div className="mb-2">
+                        <span style={{ color: '#f39c12', fontWeight: 'bold' }}>q</span>
+                        <span className="ms-2 text-muted">Orange - down left</span>
+                      </div>
+                      <div className="mb-2">
+                        <span style={{ color: '#34495e', fontWeight: 'bold' }}>n</span>
+                        <span className="ms-2 text-muted">Gray - opens down</span>
+                      </div>
+                      <div className="mb-2">
+                        <span style={{ color: '#e67e22', fontWeight: 'bold' }}>u</span>
+                        <span className="ms-2 text-muted">Orange - opens up</span>
+                      </div>
+                      <div className="mb-2">
+                        <span style={{ color: '#16a085', fontWeight: 'bold' }}>m</span>
+                        <span className="ms-2 text-muted">Teal - peaks up</span>
+                      </div>
+                      <div className="mb-2">
+                        <span style={{ color: '#c0392b', fontWeight: 'bold' }}>w</span>
+                        <span className="ms-2 text-muted">Red - valleys down</span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </Card.Body>
+          </Card>
         </Col>
 
         <Col lg={6}>
-          {/* Points Popup Animation (NEW) */}
           {pointsPopup && (
             <div 
               className="position-fixed top-50 start-50 translate-middle"
@@ -522,7 +642,6 @@ const ReaderPage = () => {
             </div>
           )}
 
-          {/* Overall Progress Bar (NEW) */}
           {isSTTActive && (
             <Card className="mb-3 border-success">
               <Card.Body>
@@ -548,7 +667,6 @@ const ReaderPage = () => {
             </Card>
           )}
 
-          {/* Mode Toggle */}
           <Card className="mb-3 border-primary shadow-sm">
             <Card.Body>
               <h5 className="mb-3">Reading Mode</h5>
@@ -572,16 +690,14 @@ const ReaderPage = () => {
               </div>
 
               {pronunciationMode ? (
-                // STT Mode Controls
                 <div>
                   <Alert variant="info" className="small mb-3">
                     💡 <strong>How it works:</strong>
                     <ul className="mb-0 mt-2">
                       <li>Speak each word clearly when prompted</li>
-                      <li>✅ Correct pronunciation → +{POINT_SYSTEM.CORRECT_PRONUNCIATION} points, moves to next word</li>
-                      <li>❌ Wrong pronunciation → hear correct version, then try again</li>
-                      <li>You get {STT_CONFIG.MAX_ATTEMPTS - 1} retry attempts per word</li>
-                      <li>🎉 Complete all words → +{POINT_SYSTEM.COMPLETE_READING} bonus points!</li>
+                      <li>✅ Correct → +{POINT_SYSTEM.CORRECT_PRONUNCIATION} points</li>
+                      <li>❌ Wrong → hear correct version, try again</li>
+                      <li>🎉 Complete all → +{POINT_SYSTEM.COMPLETE_READING} bonus!</li>
                     </ul>
                   </Alert>
                   {!isSTTActive ? (
@@ -607,13 +723,16 @@ const ReaderPage = () => {
                   )}
                 </div>
               ) : (
-                // TTS Mode
-                <TextToSpeech text={currentReadingContent} />
+                <TextToSpeech 
+                  text={currentReadingContent}
+                  colorCodingEnabled={colorCodingEnabled}
+                  colorIntensity={colorIntensity}
+                  renderColoredWord={renderColoredWord}
+                />
               )}
             </Card.Body>
           </Card>
 
-          {/* Feedback Display */}
           {feedback && (
             <Alert 
               variant={feedback.type} 
@@ -628,13 +747,12 @@ const ReaderPage = () => {
             </Alert>
           )}
 
-          {/* Current Word Display */}
           {isSTTActive && currentWord && (
             <Card className="mb-3 bg-light">
               <Card.Body className="text-center">
                 <h6 className="text-muted">Current Word:</h6>
-                <h2 className="text-primary" style={{ fontSize: "2.5rem" }}>
-                  {currentWord}
+                <h2 style={{ fontSize: "2.5rem" }}>
+                  {renderColoredWord(currentWord)}
                 </h2>
                 <small className="text-muted">
                   Word {currentWordIndex + 1} of {wordsArray.length}
@@ -643,13 +761,18 @@ const ReaderPage = () => {
             </Card>
           )}
 
-          {/* Reading Content */}
-          <Card className="p-4 shadow-lg" style={readingStyle}>
-            <ColorCoding
-              text={currentReadingContent}
-              enabled={colorCodingEnabled}
-              readerSettings={settings}
-            />
+          <Card className="shadow-sm">
+            <Card.Header className="bg-light">
+              <h5 className="mb-0">📄 Reading Text</h5>
+            </Card.Header>
+            <Card.Body style={{ backgroundColor: '#f8f9fa', padding: '2rem' }}>
+              <ColorCoding 
+                text={currentReadingContent} 
+                enabled={colorCodingEnabled}
+                colorIntensity={colorIntensity}
+                showControls={false}
+              />
+            </Card.Body>
           </Card>
 
           <Alert variant="info" className="mt-2 small">
@@ -658,7 +781,6 @@ const ReaderPage = () => {
         </Col>
 
         <Col lg={3}>
-          {/* Updated Gamification component with new props (NEW) */}
           <Gamification 
             score={gameStats.score}
             badges={gameStats.badges}
@@ -669,7 +791,6 @@ const ReaderPage = () => {
         </Col>
       </Row>
 
-      {/* CSS for animations (NEW) */}
       <style>{`
         @keyframes floatUp {
           0% { opacity: 1; transform: translate(-50%, -50%) translateY(0); }
@@ -678,6 +799,45 @@ const ReaderPage = () => {
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
+        }
+        
+        /* Custom Slider Styles */
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          cursor: pointer;
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.8);
+          border: 3px solid white;
+          transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+          transform: scale(1.15);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 5px rgba(255, 255, 255, 0.9);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+          transform: scale(1.05);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 0 6px rgba(102, 126, 234, 0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          cursor: pointer;
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.8);
+          border: 3px solid white;
+          transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+          transform: scale(1.15);
         }
       `}</style>
     </Container>

@@ -1,129 +1,573 @@
-// frontend/components/Settings.jsx
-import React from 'react';
-import { Modal, Button, Form } from 'react-bootstrap';
+// frontend/components/Settings.jsx (ADVANCED VERSION)
+
+import React, { useState } from 'react';
+import { Modal, Form, Button, Card, Row, Col, Badge, Tabs, Tab } from 'react-bootstrap';
+import { 
+  Type, Sun, Moon, Eye, Contrast, Move, Palette, 
+  RotateCcw, ZoomIn, ZoomOut, AlignLeft, AlignCenter, 
+  AlignRight, AlignJustify, Circle
+} from 'lucide-react';
 import { useAccessibility } from './AccessibilityContext';
 
+// Custom Range Slider Component with Beautiful UI
+const BeautifulSlider = ({ 
+  label, 
+  icon: Icon, 
+  value, 
+  min, 
+  max, 
+  step, 
+  onChange, 
+  unit = '', 
+  color = '#667eea',
+  showValue = true,
+  valueFormatter = (v) => v
+}) => {
+  // Ensure value is a number and fallback to min if undefined
+  const safeValue = typeof value === 'number' && !isNaN(value) ? value : min;
+  const percentage = ((safeValue - min) / (max - min)) * 100;
+  
+  return (
+    <div className="mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-2">
+        <label className="d-flex align-items-center fw-semibold">
+          {Icon && <Icon size={18} className="me-2" style={{ color }} />}
+          {label}
+        </label>
+        {showValue && (
+          <Badge bg="light" text="dark" className="fs-6">
+            {valueFormatter(safeValue)}{unit}
+          </Badge>
+        )}
+      </div>
+      
+      <div className="position-relative">
+        <input
+          type="range"
+          className="beautiful-range"
+          min={min}
+          max={max}
+          step={step}
+          value={safeValue}
+          onChange={(e) => onChange(parseFloat(e.target.value))}
+          style={{
+            background: `linear-gradient(to right, ${color} 0%, ${color} ${percentage}%, #e0e0e0 ${percentage}%, #e0e0e0 100%)`
+          }}
+        />
+        
+        {/* Tick marks */}
+        <div className="d-flex justify-content-between px-2 mt-1">
+          <small className="text-muted">{min}{unit}</small>
+          <small className="text-muted">{max}{unit}</small>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Font Family Selector
+const FontSelector = ({ value, onChange }) => {
+  const fonts = [
+    { name: 'OpenDyslexic', label: 'OpenDyslexic (Recommended)', recommended: true },
+    { name: 'Arial', label: 'Arial' },
+    { name: 'Comic Sans MS', label: 'Comic Sans MS' },
+    { name: 'Verdana', label: 'Verdana' },
+    { name: 'Georgia', label: 'Georgia' },
+    { name: 'Times New Roman', label: 'Times New Roman' },
+  ];
+
+  return (
+    <div className="mb-4">
+      <label className="d-flex align-items-center fw-semibold mb-2">
+        <Type size={18} className="me-2" style={{ color: '#667eea' }} />
+        Font Family
+      </label>
+      <div className="d-grid gap-2">
+        {fonts.map((font) => (
+          <Button
+            key={font.name}
+            variant={value === font.name ? 'primary' : 'outline-secondary'}
+            onClick={() => onChange(font.name)}
+            className="text-start d-flex align-items-center justify-content-between"
+            style={{ fontFamily: font.name }}
+          >
+            <span>{font.label}</span>
+            {font.recommended && (
+              <Badge bg="success">Recommended</Badge>
+            )}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Text Alignment Selector
+const AlignmentSelector = ({ value, onChange }) => {
+  const alignments = [
+    { value: 'left', icon: AlignLeft, label: 'Left' },
+    { value: 'center', icon: AlignCenter, label: 'Center' },
+    { value: 'right', icon: AlignRight, label: 'Right' },
+    { value: 'justify', icon: AlignJustify, label: 'Justify' },
+  ];
+
+  return (
+    <div className="mb-4">
+      <label className="d-flex align-items-center fw-semibold mb-2">
+        <AlignLeft size={18} className="me-2" style={{ color: '#667eea' }} />
+        Text Alignment
+      </label>
+      <div className="btn-group w-100" role="group">
+        {alignments.map(({ value: val, icon: Icon, label }) => (
+          <Button
+            key={val}
+            variant={value === val ? 'primary' : 'outline-secondary'}
+            onClick={() => onChange(val)}
+            className="d-flex flex-column align-items-center py-2"
+          >
+            <Icon size={20} />
+            <small className="mt-1">{label}</small>
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Color Theme Selector
+const ThemeSelector = ({ value, onChange }) => {
+  const themes = [
+    { value: 'default', label: 'Default', bg: '#ffffff', text: '#000000' },
+    { value: 'dark', label: 'Dark Mode', bg: '#1a1a1a', text: '#ffffff' },
+    { value: 'sepia', label: 'Sepia', bg: '#f4ecd8', text: '#5c4a2f' },
+    { value: 'blue', label: 'Blue Tint', bg: '#e8f4f8', text: '#1a3a4a' },
+    { value: 'green', label: 'Green Tint', bg: '#e8f8e8', text: '#1a4a1a' },
+  ];
+
+  return (
+    <div className="mb-4">
+      <label className="d-flex align-items-center fw-semibold mb-2">
+        <Palette size={18} className="me-2" style={{ color: '#667eea' }} />
+        Color Theme
+      </label>
+      <Row className="g-2">
+        {themes.map((theme) => (
+          <Col xs={6} key={theme.value}>
+            <Button
+              variant={value === theme.value ? 'primary' : 'outline-secondary'}
+              onClick={() => onChange(theme.value)}
+              className="w-100 p-3 d-flex flex-column align-items-center"
+            >
+              <div
+                className="rounded mb-2"
+                style={{
+                  width: '50px',
+                  height: '30px',
+                  backgroundColor: theme.bg,
+                  border: `2px solid ${theme.text}`,
+                }}
+              />
+              <small>{theme.label}</small>
+            </Button>
+          </Col>
+        ))}
+      </Row>
+    </div>
+  );
+};
+
+// Main Settings Modal
 const Settings = ({ show, handleClose }) => {
   const { settings, updateSetting, resetSettings } = useAccessibility();
-
-  const handleFontSizeChange = (e) => {
-    updateSetting('fontSize', parseInt(e.target.value));
-  };
-
-  const handleFontFamilyChange = (e) => {
-    updateSetting('fontFamily', e.target.value);
-  };
-
-  const handleLetterSpacingChange = (e) => {
-    updateSetting('letterSpacing', parseFloat(e.target.value));
-  };
-
-  const handleLineHeightChange = (e) => {
-    updateSetting('lineHeight', parseFloat(e.target.value));
-  };
-
-  const handleHighContrastToggle = (e) => {
-    updateSetting('highContrast', e.target.checked);
-  };
+  const [activeTab, setActiveTab] = useState('typography');
 
   const handleReset = () => {
-    resetSettings();
+    if (window.confirm('Are you sure you want to reset all settings to default?')) {
+      resetSettings();
+    }
   };
 
   return (
-    <Modal show={show} onHide={handleClose} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Accessibility Settings</Modal.Title>
+    <Modal 
+      show={show} 
+      onHide={handleClose} 
+      size="lg"
+      className="accessibility-modal"
+      scrollable
+      backdrop="static"
+      dialogClassName="modal-top"
+    >
+      <Modal.Header closeButton className="bg-primary text-white">
+        <Modal.Title className="d-flex align-items-center">
+          <Eye size={24} className="me-2" />
+          Accessibility Settings
+        </Modal.Title>
       </Modal.Header>
-      <Modal.Body>
-        {/* Font Size */}
-        <Form.Group className="mb-3">
-          <Form.Label>Font Size: {settings.fontSize}px</Form.Label>
-          <Form.Range
-            min="14"
-            max="32"
-            step="2"
-            value={settings.fontSize}
-            onChange={handleFontSizeChange}
-          />
-        </Form.Group>
-
-        {/* Font Family */}
-        <Form.Group className="mb-3">
-          <Form.Label>Font Family</Form.Label>
-          <Form.Select 
-            value={settings.fontFamily} 
-            onChange={handleFontFamilyChange}
-          >
-            <option value="OpenDyslexic">OpenDyslexic (Recommended)</option>
-            <option value="Arial">Arial</option>
-            <option value="Verdana">Verdana</option>
-            <option value="Georgia">Georgia</option>
-            <option value="'Comic Sans MS'">Comic Sans MS</option>
-            <option value="'Courier New'">Courier New</option>
-          </Form.Select>
-        </Form.Group>
-
-        {/* Letter Spacing */}
-        <Form.Group className="mb-3">
-          <Form.Label>Letter Spacing: {settings.letterSpacing}em</Form.Label>
-          <Form.Range
-            min="0"
-            max="0.5"
-            step="0.05"
-            value={settings.letterSpacing}
-            onChange={handleLetterSpacingChange}
-          />
-        </Form.Group>
-
-        {/* Line Height */}
-        <Form.Group className="mb-3">
-          <Form.Label>Line Height: {settings.lineHeight}</Form.Label>
-          <Form.Range
-            min="1.2"
-            max="2.5"
-            step="0.1"
-            value={settings.lineHeight}
-            onChange={handleLineHeightChange}
-          />
-        </Form.Group>
-
-        {/* High Contrast */}
-        <Form.Group className="mb-3">
-          <Form.Check
-            type="switch"
-            id="high-contrast-switch"
-            label="High Contrast Mode"
-            checked={settings.highContrast}
-            onChange={handleHighContrastToggle}
-          />
-        </Form.Group>
-
-        {/* Preview Text */}
-        <div 
-          className="p-3 border rounded mt-4"
-          style={{
-            fontSize: `${settings.fontSize}px`,
-            fontFamily: settings.fontFamily,
-            letterSpacing: `${settings.letterSpacing}em`,
-            lineHeight: settings.lineHeight,
-            backgroundColor: settings.highContrast ? '#121212' : '#ffffff',
-            color: settings.highContrast ? '#ffffff' : '#000000',
-            transition: 'all 0.3s ease'
-          }}
+      
+      <Modal.Body className="p-4" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+        <Tabs
+          activeKey={activeTab}
+          onSelect={(k) => setActiveTab(k)}
+          className="mb-4"
+          fill
         >
-          <strong>Preview:</strong> The quick brown fox jumps over the lazy dog. 
-          This text shows how your settings will look.
-        </div>
+          {/* Typography Tab */}
+          <Tab 
+            eventKey="typography" 
+            title={
+              <span>
+                <Type size={16} className="me-2" />
+                Typography
+              </span>
+            }
+          >
+            <div className="pt-3">
+              <FontSelector
+                value={settings.fontFamily}
+                onChange={(val) => updateSetting('fontFamily', val)}
+              />
+
+              <BeautifulSlider
+                label="Font Size"
+                icon={Type}
+                value={settings.fontSize}
+                min={14}
+                max={32}
+                step={1}
+                onChange={(val) => updateSetting('fontSize', val)}
+                unit="px"
+                color="#667eea"
+              />
+
+              <BeautifulSlider
+                label="Letter Spacing"
+                icon={Move}
+                value={settings.letterSpacing}
+                min={0}
+                max={0.5}
+                step={0.05}
+                onChange={(val) => updateSetting('letterSpacing', val)}
+                unit="em"
+                color="#764ba2"
+                valueFormatter={(v) => v.toFixed(2)}
+              />
+
+              <BeautifulSlider
+                label="Word Spacing"
+                icon={Move}
+                value={settings.wordSpacing}
+                min={0}
+                max={1}
+                step={0.1}
+                onChange={(val) => updateSetting('wordSpacing', val)}
+                unit="em"
+                color="#f093fb"
+                valueFormatter={(v) => v.toFixed(1)}
+              />
+
+              <BeautifulSlider
+                label="Line Height"
+                icon={AlignLeft}
+                value={settings.lineHeight}
+                min={1}
+                max={3}
+                step={0.1}
+                onChange={(val) => updateSetting('lineHeight', val)}
+                color="#4facfe"
+                valueFormatter={(v) => v.toFixed(1)}
+              />
+
+              <AlignmentSelector
+                value={settings.textAlign}
+                onChange={(val) => updateSetting('textAlign', val)}
+              />
+            </div>
+          </Tab>
+
+          {/* Display Tab */}
+          <Tab 
+            eventKey="display" 
+            title={
+              <span>
+                <Sun size={16} className="me-2" />
+                Display
+              </span>
+            }
+          >
+            <div className="pt-3">
+              <BeautifulSlider
+                label="Screen Brightness"
+                icon={Sun}
+                value={settings.brightness}
+                min={50}
+                max={150}
+                step={5}
+                onChange={(val) => updateSetting('brightness', val)}
+                unit="%"
+                color="#f6d365"
+              />
+
+              <BeautifulSlider
+                label="Cursor Size"
+                icon={Circle}
+                value={settings.cursorSize}
+                min={1}
+                max={3}
+                step={0.5}
+                onChange={(val) => updateSetting('cursorSize', val)}
+                unit="x"
+                color="#fa709a"
+                valueFormatter={(v) => v.toFixed(1)}
+              />
+
+              <div className="mb-4">
+                <Form.Check
+                  type="switch"
+                  id="highContrast"
+                  label={
+                    <span className="d-flex align-items-center">
+                      <Contrast size={18} className="me-2" style={{ color: '#667eea' }} />
+                      <strong>High Contrast Mode</strong>
+                    </span>
+                  }
+                  checked={settings.highContrast}
+                  onChange={(e) => updateSetting('highContrast', e.target.checked)}
+                  className="fs-5"
+                />
+                <small className="text-muted ms-4 ps-2">
+                  Increases contrast for better visibility
+                </small>
+              </div>
+
+              <div className="mb-4">
+                <Form.Check
+                  type="switch"
+                  id="readingGuide"
+                  label={
+                    <span className="d-flex align-items-center">
+                      <AlignLeft size={18} className="me-2" style={{ color: '#667eea' }} />
+                      <strong>Reading Guide Line</strong>
+                    </span>
+                  }
+                  checked={settings.readingGuide}
+                  onChange={(e) => updateSetting('readingGuide', e.target.checked)}
+                  className="fs-5"
+                />
+                <small className="text-muted ms-4 ps-2">
+                  Shows a line to help track reading position
+                </small>
+              </div>
+
+              <ThemeSelector
+                value={settings.colorTheme}
+                onChange={(val) => updateSetting('colorTheme', val)}
+              />
+            </div>
+          </Tab>
+
+          {/* Preview Tab */}
+          <Tab 
+            eventKey="preview" 
+            title={
+              <span>
+                <Eye size={16} className="me-2" />
+                Preview
+              </span>
+            }
+          >
+            <div className="pt-3">
+              <Card className="border-primary">
+                <Card.Body>
+                  <h5 className="mb-3">Preview Text</h5>
+                  <div
+                    style={{
+                      fontFamily: settings.fontFamily,
+                      fontSize: `${settings.fontSize}px`,
+                      letterSpacing: `${settings.letterSpacing}em`,
+                      wordSpacing: `${settings.wordSpacing}em`,
+                      lineHeight: settings.lineHeight,
+                      textAlign: settings.textAlign,
+                      padding: '20px',
+                      backgroundColor: settings.highContrast ? '#000' : '#fff',
+                      color: settings.highContrast ? '#fff' : '#000',
+                    }}
+                  >
+                    <p>
+                      The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.
+                    </p>
+                    <p>
+                      Reading should be comfortable and easy. These settings help you customize the text to your preferences.
+                    </p>
+                    <p className="mb-0">
+                      Adjust the settings until the text feels just right for you!
+                    </p>
+                  </div>
+                </Card.Body>
+              </Card>
+
+              <div className="mt-3 p-3 bg-light rounded">
+                <h6 className="text-muted">Current Settings:</h6>
+                <Row>
+                  <Col xs={6}>
+                    <small><strong>Font:</strong> {settings.fontFamily}</small>
+                  </Col>
+                  <Col xs={6}>
+                    <small><strong>Size:</strong> {settings.fontSize}px</small>
+                  </Col>
+                  <Col xs={6}>
+                    <small><strong>Brightness:</strong> {settings.brightness}%</small>
+                  </Col>
+                  <Col xs={6}>
+                    <small><strong>Theme:</strong> {settings.colorTheme}</small>
+                  </Col>
+                </Row>
+              </div>
+            </div>
+          </Tab>
+        </Tabs>
       </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={handleReset}>
+      
+      <Modal.Footer className="bg-light">
+        <Button 
+          variant="outline-danger" 
+          onClick={handleReset}
+          className="me-auto"
+        >
+          <RotateCcw size={16} className="me-2" />
           Reset to Default
         </Button>
+        <Button variant="secondary" onClick={handleClose}>
+          Close
+        </Button>
         <Button variant="primary" onClick={handleClose}>
-          Save & Close
+          Save Changes
         </Button>
       </Modal.Footer>
+
+      {/* Custom CSS for beautiful sliders */}
+      <style>{`
+        .modal-top {
+          margin-top: 2rem;
+          margin-bottom: 2rem;
+        }
+
+        .modal-top .modal-content {
+          max-height: calc(100vh - 4rem);
+          overflow: hidden;
+        }
+
+        .accessibility-modal .modal-dialog {
+          pointer-events: auto;
+        }
+
+        .accessibility-modal .modal-content {
+          pointer-events: auto;
+        }
+
+        .beautiful-range {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 8px;
+          border-radius: 10px;
+          outline: none;
+          transition: all 0.3s ease;
+          cursor: pointer;
+        }
+
+        .beautiful-range::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          cursor: pointer;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          transition: all 0.2s ease;
+        }
+
+        .beautiful-range::-webkit-slider-thumb:hover {
+          transform: scale(1.2);
+          box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .beautiful-range::-webkit-slider-thumb:active {
+          transform: scale(1.1);
+        }
+
+        .beautiful-range::-moz-range-thumb {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          cursor: pointer;
+          border: none;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          transition: all 0.2s ease;
+        }
+
+        .beautiful-range::-moz-range-thumb:hover {
+          transform: scale(1.2);
+          box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .accessibility-modal .modal-content {
+          border-radius: 15px;
+          overflow: hidden;
+          pointer-events: auto;
+        }
+
+        .accessibility-modal .modal-body {
+          pointer-events: auto;
+          user-select: auto;
+        }
+
+        .accessibility-modal .nav-tabs {
+          border-bottom: 2px solid #e0e0e0;
+        }
+
+        .accessibility-modal .nav-tabs .nav-link {
+          color: #666;
+          font-weight: 500;
+          padding: 12px 20px;
+          border: none;
+          border-bottom: 3px solid transparent;
+          transition: all 0.3s ease;
+        }
+
+        .accessibility-modal .nav-tabs .nav-link:hover {
+          border-bottom-color: #667eea;
+          color: #667eea;
+        }
+
+        .accessibility-modal .nav-tabs .nav-link.active {
+          color: #667eea;
+          border-bottom-color: #667eea;
+          background: none;
+        }
+
+        /* Theme styles */
+        .theme-dark {
+          background-color: #1a1a1a !important;
+          color: #ffffff !important;
+        }
+
+        .theme-sepia {
+          background-color: #f4ecd8 !important;
+          color: #5c4a2f !important;
+        }
+
+        .theme-blue {
+          background-color: #e8f4f8 !important;
+          color: #1a3a4a !important;
+        }
+
+        .theme-green {
+          background-color: #e8f8e8 !important;
+          color: #1a4a1a !important;
+        }
+      `}</style>
     </Modal>
   );
 };
