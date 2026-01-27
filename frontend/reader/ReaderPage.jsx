@@ -74,6 +74,7 @@ const ReaderPage = ({ userId }) => {
   });
 
   const [pointsPopup, setPointsPopup] = useState(null);
+  const [difficultWords, setDifficultWords] = useState([]);
 
   const recognitionRef = useRef(null);
   const shouldContinueRef = useRef(true);
@@ -333,6 +334,12 @@ const ReaderPage = ({ userId }) => {
         break;
       } else {
         attempts++;
+        
+        // Track difficult words after 2 failed attempts
+        if (attempts >= 2 && !difficultWords.includes(word.toLowerCase())) {
+          setDifficultWords(prev => [...prev, word.toLowerCase()]);
+        }
+        
         await new Promise(resolve => setTimeout(resolve, STT_CONFIG.RETRY_DELAY_MS));
         
         if (attempts < STT_CONFIG.MAX_ATTEMPTS && shouldContinueRef.current) {
@@ -417,7 +424,7 @@ const ReaderPage = ({ userId }) => {
     lineHeight: settings.lineHeight,
   };
 
-  // Helper function to render colored single word
+  // Helper function to render colored single word - SMOOTH FADE TO BLACK
   const renderColoredWord = (word) => {
     // If not enabled OR below 50%, return PLAIN BLACK TEXT
     if (!colorCodingEnabled || colorIntensity < 50) {
@@ -430,21 +437,23 @@ const ReaderPage = ({ userId }) => {
       const lowerChar = char.toLowerCase();
       if (colorMap[lowerChar]) {
         const color = colorMap[lowerChar];
-        const opacity = Math.max(0.5, colorIntensity / 100);
-        const brightness = 0.7 + (colorIntensity / 100) * 0.6;
-
+        
+        // Calculate color strength - smoothly fades to black
+        const colorStrength = colorIntensity / 100; // 0.5 to 1.0
+        
         const r = parseInt(color.slice(1, 3), 16);
         const g = parseInt(color.slice(3, 5), 16);
         const b = parseInt(color.slice(5, 7), 16);
 
-        const newR = Math.min(255, Math.floor(r * brightness));
-        const newG = Math.min(255, Math.floor(g * brightness));
-        const newB = Math.min(255, Math.floor(b * brightness));
+        // Interpolate between full color and black
+        const finalR = Math.round(r * colorStrength);
+        const finalG = Math.round(g * colorStrength);
+        const finalB = Math.round(b * colorStrength);
 
         const style = {
-          color: `rgb(${newR}, ${newG}, ${newB})`,
-          opacity: opacity,
-          fontWeight: colorIntensity > 70 ? 'bold' : 'normal'
+          color: `rgb(${finalR}, ${finalG}, ${finalB})`,
+          fontWeight: colorIntensity > 70 ? 'bold' : (colorIntensity > 50 ? '600' : 'normal'),
+          transition: 'color 0.3s ease, font-weight 0.3s ease'
         };
 
         return <span key={index} style={style}>{char}</span>;
@@ -455,12 +464,28 @@ const ReaderPage = ({ userId }) => {
 
   const getHelperText = () => {
     if (colorIntensity < 50) {
-      return '⚪ Colors disabled - Normal text displayed (Below 50%)';
-    } else if (colorIntensity <= 70) {
-      return '📚 Medium - Good balance for students who are practicing';
+      return '⚪ Below 50% - All text in normal black (No color support)';
+    } else if (colorIntensity < 60) {
+      return '🌑 50-60% - Colors fading to dark (Almost independent)';
+    } else if (colorIntensity < 70) {
+      return '🌓 60-70% - Medium colors (Gradual fade)';
+    } else if (colorIntensity < 80) {
+      return '🌕 70-80% - Bright colors (Good support)';
     } else {
-      return '🎯 Bold - High contrast with bold text for beginner students';
+      return '⭐ 80-100% - Maximum color & bold (Beginner level)';
     }
+  };
+
+  // Speak word when clicked
+  const handleWordClick = (word) => {
+    if (!("speechSynthesis" in window)) return;
+    
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.rate = 0.8;
+    utterance.pitch = 1.1;
+    utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
   };
 
   if (isViewingPreview) {
@@ -770,7 +795,9 @@ const ReaderPage = ({ userId }) => {
                 text={currentReadingContent} 
                 enabled={colorCodingEnabled}
                 colorIntensity={colorIntensity}
-                showControls={false}
+                onWordClick={handleWordClick}
+                highlightDifficultWords={true}
+                difficultWords={difficultWords}
               />
             </Card.Body>
           </Card>
@@ -778,6 +805,53 @@ const ReaderPage = ({ userId }) => {
           <Alert variant="info" className="mt-2 small">
             Text Loaded: <strong>{contentSource}</strong>
           </Alert>
+
+          {/* Difficult Words Alert */}
+          {difficultWords.length > 0 && (
+            <Alert variant="warning" className="mt-3">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>🎯 Practice These Words:</strong>
+                  <div className="mt-2">
+                    {difficultWords.map((word, index) => (
+                      <span
+                        key={index}
+                        onClick={() => handleWordClick(word)}
+                        style={{
+                          display: 'inline-block',
+                          backgroundColor: '#fff',
+                          padding: '4px 12px',
+                          margin: '4px',
+                          borderRadius: '16px',
+                          cursor: 'pointer',
+                          border: '2px solid #ffc107',
+                          fontWeight: 'bold',
+                          transition: 'all 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = 'scale(1.1)';
+                          e.target.style.backgroundColor = '#fff9c4';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = 'scale(1)';
+                          e.target.style.backgroundColor = '#fff';
+                        }}
+                      >
+                        🔊 {word}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <Button 
+                  variant="outline-warning" 
+                  size="sm"
+                  onClick={() => setDifficultWords([])}
+                >
+                  Clear
+                </Button>
+              </div>
+            </Alert>
+          )}
         </Col>
 
         <Col lg={3}>
