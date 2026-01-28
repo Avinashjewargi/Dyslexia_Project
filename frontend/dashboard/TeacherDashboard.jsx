@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Badge, ProgressBar, Button, Alert } from 'react-bootstrap';
 import { 
   Users, TrendingUp, BookOpen, Award, Clock, Target,
-  BarChart3, PieChart as PieIcon, UserCheck, AlertCircle 
+  BarChart3, PieChartIcon, UserCheck, AlertCircle 
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -192,7 +192,7 @@ function TeacherDashboard() {
           <Card className="border-0 shadow-lg h-100">
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
-                <PieIcon className="me-2 text-warning" />
+                <PieChartIcon className="me-2 text-warning" />
                 Student Performance
               </h5>
               <ResponsiveContainer width="100%" height={250}>

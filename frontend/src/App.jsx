@@ -1,4 +1,4 @@
-// frontend/src/App.jsx (NO LOGIN RESTRICTIONS)
+// frontend/src/App.jsx (WITH ALL 25 LEXIAI ROUTES)
 
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
@@ -16,6 +16,44 @@ import SpellingTest from '../phonology/SpellingTest';
 import LetterReplacement from '../phonology/LetterReplacement';
 import OddOneOut from '../phonology/OddOneOut';
 import StoriesReader from '../stories/StoriesReader';
+
+// LexiAI Hub
+import LexiAIHub from '../lexiai/LexiAIHub';
+
+// Category 1: Language & Literacy (5 cards)
+import AlphabetMaster from '../lexiai/cards/AlphabetMaster';
+import PhonicsAndSounds from '../lexiai/cards/PhonicsAndSounds';
+import NumbersAndDigits from '../lexiai/cards/NumbersAndDigits';
+import SightWords from '../lexiai/cards/SightWords';
+import RhymesAndPatterns from '../lexiai/cards/RhymesAndPatterns';
+
+// Category 2: Living Things (5 cards)
+import AnimalsExplorer from '../lexiai/cards/AnimalsExplorer';
+import BirdsWorld from '../lexiai/cards/BirdsWorld';
+import InsectsHub from '../lexiai/cards/InsectsHub';
+import FruitsBasket from '../lexiai/cards/FruitsBasket';
+import VegetableGarden from '../lexiai/cards/VegetableGarden';
+
+// Category 3: Daily Life & Surroundings (5 cards)
+import ColorsShades from '../lexiai/cards/ColorsShades';
+import VehiclesZone from '../lexiai/cards/VehiclesZone';
+import HumanBody from '../lexiai/cards/HumanBody';
+import ClothesWearables from '../lexiai/cards/ClothesWearables';
+import HomeObjects from '../lexiai/cards/HomeObjects';
+
+// Category 4: Nature & Time Awareness (3 cards)
+import NatureSpace from '../lexiai/cards/NatureSpace';
+import WeatherWatch from '../lexiai/cards/WeatherWatch';
+import TimeCalendar from '../lexiai/cards/TimeCalendar';
+
+// Category 5: Thinking, Math & Life Skills (7 cards)
+import ShapesGeometry from '../lexiai/cards/ShapesGeometry';
+import PatternBuilder from '../lexiai/cards/PatternBuilder';
+import SizeComparison from '../lexiai/cards/SizeComparison';
+import DirectionSense from '../lexiai/cards/DirectionSense';
+import EmotionSense from '../lexiai/cards/EmotionSense';
+import SignsSymbols from '../lexiai/cards/SignsSymbols';
+import SafetySocial from '../lexiai/cards/SafetySocial';
 
 // Inner Layout component
 const MainLayout = ({ children, isLandingPage, user, onLogout }) => {
@@ -130,7 +168,7 @@ function App() {
           } 
         />
         
-        {/* All Routes - No Login Required */}
+        {/* Reader Routes */}
         <Route 
           path="/reader" 
           element={
@@ -149,6 +187,7 @@ function App() {
           } 
         />
 
+        {/* Dashboard Routes */}
         <Route 
           path="/dashboard" 
           element={
@@ -212,7 +251,256 @@ function App() {
             </MainLayout>
           } 
         />
+
+        {/* ========================================= */}
+        {/* 🌟 LEXIAI ROUTES - ALL 25 CARDS (COMPLETE) */}
+        {/* ========================================= */}
+
+        {/* LexiAI Hub - Main Landing */}
+        <Route 
+          path="/lexiai" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <LexiAIHub />
+            </MainLayout>
+          } 
+        />
+
+        {/* ===== CATEGORY 1: Language & Literacy (5 cards) ===== */}
+        <Route 
+          path="/lexiai/alphabet" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <AlphabetMaster />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/phonics" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <PhonicsAndSounds />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/numbers" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <NumbersAndDigits />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/sight-words" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <SightWords />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/rhymes" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <RhymesAndPatterns />
+            </MainLayout>
+          } 
+        />
+
+        {/* ===== CATEGORY 2: Living Things (5 cards) ===== */}
+        <Route 
+          path="/lexiai/animals" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <AnimalsExplorer />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/birds" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <BirdsWorld />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/insects" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <InsectsHub />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/fruits" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <FruitsBasket />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/vegetables" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <VegetableGarden />
+            </MainLayout>
+          } 
+        />
+
+        {/* ===== CATEGORY 3: Daily Life & Surroundings (5 cards) ===== */}
+        <Route 
+          path="/lexiai/colors" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <ColorsShades />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/vehicles" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <VehiclesZone />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/body" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <HumanBody />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/clothes" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <ClothesWearables />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/home" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <HomeObjects />
+            </MainLayout>
+          } 
+        />
+
+        {/* ===== CATEGORY 4: Nature & Time Awareness (3 cards) ===== */}
+        <Route 
+          path="/lexiai/nature" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <NatureSpace />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/weather" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <WeatherWatch />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/time" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <TimeCalendar />
+            </MainLayout>
+          } 
+        />
+
+        {/* ===== CATEGORY 5: Thinking, Math & Life Skills (7 cards) ===== */}
+        <Route 
+          path="/lexiai/shapes" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <ShapesGeometry />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/patterns" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <PatternBuilder />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/size" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <SizeComparison />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/direction" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <DirectionSense />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/emotions" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <EmotionSense />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/symbols" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <SignsSymbols />
+            </MainLayout>
+          } 
+        />
+
+        <Route 
+          path="/lexiai/safety" 
+          element={
+            <MainLayout user={user} onLogout={handleLogout}>
+              <SafetySocial />
+            </MainLayout>
+          } 
+        />
+
+        {/* ========================================= */}
+        {/* END OF LEXIAI ROUTES - 25 CARDS COMPLETE */}
+        {/* ========================================= */}
         
+        {/* 404 Route */}
         <Route path="*" element={<h1>404: Page Not Found</h1>} />
       </Routes>
     </AccessibilityProvider>
