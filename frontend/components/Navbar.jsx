@@ -1,8 +1,8 @@
-// frontend/components/Navbar.jsx (UPDATED WITH LOGOUT)
+// frontend/components/Navbar.jsx (WITH LEXIAI ADDED)
 
 import React from 'react';
 import { Navbar, Container, Nav, Button, NavDropdown, Badge } from 'react-bootstrap';
-import { BookOpen, Settings as SettingsIcon, LogOut, User } from 'lucide-react';
+import { BookOpen, Settings as SettingsIcon, LogOut, User, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 function AppNavbar({ onOpenSettings, user, onLogout }) {
@@ -19,7 +19,7 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
     if (onLogout) {
       onLogout();
     }
-    navigate('/login');
+    navigate('/');
   };
 
   return (
@@ -34,98 +34,95 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
         
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            {user && (
-              <>
-                {/* Reader Link - Only for logged-in users */}
-                <Nav.Link as={Link} to="/reader">
-                  📖 Reader
-                </Nav.Link>
-                
-                {/* Stories Link - Only for logged-in users */}
-                <Nav.Link as={Link} to="/stories">
-                  📚 Stories
-                </Nav.Link>
-                
-                {/* Dashboard Dropdown */}
-                <NavDropdown 
-                  title={
-                    <span>
-                      📊 Dashboards
-                    </span>
-                  } 
-                  id="dashboard-dropdown"
-                >
-                  {user.role === 'student' && (
-                    <NavDropdown.Item as={Link} to="/dashboard">
-                      👤 Student Dashboard
-                      <div className="small text-muted">Track your progress</div>
-                    </NavDropdown.Item>
-                  )}
-                  
-                  {user.role === 'teacher' && (
-                    <NavDropdown.Item as={Link} to="/teacher-dashboard">
-                      👩‍🏫 Teacher Dashboard
-                      <div className="small text-muted">Monitor class performance</div>
-                    </NavDropdown.Item>
-                  )}
-                </NavDropdown>
-                
-                {/* Phonology Dropdown - Only for students */}
-                {user.role === 'student' && (
-                  <NavDropdown 
-                    title={
-                      <span>
-                        🎯 Phonological Awareness
-                      </span>
-                    } 
-                    id="phonology-dropdown"
-                  >
-                    <NavDropdown.Header>Practice Activities</NavDropdown.Header>
-                    
-                    <NavDropdown.Item as={Link} to="/phonology/spelling">
-                      📝 Spelling Practice
-                      <div className="small text-muted">3 Levels • Easy to Hard</div>
-                    </NavDropdown.Item>
-                    
-                    <NavDropdown.Divider />
-                    
-                    <NavDropdown.Item as={Link} to="/phonology/replacement">
-                      🔄 Letter Replacement
-                      <div className="small text-muted">15 Challenges</div>
-                    </NavDropdown.Item>
-                    
-                    <NavDropdown.Divider />
-                    
-                    <NavDropdown.Item as={Link} to="/phonology/odd-one-out">
-                      ⭐ Odd One Out
-                      <div className="small text-muted">30 Tests • Categories, Sounds & Letters</div>
-                    </NavDropdown.Item>
-                    
-                    <NavDropdown.Divider />
-                    
-                    <NavDropdown.Item as={Link} to="/phonology">
-                      <strong>🏠 Activity Hub</strong>
-                    </NavDropdown.Item>
-                  </NavDropdown>
-                )}
-              </>
-            )}
+            {/* Reader Link */}
+            <Nav.Link as={Link} to="/reader">
+              📖 Reader
+            </Nav.Link>
+            
+            {/* Stories Link */}
+            <Nav.Link as={Link} to="/stories">
+              📚 Stories
+            </Nav.Link>
+
+            {/* 🌟 NEW: LexiAI Learning Module */}
+            <Nav.Link 
+              as={Link} 
+              to="/lexiai"
+              className="fw-bold text-primary"
+              style={{ 
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontWeight: 'bold'
+              }}
+            >
+              <Sparkles size={18} className="me-1" style={{ marginBottom: '2px', color: '#667eea' }} />
+              LexiAI Learning
+            </Nav.Link>
+            
+            {/* Dashboard Dropdown */}
+            <NavDropdown 
+              title={
+                <span>
+                  📊 Dashboards
+                </span>
+              } 
+              id="dashboard-dropdown"
+            >
+              <NavDropdown.Item as={Link} to="/dashboard">
+                👤 Student Dashboard
+                <div className="small text-muted">Track your progress</div>
+              </NavDropdown.Item>
+              
+              <NavDropdown.Divider />
+              
+              <NavDropdown.Item as={Link} to="/teacher-dashboard">
+                👩‍🏫 Teacher Dashboard
+                <div className="small text-muted">Monitor class performance</div>
+              </NavDropdown.Item>
+            </NavDropdown>
+            
+            {/* Phonology Dropdown */}
+            <NavDropdown 
+              title={
+                <span>
+                  🎯 Phonological Awareness
+                </span>
+              } 
+              id="phonology-dropdown"
+            >
+              <NavDropdown.Header>Practice Activities</NavDropdown.Header>
+              
+              <NavDropdown.Item as={Link} to="/phonology/spelling">
+                📝 Spelling Practice
+                <div className="small text-muted">3 Levels • Easy to Hard</div>
+              </NavDropdown.Item>
+              
+              <NavDropdown.Divider />
+              
+              <NavDropdown.Item as={Link} to="/phonology/replacement">
+                🔄 Letter Replacement
+                <div className="small text-muted">15 Challenges</div>
+              </NavDropdown.Item>
+              
+              <NavDropdown.Divider />
+              
+              <NavDropdown.Item as={Link} to="/phonology/odd-one-out">
+                ⭐ Odd One Out
+                <div className="small text-muted">30 Tests • Categories, Sounds & Letters</div>
+              </NavDropdown.Item>
+              
+              <NavDropdown.Divider />
+              
+              <NavDropdown.Item as={Link} to="/phonology">
+                <strong>🏠 Activity Hub</strong>
+              </NavDropdown.Item>
+            </NavDropdown>
           </Nav>
           
-          {/* Right side buttons */}
+          {/* RIGHT SIDE - LOGIN THEN ACCESSIBILITY */}
           <div className="d-flex align-items-center gap-2">
-            {/* Accessibility Settings Button */}
-            <Button 
-              variant="outline-primary" 
-              onClick={handleSettingsClick}
-              className="d-flex align-items-center"
-              size="sm"
-            >
-              <SettingsIcon size={18} className="me-2" />
-              Accessibility
-            </Button>
-
-            {/* User Info & Logout */}
+            {/* Login/User Dropdown */}
             {user ? (
               <NavDropdown
                 title={
@@ -163,6 +160,17 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
                 Login
               </Button>
             )}
+
+            {/* Accessibility Settings - TOP RIGHT CORNER */}
+            <Button 
+              variant="outline-primary" 
+              onClick={handleSettingsClick}
+              className="d-flex align-items-center"
+              size="sm"
+            >
+              <SettingsIcon size={18} className="me-2" />
+              Accessibility
+            </Button>
           </div>
         </Navbar.Collapse>
       </Container>

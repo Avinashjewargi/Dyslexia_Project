@@ -32,23 +32,28 @@ const ColorCoding = ({
 
   const colorMap = getCompleteColorMap();
 
-  // Apply color with brightness/contrast adjustment
+  // Apply color with brightness/contrast adjustment - SMOOTH TRANSITION TO BLACK
   const applyColorWithIntensity = (baseColor, intensity) => {
-    const opacity = Math.max(0.5, intensity / 100);
-    const brightness = 0.7 + (intensity / 100) * 0.6;
-
+    // Calculate opacity based on intensity (smoothly fades from colored to black)
+    const colorStrength = intensity / 100; // 0.2 to 1.0
+    
+    // Convert hex to RGB
     const r = parseInt(baseColor.slice(1, 3), 16);
     const g = parseInt(baseColor.slice(3, 5), 16);
     const b = parseInt(baseColor.slice(5, 7), 16);
 
-    const newR = Math.min(255, Math.floor(r * brightness));
-    const newG = Math.min(255, Math.floor(g * brightness));
-    const newB = Math.min(255, Math.floor(b * brightness));
+    // Interpolate between the color and black based on intensity
+    // At 100%: full color
+    // At 50%: 50% color, 50% black
+    // At 20%: 20% color, 80% black (very dark)
+    const finalR = Math.round(r * colorStrength);
+    const finalG = Math.round(g * colorStrength);
+    const finalB = Math.round(b * colorStrength);
 
     return {
-      color: `rgb(${newR}, ${newG}, ${newB})`,
-      opacity: opacity,
-      fontWeight: intensity > 70 ? 'bold' : 'normal',
+      color: `rgb(${finalR}, ${finalG}, ${finalB})`,
+      opacity: 1, // Keep full opacity, color itself fades to black
+      fontWeight: intensity > 70 ? 'bold' : (intensity > 50 ? '600' : 'normal'),
       transition: 'all 0.3s ease'
     };
   };
