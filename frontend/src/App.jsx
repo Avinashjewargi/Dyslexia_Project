@@ -1,5 +1,4 @@
-// frontend/src/App.jsx (WITH ALL 25 LEXIAI ROUTES)
-
+// frontend/src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import AppNavbar from '../components/Navbar';
@@ -11,10 +10,15 @@ import ReaderPage from '../reader/ReaderPage';
 import Settings from '../components/Settings';
 import { AccessibilityProvider, useAccessibility } from '../components/AccessibilityContext';
 import AppFooter from '../components/Footer';
+import Chatbot from '../components/Chatbot';
+
+// Phonology Modules
 import PhonologyHub from '../phonology/PhonologyHub';
 import SpellingTest from '../phonology/SpellingTest';
 import LetterReplacement from '../phonology/LetterReplacement';
 import OddOneOut from '../phonology/OddOneOut';
+
+// Stories
 import StoriesReader from '../stories/StoriesReader';
 
 // LexiAI Hub
@@ -70,6 +74,7 @@ const MainLayout = ({ children, isLandingPage, user, onLogout }) => {
     transition: 'background-color 0.3s, color 0.3s',
   };
 
+  // Landing page layout (no chatbot)
   if (isLandingPage) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -87,6 +92,7 @@ const MainLayout = ({ children, isLandingPage, user, onLogout }) => {
     );
   }
 
+  // All other pages with floating chatbot
   return (
     <div style={appStyle}>
       <AppNavbar 
@@ -94,11 +100,17 @@ const MainLayout = ({ children, isLandingPage, user, onLogout }) => {
         user={user}
         onLogout={onLogout}
       />
+      
+      {/* Main content - Full width */}
       <div className="flex-grow-1 container-fluid my-5">
         {children}
       </div>
+
       <AppFooter />
       <Settings show={showSettings} handleClose={() => setShowSettings(false)} />
+      
+      {/* Floating Chatbot Widget */}
+      <Chatbot />
     </div>
   );
 };
@@ -152,13 +164,13 @@ function App() {
   return (
     <AccessibilityProvider>
       <Routes>
-        {/* Login Page - Optional, No Redirects */}
+        {/* Login Page - No Chatbot */}
         <Route 
           path="/login" 
           element={<Login onLogin={handleLogin} />} 
         />
 
-        {/* Landing Page - Public */}
+        {/* Landing Page - Public, No Chatbot */}
         <Route 
           path="/" 
           element={
