@@ -1,12 +1,15 @@
-// frontend/components/Navbar.jsx (WITH LEXIAI ADDED)
+// frontend/components/Navbar.jsx (WITH TRANSLATIONS ADDED)
 
 import React from 'react';
 import { Navbar, Container, Nav, Button, NavDropdown, Badge } from 'react-bootstrap';
 import { BookOpen, Settings as SettingsIcon, LogOut, User, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from './LanguageSelector';
 
 function AppNavbar({ onOpenSettings, user, onLogout }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleSettingsClick = (e) => {
     e.preventDefault();
@@ -27,7 +30,7 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
       <Container>
         <Navbar.Brand as={Link} to="/" style={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
           <BookOpen size={28} className="me-2" style={{ marginBottom: '4px' }} />
-          Adaptive Reading Assistant
+          {t('navbar.appTitle', 'Adaptive Reading Assistant')}
         </Navbar.Brand>
         
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -36,15 +39,15 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
           <Nav className="me-auto">
             {/* Reader Link */}
             <Nav.Link as={Link} to="/reader">
-              📖 Reader
+              📖 {t('navbar.reader', 'Reader')}
             </Nav.Link>
             
             {/* Stories Link */}
             <Nav.Link as={Link} to="/stories">
-              📚 Stories
+              📚 {t('navbar.stories', 'Stories')}
             </Nav.Link>
 
-            {/* 🌟 NEW: LexiAI Learning Module */}
+            {/* LexiAI Learning Module */}
             <Nav.Link 
               as={Link} 
               to="/lexiai"
@@ -57,28 +60,32 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
               }}
             >
               <Sparkles size={18} className="me-1" style={{ marginBottom: '2px', color: '#667eea' }} />
-              LexiAI Learning
+              {t('navbar.lexiAI', 'LexiAI Learning')}
             </Nav.Link>
             
             {/* Dashboard Dropdown */}
             <NavDropdown 
               title={
                 <span>
-                  📊 Dashboards
+                  📊 {t('navbar.dashboards', 'Dashboards')}
                 </span>
               } 
               id="dashboard-dropdown"
             >
               <NavDropdown.Item as={Link} to="/dashboard">
-                👤 Student Dashboard
-                <div className="small text-muted">Track your progress</div>
+                👤 {t('navbar.studentDashboard', 'Student Dashboard')}
+                <div className="small text-muted">
+                  {t('navbar.studentDashboardDesc', 'Track your progress')}
+                </div>
               </NavDropdown.Item>
               
               <NavDropdown.Divider />
               
               <NavDropdown.Item as={Link} to="/teacher-dashboard">
-                👩‍🏫 Teacher Dashboard
-                <div className="small text-muted">Monitor class performance</div>
+                👩‍🏫 {t('navbar.teacherDashboard', 'Teacher Dashboard')}
+                <div className="small text-muted">
+                  {t('navbar.teacherDashboardDesc', 'Monitor class performance')}
+                </div>
               </NavDropdown.Item>
             </NavDropdown>
             
@@ -86,42 +93,53 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
             <NavDropdown 
               title={
                 <span>
-                  🎯 Phonological Awareness
+                  🎯 {t('navbar.phonologicalAwareness', 'Phonological Awareness')}
                 </span>
               } 
               id="phonology-dropdown"
             >
-              <NavDropdown.Header>Practice Activities</NavDropdown.Header>
+              <NavDropdown.Header>
+                {t('navbar.practiceActivities', 'Practice Activities')}
+              </NavDropdown.Header>
               
               <NavDropdown.Item as={Link} to="/phonology/spelling">
-                📝 Spelling Practice
-                <div className="small text-muted">3 Levels • Easy to Hard</div>
+                📝 {t('navbar.spellingPractice', 'Spelling Practice')}
+                <div className="small text-muted">
+                  {t('navbar.spellingPracticeDesc', '3 Levels • Easy to Hard')}
+                </div>
               </NavDropdown.Item>
               
               <NavDropdown.Divider />
               
               <NavDropdown.Item as={Link} to="/phonology/replacement">
-                🔄 Letter Replacement
-                <div className="small text-muted">15 Challenges</div>
+                🔄 {t('navbar.letterReplacement', 'Letter Replacement')}
+                <div className="small text-muted">
+                  {t('navbar.letterReplacementDesc', '15 Challenges')}
+                </div>
               </NavDropdown.Item>
               
               <NavDropdown.Divider />
               
               <NavDropdown.Item as={Link} to="/phonology/odd-one-out">
-                ⭐ Odd One Out
-                <div className="small text-muted">30 Tests • Categories, Sounds & Letters</div>
+                ⭐ {t('navbar.oddOneOut', 'Odd One Out')}
+                <div className="small text-muted">
+                  {t('navbar.oddOneOutDesc', '30 Tests • Categories, Sounds & Letters')}
+                </div>
               </NavDropdown.Item>
               
               <NavDropdown.Divider />
               
               <NavDropdown.Item as={Link} to="/phonology">
-                <strong>🏠 Activity Hub</strong>
+                <strong>🏠 {t('navbar.activityHub', 'Activity Hub')}</strong>
               </NavDropdown.Item>
             </NavDropdown>
           </Nav>
           
-          {/* RIGHT SIDE - LOGIN THEN ACCESSIBILITY */}
+          {/* RIGHT SIDE - Language Selector, Login, then Accessibility */}
           <div className="d-flex align-items-center gap-2">
+            {/* Language Selector */}
+            <LanguageSelector compact={true} showLabel={false} />
+
             {/* Login/User Dropdown */}
             {user ? (
               <NavDropdown
@@ -130,7 +148,9 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
                     <User size={18} className="me-2" />
                     {user.name}
                     {user.role === 'teacher' && (
-                      <Badge bg="success" className="ms-2">Teacher</Badge>
+                      <Badge bg="success" className="ms-2">
+                        {t('navbar.teacher', 'Teacher')}
+                      </Badge>
                     )}
                   </span>
                 }
@@ -138,7 +158,9 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
                 align="end"
               >
                 <NavDropdown.Header>
-                  <div className="small text-muted">Logged in as</div>
+                  <div className="small text-muted">
+                    {t('navbar.loggedInAs', 'Logged in as')}
+                  </div>
                   <strong>{user.name}</strong>
                   <div className="small text-muted">{user.email}</div>
                 </NavDropdown.Header>
@@ -147,7 +169,7 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
                 
                 <NavDropdown.Item onClick={handleLogout}>
                   <LogOut size={18} className="me-2" />
-                  Logout
+                  {t('navbar.logout', 'Logout')}
                 </NavDropdown.Item>
               </NavDropdown>
             ) : (
@@ -157,7 +179,7 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
                 as={Link}
                 to="/login"
               >
-                Login
+                {t('navbar.login', 'Login')}
               </Button>
             )}
 
@@ -169,7 +191,7 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
               size="sm"
             >
               <SettingsIcon size={18} className="me-2" />
-              Accessibility
+              {t('navbar.accessibility', 'Accessibility')}
             </Button>
           </div>
         </Navbar.Collapse>

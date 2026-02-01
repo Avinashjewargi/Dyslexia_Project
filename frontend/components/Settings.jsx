@@ -1,13 +1,15 @@
-// frontend/components/Settings.jsx (ADVANCED VERSION)
+// frontend/components/Settings.jsx (ADVANCED VERSION WITH TRANSLATIONS)
 
 import React, { useState } from 'react';
 import { Modal, Form, Button, Card, Row, Col, Badge, Tabs, Tab } from 'react-bootstrap';
 import { 
   Type, Sun, Moon, Eye, Contrast, Move, Palette, 
   RotateCcw, ZoomIn, ZoomOut, AlignLeft, AlignCenter, 
-  AlignRight, AlignJustify, Circle
+  AlignRight, AlignJustify, Circle, Globe
 } from 'lucide-react';
 import { useAccessibility } from './AccessibilityContext';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 
 // Custom Range Slider Component with Beautiful UI
 const BeautifulSlider = ({ 
@@ -67,8 +69,10 @@ const BeautifulSlider = ({
 
 // Font Family Selector
 const FontSelector = ({ value, onChange }) => {
+  const { t } = useTranslation();
+  
   const fonts = [
-    { name: 'OpenDyslexic', label: 'OpenDyslexic (Recommended)', recommended: true },
+    { name: 'OpenDyslexic', label: t('settings.fonts.openDyslexic', 'OpenDyslexic'), recommended: true },
     { name: 'Arial', label: 'Arial' },
     { name: 'Comic Sans MS', label: 'Comic Sans MS' },
     { name: 'Verdana', label: 'Verdana' },
@@ -80,7 +84,7 @@ const FontSelector = ({ value, onChange }) => {
     <div className="mb-4">
       <label className="d-flex align-items-center fw-semibold mb-2">
         <Type size={18} className="me-2" style={{ color: '#667eea' }} />
-        Font Family
+        {t('settings.fontFamily', 'Font Family')}
       </label>
       <div className="d-grid gap-2">
         {fonts.map((font) => (
@@ -93,7 +97,7 @@ const FontSelector = ({ value, onChange }) => {
           >
             <span>{font.label}</span>
             {font.recommended && (
-              <Badge bg="success">Recommended</Badge>
+              <Badge bg="success">{t('settings.recommended', 'Recommended')}</Badge>
             )}
           </Button>
         ))}
@@ -104,18 +108,20 @@ const FontSelector = ({ value, onChange }) => {
 
 // Text Alignment Selector
 const AlignmentSelector = ({ value, onChange }) => {
+  const { t } = useTranslation();
+  
   const alignments = [
-    { value: 'left', icon: AlignLeft, label: 'Left' },
-    { value: 'center', icon: AlignCenter, label: 'Center' },
-    { value: 'right', icon: AlignRight, label: 'Right' },
-    { value: 'justify', icon: AlignJustify, label: 'Justify' },
+    { value: 'left', icon: AlignLeft, label: t('settings.alignment.left', 'Left') },
+    { value: 'center', icon: AlignCenter, label: t('settings.alignment.center', 'Center') },
+    { value: 'right', icon: AlignRight, label: t('settings.alignment.right', 'Right') },
+    { value: 'justify', icon: AlignJustify, label: t('settings.alignment.justify', 'Justify') },
   ];
 
   return (
     <div className="mb-4">
       <label className="d-flex align-items-center fw-semibold mb-2">
         <AlignLeft size={18} className="me-2" style={{ color: '#667eea' }} />
-        Text Alignment
+        {t('settings.textAlignment', 'Text Alignment')}
       </label>
       <div className="btn-group w-100" role="group">
         {alignments.map(({ value: val, icon: Icon, label }) => (
@@ -136,19 +142,21 @@ const AlignmentSelector = ({ value, onChange }) => {
 
 // Color Theme Selector
 const ThemeSelector = ({ value, onChange }) => {
+  const { t } = useTranslation();
+  
   const themes = [
-    { value: 'default', label: 'Default', bg: '#ffffff', text: '#000000' },
-    { value: 'dark', label: 'Dark Mode', bg: '#1a1a1a', text: '#ffffff' },
-    { value: 'sepia', label: 'Sepia', bg: '#f4ecd8', text: '#5c4a2f' },
-    { value: 'blue', label: 'Blue Tint', bg: '#e8f4f8', text: '#1a3a4a' },
-    { value: 'green', label: 'Green Tint', bg: '#e8f8e8', text: '#1a4a1a' },
+    { value: 'default', label: t('settings.themes.default', 'Default'), bg: '#ffffff', text: '#000000' },
+    { value: 'dark', label: t('settings.themes.dark', 'Dark Mode'), bg: '#1a1a1a', text: '#ffffff' },
+    { value: 'sepia', label: t('settings.themes.sepia', 'Sepia'), bg: '#f4ecd8', text: '#5c4a2f' },
+    { value: 'blue', label: t('settings.themes.blue', 'Blue Tint'), bg: '#e8f4f8', text: '#1a3a4a' },
+    { value: 'green', label: t('settings.themes.green', 'Green Tint'), bg: '#e8f8e8', text: '#1a4a1a' },
   ];
 
   return (
     <div className="mb-4">
       <label className="d-flex align-items-center fw-semibold mb-2">
         <Palette size={18} className="me-2" style={{ color: '#667eea' }} />
-        Color Theme
+        {t('settings.colorTheme', 'Color Theme')}
       </label>
       <Row className="g-2">
         {themes.map((theme) => (
@@ -179,10 +187,12 @@ const ThemeSelector = ({ value, onChange }) => {
 // Main Settings Modal
 const Settings = ({ show, handleClose }) => {
   const { settings, updateSetting, resetSettings } = useAccessibility();
+  const { t } = useTranslation();
+  const { currentLanguage, languageConfig } = useLanguage();
   const [activeTab, setActiveTab] = useState('typography');
 
   const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset all settings to default?')) {
+    if (window.confirm(t('settings.confirmReset', 'Are you sure you want to reset all settings to default?'))) {
       resetSettings();
     }
   };
@@ -200,7 +210,7 @@ const Settings = ({ show, handleClose }) => {
       <Modal.Header closeButton className="bg-primary text-white">
         <Modal.Title className="d-flex align-items-center">
           <Eye size={24} className="me-2" />
-          Accessibility Settings
+          {t('settings.title', 'Accessibility Settings')}
         </Modal.Title>
       </Modal.Header>
       
@@ -217,7 +227,7 @@ const Settings = ({ show, handleClose }) => {
             title={
               <span>
                 <Type size={16} className="me-2" />
-                Typography
+                {t('settings.tabs.typography', 'Typography')}
               </span>
             }
           >
@@ -228,7 +238,7 @@ const Settings = ({ show, handleClose }) => {
               />
 
               <BeautifulSlider
-                label="Font Size"
+                label={t('settings.fontSize', 'Font Size')}
                 icon={Type}
                 value={settings.fontSize}
                 min={14}
@@ -240,7 +250,7 @@ const Settings = ({ show, handleClose }) => {
               />
 
               <BeautifulSlider
-                label="Letter Spacing"
+                label={t('settings.letterSpacing', 'Letter Spacing')}
                 icon={Move}
                 value={settings.letterSpacing}
                 min={0}
@@ -253,7 +263,7 @@ const Settings = ({ show, handleClose }) => {
               />
 
               <BeautifulSlider
-                label="Word Spacing"
+                label={t('settings.wordSpacing', 'Word Spacing')}
                 icon={Move}
                 value={settings.wordSpacing}
                 min={0}
@@ -266,7 +276,7 @@ const Settings = ({ show, handleClose }) => {
               />
 
               <BeautifulSlider
-                label="Line Height"
+                label={t('settings.lineHeight', 'Line Height')}
                 icon={AlignLeft}
                 value={settings.lineHeight}
                 min={1}
@@ -290,13 +300,13 @@ const Settings = ({ show, handleClose }) => {
             title={
               <span>
                 <Sun size={16} className="me-2" />
-                Display
+                {t('settings.tabs.display', 'Display')}
               </span>
             }
           >
             <div className="pt-3">
               <BeautifulSlider
-                label="Screen Brightness"
+                label={t('settings.brightness', 'Screen Brightness')}
                 icon={Sun}
                 value={settings.brightness}
                 min={50}
@@ -308,7 +318,7 @@ const Settings = ({ show, handleClose }) => {
               />
 
               <BeautifulSlider
-                label="Cursor Size"
+                label={t('settings.cursorSize', 'Cursor Size')}
                 icon={Circle}
                 value={settings.cursorSize}
                 min={1}
@@ -327,7 +337,7 @@ const Settings = ({ show, handleClose }) => {
                   label={
                     <span className="d-flex align-items-center">
                       <Contrast size={18} className="me-2" style={{ color: '#667eea' }} />
-                      <strong>High Contrast Mode</strong>
+                      <strong>{t('settings.highContrast', 'High Contrast Mode')}</strong>
                     </span>
                   }
                   checked={settings.highContrast}
@@ -335,7 +345,7 @@ const Settings = ({ show, handleClose }) => {
                   className="fs-5"
                 />
                 <small className="text-muted ms-4 ps-2">
-                  Increases contrast for better visibility
+                  {t('settings.highContrastDesc', 'Increases contrast for better visibility')}
                 </small>
               </div>
 
@@ -346,7 +356,7 @@ const Settings = ({ show, handleClose }) => {
                   label={
                     <span className="d-flex align-items-center">
                       <AlignLeft size={18} className="me-2" style={{ color: '#667eea' }} />
-                      <strong>Reading Guide Line</strong>
+                      <strong>{t('settings.readingGuide', 'Reading Guide Line')}</strong>
                     </span>
                   }
                   checked={settings.readingGuide}
@@ -354,7 +364,7 @@ const Settings = ({ show, handleClose }) => {
                   className="fs-5"
                 />
                 <small className="text-muted ms-4 ps-2">
-                  Shows a line to help track reading position
+                  {t('settings.readingGuideDesc', 'Shows a line to help track reading position')}
                 </small>
               </div>
 
@@ -365,20 +375,41 @@ const Settings = ({ show, handleClose }) => {
             </div>
           </Tab>
 
-          {/* Preview Tab */}
+          {/* Language & Preview Tab */}
           <Tab 
             eventKey="preview" 
             title={
               <span>
                 <Eye size={16} className="me-2" />
-                Preview
+                {t('settings.tabs.preview', 'Preview')}
               </span>
             }
           >
             <div className="pt-3">
+              {/* Current Language Display */}
+              <Card className="border-info mb-3">
+                <Card.Body>
+                  <div className="d-flex align-items-center justify-content-between">
+                    <div className="d-flex align-items-center">
+                      <Globe size={20} className="me-2 text-primary" />
+                      <div>
+                        <strong>{t('settings.currentLanguage', 'Current Language')}:</strong>
+                        <div className="text-muted small">
+                          {languageConfig.nativeName} ({languageConfig.name})
+                        </div>
+                      </div>
+                    </div>
+                    <Badge bg="primary" className="fs-6">
+                      {currentLanguage.toUpperCase()}
+                    </Badge>
+                  </div>
+                </Card.Body>
+              </Card>
+
+              {/* Preview Text */}
               <Card className="border-primary">
                 <Card.Body>
-                  <h5 className="mb-3">Preview Text</h5>
+                  <h5 className="mb-3">{t('settings.previewText', 'Preview Text')}</h5>
                   <div
                     style={{
                       fontFamily: settings.fontFamily,
@@ -393,32 +424,36 @@ const Settings = ({ show, handleClose }) => {
                     }}
                   >
                     <p>
-                      The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.
+                      {t('settings.previewSentence1', 'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.')}
                     </p>
                     <p>
-                      Reading should be comfortable and easy. These settings help you customize the text to your preferences.
+                      {t('settings.previewSentence2', 'Reading should be comfortable and easy. These settings help you customize the text to your preferences.')}
                     </p>
                     <p className="mb-0">
-                      Adjust the settings until the text feels just right for you!
+                      {t('settings.previewSentence3', 'Adjust the settings until the text feels just right for you!')}
                     </p>
                   </div>
                 </Card.Body>
               </Card>
 
+              {/* Current Settings Summary */}
               <div className="mt-3 p-3 bg-light rounded">
-                <h6 className="text-muted">Current Settings:</h6>
+                <h6 className="text-muted">{t('settings.currentSettings', 'Current Settings')}:</h6>
                 <Row>
                   <Col xs={6}>
-                    <small><strong>Font:</strong> {settings.fontFamily}</small>
+                    <small><strong>{t('settings.font', 'Font')}:</strong> {settings.fontFamily}</small>
                   </Col>
                   <Col xs={6}>
-                    <small><strong>Size:</strong> {settings.fontSize}px</small>
+                    <small><strong>{t('settings.size', 'Size')}:</strong> {settings.fontSize}px</small>
                   </Col>
                   <Col xs={6}>
-                    <small><strong>Brightness:</strong> {settings.brightness}%</small>
+                    <small><strong>{t('settings.brightness', 'Brightness')}:</strong> {settings.brightness}%</small>
                   </Col>
                   <Col xs={6}>
-                    <small><strong>Theme:</strong> {settings.colorTheme}</small>
+                    <small><strong>{t('settings.theme', 'Theme')}:</strong> {settings.colorTheme}</small>
+                  </Col>
+                  <Col xs={12} className="mt-2">
+                    <small><strong>{t('settings.language', 'Language')}:</strong> {languageConfig.nativeName}</small>
                   </Col>
                 </Row>
               </div>
@@ -434,13 +469,13 @@ const Settings = ({ show, handleClose }) => {
           className="me-auto"
         >
           <RotateCcw size={16} className="me-2" />
-          Reset to Default
+          {t('settings.resetDefault', 'Reset to Default')}
         </Button>
         <Button variant="secondary" onClick={handleClose}>
-          Close
+          {t('settings.close', 'Close')}
         </Button>
         <Button variant="primary" onClick={handleClose}>
-          Save Changes
+          {t('settings.saveChanges', 'Save Changes')}
         </Button>
       </Modal.Footer>
 

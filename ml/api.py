@@ -1,80 +1,189 @@
-# ml/api.py
-
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import sys
 import os
-import json
+import sys
 import nltk
 
-# --- SETUP NLTK DATA (Must be done before importing NLP modules) ---
+# --------------------------------------------------
+# NLTK SETUP (RUN ONCE AT STARTUP)
+# --------------------------------------------------
 def setup_nltk():
-    """Download and setup required NLTK resources"""
-    required_resources = ['punkt_tab', 'averaged_perceptron_tagger', 'wordnet']
-    
+    required_resources = ["punkt"]
     for resource in required_resources:
         try:
-            nltk.data.find(f'tokenizers/{resource}')
+            nltk.data.find(f"tokenizers/{resource}")
         except LookupError:
-            try:
-                nltk.download(resource, quiet=True)
-                print(f"✓ Downloaded NLTK resource: {resource}")
-            except Exception as e:
-                print(f"⚠ Warning: Could not download {resource}: {e}")
+            nltk.download(resource, quiet=True)
 
-# Call setup before importing NLP modules
 setup_nltk()
 
-# Add the current directory to Python path
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+# --------------------------------------------------
+# PATH SETUP
+# --------------------------------------------------
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(PROJECT_ROOT)
 
-# Import the NLP analysis function
-from nlp.reading_analysis import analyze_reading_content 
+# --------------------------------------------------
+# IMPORT PROJECT MODULES
+# --------------------------------------------------
+from ocr.process_text import extract_text_from_image
+from speech.recognition import text_to_speech
+from nlp.reading_analysis import analyze_text
+from config.languageConfig import is_valid_language, DEFAULT_LANGUAGE
 
+# --------------------------------------------------
+# FLASK APP SETUP
+# --------------------------------------------------
 app = Flask(__name__)
 CORS(app)
 PORT = 5050
 
-# --- Home/Test Route (ADD THIS) ---
-@app.route('/')
+AUDIO_DIR = os.path.join(PROJECT_ROOT, "backend", "audio_temp")
+
+# --------------------------------------------------
+# HOME / HEALTH ROUTES
+# --------------------------------------------------
+@app.route("/", methods=["GET"])
 def home():
     return jsonify({
-        "status": "ML Service is running!",
+        "status": "ML Service is running",
         "version": "1.0",
-        "endpoints": ["/api/v1/analyze-content"]
+        "supported_languages": ["en", "hi", "kn"],
+        "endpoints": {
+            "health": "/health",
+            "ocr": "/api/v1/ocr",
+            "tts": "/api/v1/tts",
+            "analysis": "/api/v1/analyze-content",
+            "audio": "/audio/<filename>"
+        }
     })
 
-# --- Core NLP Analysis Endpoint ---
-@app.route('/api/v1/analyze-content', methods=['POST'])
-def analyze_content_route():
-    """
-    Analyzes content received from the frontend (OCR result or manual text).
-    """
-    data = request.json
-    text_content = data.get('text')
-    
-    if not text_content:
-        return jsonify({"message": "Missing 'text' parameter for analysis."}), 400
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "service": "ML API"
+    }), 200
 
+# --------------------------------------------------
+# OCR ENDPOINT
+# --------------------------------------------------
+@app.route("/api/v1/ocr", methods=["POST"])
+def ocr_endpoint():
     try:
-        analysis_results = analyze_reading_content(text_content)
-        
-        return jsonify({
-            "success": True,
-            "analysis": analysis_results
-        })
+        if "image" not in request.files:
+            return jsonify({
+                "success": False,
+                "error": "No image file provided"
+            }), 400
+
+        image = request.files["image"]
+        language = request.form.get("language", DEFAULT_LANGUAGE)
+
+        if not is_valid_language(language):
+            language = DEFAULT_LANGUAGE
+
+        temp_path = f"temp_{image.filename}"
+        image.save(temp_path)
+
+        result = extract_text_from_image(temp_path, language)
+
+        os.remove(temp_path)
+
+        return jsonify(result), 200 if result.get("success") else 500
+
     except Exception as e:
-        print(f"Error during NLP analysis: {e}", file=sys.stderr)
         return jsonify({
             "success": False,
-            "message": "Internal error during NLP processing."
+            "error": str(e)
         }), 500
 
-# --- Serve Static Audio Files ---
-@app.route('/audio/<filename>')
-def serve_audio(filename):
-    return send_from_directory('audio_temp', filename) 
+# --------------------------------------------------
+# TEXT TO SPEECH ENDPOINT
+# --------------------------------------------------
+@app.route("/api/v1/tts", methods=["POST"])
+def tts_endpoint():
+    try:
+        data = request.get_json()
 
-if __name__ == '__main__':
-    print(f"ML Service running on http://localhost:{PORT}")
-    app.run(port=PORT, debug=True)
+        if not data or "text" not in data:
+            return jsonify({
+                "success": False,
+                "error": "No text provided"
+            }), 400
+
+        text = data["text"]
+        language = data.get("language", DEFAULT_LANGUAGE)
+        speed = float(data.get("speed", 1.0))
+
+        if not is_valid_language(language):
+            language = DEFAULT_LANGUAGE
+
+        result = text_to_speech(text, language, speed)
+
+        return jsonify(result), 200 if result.get("success") else 500
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# --------------------------------------------------
+# TEXT ANALYSIS ENDPOINT
+# --------------------------------------------------
+@app.route("/api/v1/analyze-content", methods=["POST"])
+def analyze_endpoint():
+    try:
+        data = request.get_json()
+
+        if not data or "text" not in data:
+            return jsonify({
+                "success": False,
+                "error": "No text provided"
+            }), 400
+
+        text = data["text"]
+        language = data.get("language", DEFAULT_LANGUAGE)
+
+        if not is_valid_language(language):
+            language = DEFAULT_LANGUAGE
+
+        result = analyze_text(text, language)
+
+        if not result.get("success"):
+            return jsonify(result), 500
+
+        return jsonify({
+            "success": True,
+            "analysis": {
+                "language": result.get("language", language),
+                "script": result.get("script", "Unknown"),
+                "reading_level": result.get("reading_level", "Unknown"),
+                "difficulty_score": result.get("difficulty_score", 0.0),
+                "challenging_words": result.get("challenging_words", []),
+                "statistics": result.get("statistics", {})
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# --------------------------------------------------
+# SERVE GENERATED AUDIO FILES
+# --------------------------------------------------
+@app.route("/audio/<filename>")
+def serve_audio(filename):
+    return send_from_directory(AUDIO_DIR, filename)
+
+# --------------------------------------------------
+# MAIN
+# --------------------------------------------------
+if __name__ == "__main__":
+    print("🚀 Starting ML API Server")
+    print(f"🌐 http://localhost:{PORT}")
+    print("🗣 Supported languages: en, hi, kn")
+    app.run(host="0.0.0.0", port=PORT, debug=True)

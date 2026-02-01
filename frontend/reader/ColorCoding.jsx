@@ -1,7 +1,9 @@
-// frontend/reader/ColorCoding.jsx - COMPLETE WITH INTERACTIVE FEATURES
+// frontend/reader/ColorCoding.jsx - COMPLETE WITH MULTI-LANGUAGE SUPPORT
 
 import React, { useState } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 import { getCompleteColorMap } from '../config/colorCodingConfig';
+import { CONFUSING_LETTERS } from '../config/languageConfig';
 
 const ColorCoding = ({ 
   text, 
@@ -12,6 +14,7 @@ const ColorCoding = ({
   difficultWords = []
 }) => {
   const [hoveredWord, setHoveredWord] = useState(null);
+  const { currentLanguage } = useLanguage();
   
   if (!text) {
     return null;
@@ -30,7 +33,30 @@ const ColorCoding = ({
     );
   }
 
-  const colorMap = getCompleteColorMap();
+  // Get color map based on language
+  const getColorMapForLanguage = () => {
+    // First, try to get language-specific confusing letters
+    const languageSpecificLetters = CONFUSING_LETTERS[currentLanguage] || {};
+    
+    // If language has specific confusing letters, create color map from them
+    if (Object.keys(languageSpecificLetters).length > 0) {
+      const languageColorMap = {};
+      Object.keys(languageSpecificLetters).forEach(letter => {
+        const config = languageSpecificLetters[letter];
+        languageColorMap[letter.toLowerCase()] = config.color;
+        languageColorMap[letter.toUpperCase()] = config.color;
+      });
+      
+      console.log(`✅ Using ${currentLanguage} color map:`, languageColorMap);
+      return languageColorMap;
+    }
+    
+    // Fallback to default English color map
+    console.log(`⚠️ No specific color map for ${currentLanguage}, using English default`);
+    return getCompleteColorMap();
+  };
+
+  const colorMap = getColorMapForLanguage();
 
   // Apply color with brightness/contrast adjustment - SMOOTH TRANSITION TO BLACK
   const applyColorWithIntensity = (baseColor, intensity) => {
@@ -56,6 +82,18 @@ const ColorCoding = ({
       fontWeight: intensity > 70 ? 'bold' : (intensity > 50 ? '600' : 'normal'),
       transition: 'all 0.3s ease'
     };
+  };
+
+  // Get tooltip text for confusing letter
+  const getLetterTooltip = (char) => {
+    const lowerChar = char.toLowerCase();
+    const letterConfig = CONFUSING_LETTERS[currentLanguage]?.[lowerChar];
+    
+    if (letterConfig && letterConfig.confusedWith) {
+      return `Often confused with: ${letterConfig.confusedWith.join(', ')}`;
+    }
+    
+    return null;
   };
 
   // Render single word with color coding and hover effects
@@ -93,10 +131,16 @@ const ColorCoding = ({
       >
         {word.split('').map((char, charIndex) => {
           const lowerChar = char.toLowerCase();
+          const tooltip = getLetterTooltip(char);
+          
           if (colorMap[lowerChar]) {
             const style = applyColorWithIntensity(colorMap[lowerChar], colorIntensity);
             return (
-              <span key={charIndex} style={style}>
+              <span 
+                key={charIndex} 
+                style={style}
+                title={tooltip || undefined}
+              >
                 {char}
               </span>
             );

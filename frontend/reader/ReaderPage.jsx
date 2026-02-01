@@ -1,4 +1,4 @@
-// frontend/reader/ReaderPage.jsx - COMPLETE FIXED VERSION
+// frontend/reader/ReaderPage.jsx - COMPLETE WITH LANGUAGE SUPPORT
 
 import React, { useState, useRef } from "react";
 import { Container, Card, Alert, Row, Col, Button, Spinner, ProgressBar, Form } from "react-bootstrap";
@@ -9,6 +9,8 @@ import OCRUploader from "./OCRUploader";
 import OCRSideBySidePreview from "./OCRSideBySidePreview";
 import ColorCoding from "./ColorCoding";
 import { useAccessibility } from "../components/AccessibilityContext";
+import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 import { getCompleteColorMap } from '../config/colorCodingConfig';
 
 const DEFAULT_CONTENT =
@@ -38,6 +40,8 @@ const POINT_SYSTEM = {
 
 const ReaderPage = ({ userId }) => {
   const { settings } = useAccessibility();
+  const { currentLanguage, languageConfig } = useLanguage();
+  const { t } = useTranslation();
 
   const [currentReadingContent, setCurrentReadingContent] = useState(DEFAULT_CONTENT);
   const [colorCodingEnabled, setColorCodingEnabled] = useState(true);
@@ -75,6 +79,8 @@ const ReaderPage = ({ userId }) => {
 
   const [pointsPopup, setPointsPopup] = useState(null);
   const [difficultWords, setDifficultWords] = useState([]);
+  const [readingLevel, setReadingLevel] = useState('Unknown');
+  const [difficultyScore, setDifficultyScore] = useState(0);
 
   const recognitionRef = useRef(null);
   const shouldContinueRef = useRef(true);
@@ -138,17 +144,14 @@ const ReaderPage = ({ userId }) => {
     setIsViewingPreview(true);
   };
 
-  const loadExtractedText = async () => {
-    if (!previewText) return;
-    setIsAnalyzing(true);
-
+  const analyzeText = async (text) => {
     try {
       const response = await fetch("http://localhost:5000/api/ml/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          text: previewText,
-          source: previewSource,
+          text: text,
+          language: currentLanguage,  // Send current language
           saveToFile: true  
         }),
       });
@@ -156,12 +159,38 @@ const ReaderPage = ({ userId }) => {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        const analysis = data.analysis || {};
+        setDifficultWords(analysis.challenging_words || []);
+        setDifficultyScore(analysis.difficulty_score || 0);
+        setReadingLevel(analysis.reading_level || 'Unknown');
+        
+        console.log('✅ Text analysis:', analysis);
+        console.log('📊 Language:', currentLanguage);
+        console.log('🎯 Difficult words:', analysis.challenging_words);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('❌ Analysis Error:', error);
+      return null;
+    }
+  };
+
+  const loadExtractedText = async () => {
+    if (!previewText) return;
+    setIsAnalyzing(true);
+
+    try {
+      const analysisResult = await analyzeText(previewText);
+
+      if (analysisResult && analysisResult.success) {
         setCurrentReadingContent(previewText);
         setContentSource(previewSource || "Uploaded / Manual");
         setPreviewText(null);
         setPreviewFile(null);
         setIsViewingPreview(false);
       } else {
+        // Even if analysis fails, still load the text
         setCurrentReadingContent(previewText);
         setContentSource(previewSource || "Uploaded / Manual");
         setIsViewingPreview(false);
@@ -173,6 +202,43 @@ const ReaderPage = ({ userId }) => {
       setIsViewingPreview(false);
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const saveSession = async () => {
+    if (!userId) {
+      console.warn('No userId provided, skipping session save');
+      return;
+    }
+
+    try {
+      const sessionData = {
+        userId: userId,
+        sessionType: 'reading',
+        content: currentReadingContent,
+        wpm: 0, // Calculate if needed
+        accuracy: 0, // Calculate if needed
+        readingTimeSec: 0, // Track if needed
+        difficultWords: difficultWords,
+        language: currentLanguage,  // Include current language
+        timestamp: new Date().toISOString()
+      };
+      
+      const response = await fetch('http://localhost:5000/api/reading/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sessionData)
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('✅ Session saved successfully!');
+      } else {
+        console.error('❌ Failed to save session:', data.error);
+      }
+    } catch (error) {
+      console.error('❌ Save Session Error:', error);
     }
   };
 
@@ -191,6 +257,12 @@ const ReaderPage = ({ userId }) => {
 
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(word);
+      
+      // Use language-specific voice if available
+      if (languageConfig && languageConfig.ttsCode) {
+        utterance.lang = languageConfig.ttsCode;
+      }
+      
       utterance.rate = STT_CONFIG.SPEECH_RATE;
       utterance.pitch = 1.1;
       utterance.volume = 1;
@@ -205,7 +277,7 @@ const ReaderPage = ({ userId }) => {
       if (!SpeechRecognition) {
         setFeedback({
           type: "warning",
-          message: "Speech Recognition not supported."
+          message: t('reader.speechNotSupported') || "Speech Recognition not supported."
         });
         resolve({ success: false, skip: true });
         return;
@@ -216,7 +288,14 @@ const ReaderPage = ({ userId }) => {
       }
 
       const recognition = new SpeechRecognition();
-      recognition.lang = "en-US";
+      
+      // Set recognition language based on current language
+      if (languageConfig && languageConfig.ttsCode) {
+        recognition.lang = languageConfig.ttsCode;
+      } else {
+        recognition.lang = "en-US";
+      }
+      
       recognition.interimResults = false;
       recognition.maxAlternatives = 3;
       recognition.continuous = false;
@@ -225,7 +304,7 @@ const ReaderPage = ({ userId }) => {
 
       setFeedback({
         type: "info",
-        message: `🎤 Speak: "${expectedWord}"`
+        message: `🎤 ${t('reader.speak')}: "${expectedWord}"`
       });
 
       let resolved = false;
@@ -236,7 +315,7 @@ const ReaderPage = ({ userId }) => {
           recognition.stop();
           setFeedback({
             type: "warning",
-            message: "⏱️ No speech detected. Try again..."
+            message: t('reader.noSpeechDetected') || "⏱️ No speech detected. Try again..."
           });
           resolve({ success: false, skip: false });
         }
@@ -263,13 +342,13 @@ const ReaderPage = ({ userId }) => {
         if (isCorrect) {
           setFeedback({
             type: "success",
-            message: `✅ Correct! "${spokenWord}"`
+            message: `✅ ${t('reader.correct') || 'Correct'}! "${spokenWord}"`
           });
           resolve({ success: true, skip: false });
         } else {
           setFeedback({
             type: "danger",
-            message: `❌ Wrong! You said "${spokenWord}"`
+            message: `❌ ${t('reader.wrong') || 'Wrong'}! ${t('reader.youSaid') || 'You said'} "${spokenWord}"`
           });
           resolve({ success: false, skip: false });
         }
@@ -280,11 +359,11 @@ const ReaderPage = ({ userId }) => {
         resolved = true;
         clearTimeout(timeout);
 
-        let errorMsg = "Error occurred. Moving to next word...";
+        let errorMsg = t('reader.errorOccurred') || "Error occurred. Moving to next word...";
         if (event.error === 'no-speech') {
-          errorMsg = "No speech detected. Moving on...";
+          errorMsg = t('reader.noSpeechMoving') || "No speech detected. Moving on...";
         } else if (event.error === 'not-allowed') {
-          errorMsg = "Microphone permission denied!";
+          errorMsg = t('reader.micPermissionDenied') || "Microphone permission denied!";
           shouldContinueRef.current = false;
         }
         
@@ -345,21 +424,21 @@ const ReaderPage = ({ userId }) => {
         if (attempts < STT_CONFIG.MAX_ATTEMPTS && shouldContinueRef.current) {
           setFeedback({
             type: "warning",
-            message: `📢 Listen: "${word}"`
+            message: `📢 ${t('reader.listen')}: "${word}"`
           });
           await speakWord(word);
           await new Promise(resolve => setTimeout(resolve, 500));
           
           setFeedback({
             type: "info",
-            message: `🔁 Try again (${attempts}/${STT_CONFIG.MAX_ATTEMPTS - 1})`
+            message: `🔁 ${t('reader.tryAgain') || 'Try again'} (${attempts}/${STT_CONFIG.MAX_ATTEMPTS - 1})`
           });
           await new Promise(resolve => setTimeout(resolve, 500));
         } else {
           if (shouldContinueRef.current) {
             setFeedback({
               type: "warning",
-              message: `Moving to next word...`
+              message: t('reader.movingToNext') || `Moving to next word...`
             });
             await new Promise(resolve => setTimeout(resolve, 1000));
             setFeedback(null);
@@ -386,9 +465,12 @@ const ReaderPage = ({ userId }) => {
       awardPoints(POINT_SYSTEM.COMPLETE_READING, 'reading');
       checkAchievements();
       
+      // Save session after completion
+      await saveSession();
+      
       setFeedback({
         type: "success",
-        message: `🎉 Completed! Great job! +${POINT_SYSTEM.COMPLETE_READING} bonus!`
+        message: `🎉 ${t('reader.completed') || 'Completed'}! ${t('reader.greatJob') || 'Great job'}! +${POINT_SYSTEM.COMPLETE_READING} ${t('reader.bonus') || 'bonus'}!`
       });
       setTimeout(() => {
         setFeedback(null);
@@ -464,15 +546,15 @@ const ReaderPage = ({ userId }) => {
 
   const getHelperText = () => {
     if (colorIntensity < 50) {
-      return '⚪ Below 50% - All text in normal black (No color support)';
+      return t('reader.colorHelper.below50') || '⚪ Below 50% - All text in normal black (No color support)';
     } else if (colorIntensity < 60) {
-      return '🌑 50-60% - Colors fading to dark (Almost independent)';
+      return t('reader.colorHelper.50to60') || '🌑 50-60% - Colors fading to dark (Almost independent)';
     } else if (colorIntensity < 70) {
-      return '🌓 60-70% - Medium colors (Gradual fade)';
+      return t('reader.colorHelper.60to70') || '🌓 60-70% - Medium colors (Gradual fade)';
     } else if (colorIntensity < 80) {
-      return '🌕 70-80% - Bright colors (Good support)';
+      return t('reader.colorHelper.70to80') || '🌕 70-80% - Bright colors (Good support)';
     } else {
-      return '⭐ 80-100% - Maximum color & bold (Beginner level)';
+      return t('reader.colorHelper.80to100') || '⭐ 80-100% - Maximum color & bold (Beginner level)';
     }
   };
 
@@ -482,6 +564,12 @@ const ReaderPage = ({ userId }) => {
     
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(word);
+    
+    // Use language-specific voice
+    if (languageConfig && languageConfig.ttsCode) {
+      utterance.lang = languageConfig.ttsCode;
+    }
+    
     utterance.rate = 0.8;
     utterance.pitch = 1.1;
     utterance.volume = 1;
@@ -500,7 +588,10 @@ const ReaderPage = ({ userId }) => {
             <Card className="p-5 text-center shadow-lg border-info">
               <Card.Body>
                 <Spinner animation="border" variant="info" className="mb-3" />
-                <h4>Analyzing Text...</h4>
+                <h4>{t('reader.analyzingText') || 'Analyzing Text...'}</h4>
+                <small className="text-muted">
+                  {t('reader.analyzingLanguage') || 'Analyzing in'}: <strong>{languageConfig?.name || currentLanguage}</strong>
+                </small>
               </Card.Body>
             </Card>
           ) : (
@@ -532,9 +623,9 @@ const ReaderPage = ({ userId }) => {
                 id="color-coding-switch"
                 label={
                   <span>
-                    <strong>Enable Color Coding for Confused Letters</strong>
+                    <strong>{t('reader.enableColorCoding') || 'Enable Color Coding for Confused Letters'}</strong>
                     <small className="d-block text-muted mt-1">
-                      Highlights b/d, p/q, m/w, n/u in different colors
+                      {t('reader.colorCodingDesc') || 'Highlights b/d, p/q, m/w, n/u in different colors'}
                     </small>
                   </span>
                 }
@@ -551,7 +642,7 @@ const ReaderPage = ({ userId }) => {
                   <Form.Group className="mb-3">
                     <div className="d-flex justify-content-between align-items-center mb-3">
                       <Form.Label className="mb-0">
-                        <strong>🎨 Color Brightness & Contrast</strong>
+                        <strong>🎨 {t('reader.colorBrightness') || 'Color Brightness & Contrast'}</strong>
                       </Form.Label>
                       <span className={`badge ${colorIntensity < 50 ? 'bg-secondary' : 'bg-primary'}`}>
                         {colorIntensity}%
@@ -593,8 +684,8 @@ const ReaderPage = ({ userId }) => {
                     </div>
                     
                     <div className="d-flex justify-content-between small text-muted mb-2">
-                      <span>🌙 Less</span>
-                      <span>⚡ More</span>
+                      <span>🌙 {t('reader.less') || 'Less'}</span>
+                      <span>⚡ {t('reader.more') || 'More'}</span>
                     </div>
                     
                     <Form.Text className="text-muted d-block">
@@ -607,40 +698,40 @@ const ReaderPage = ({ userId }) => {
                   {/* Color Guide */}
                   <div>
                     <h6 className="mb-3">
-                      <strong>🎨 Color Guide</strong>
+                      <strong>🎨 {t('reader.colorGuide') || 'Color Guide'}</strong>
                     </h6>
                     <div className="small">
                       <div className="mb-2">
                         <span style={{ color: '#3498db', fontWeight: 'bold' }}>b</span>
-                        <span className="ms-2 text-muted">Blue - right →</span>
+                        <span className="ms-2 text-muted">{t('reader.blueRight') || 'Blue - right →'}</span>
                       </div>
                       <div className="mb-2">
                         <span style={{ color: '#e74c3c', fontWeight: 'bold' }}>d</span>
-                        <span className="ms-2 text-muted">Red - left ←</span>
+                        <span className="ms-2 text-muted">{t('reader.redLeft') || 'Red - left ←'}</span>
                       </div>
                       <div className="mb-2">
                         <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>p</span>
-                        <span className="ms-2 text-muted">Green - down right</span>
+                        <span className="ms-2 text-muted">{t('reader.greenDown') || 'Green - down right'}</span>
                       </div>
                       <div className="mb-2">
                         <span style={{ color: '#f39c12', fontWeight: 'bold' }}>q</span>
-                        <span className="ms-2 text-muted">Orange - down left</span>
+                        <span className="ms-2 text-muted">{t('reader.orangeDown') || 'Orange - down left'}</span>
                       </div>
                       <div className="mb-2">
                         <span style={{ color: '#34495e', fontWeight: 'bold' }}>n</span>
-                        <span className="ms-2 text-muted">Gray - opens down</span>
+                        <span className="ms-2 text-muted">{t('reader.grayDown') || 'Gray - opens down'}</span>
                       </div>
                       <div className="mb-2">
                         <span style={{ color: '#e67e22', fontWeight: 'bold' }}>u</span>
-                        <span className="ms-2 text-muted">Orange - opens up</span>
+                        <span className="ms-2 text-muted">{t('reader.orangeUp') || 'Orange - opens up'}</span>
                       </div>
                       <div className="mb-2">
                         <span style={{ color: '#16a085', fontWeight: 'bold' }}>m</span>
-                        <span className="ms-2 text-muted">Teal - peaks up</span>
+                        <span className="ms-2 text-muted">{t('reader.tealPeaks') || 'Teal - peaks up'}</span>
                       </div>
                       <div className="mb-2">
                         <span style={{ color: '#c0392b', fontWeight: 'bold' }}>w</span>
-                        <span className="ms-2 text-muted">Red - valleys down</span>
+                        <span className="ms-2 text-muted">{t('reader.redValleys') || 'Red - valleys down'}</span>
                       </div>
                     </div>
                   </div>
@@ -671,7 +762,7 @@ const ReaderPage = ({ userId }) => {
             <Card className="mb-3 border-success">
               <Card.Body>
                 <div className="d-flex justify-content-between mb-2">
-                  <span><strong>Overall Progress</strong></span>
+                  <span><strong>{t('reader.overallProgress') || 'Overall Progress'}</strong></span>
                   <span className="text-success fw-bold">
                     {currentWordIndex + 1}/{wordsArray.length}
                   </span>
@@ -684,7 +775,7 @@ const ReaderPage = ({ userId }) => {
                   style={{ height: '30px', fontSize: '1rem' }}
                 />
                 <small className="text-muted d-block mt-2">
-                  Points this session: <strong className="text-success">
+                  {t('reader.pointsThisSession') || 'Points this session'}: <strong className="text-success">
                     {gameStats.sessionPoints}
                   </strong>
                 </small>
@@ -694,7 +785,7 @@ const ReaderPage = ({ userId }) => {
 
           <Card className="mb-3 border-primary shadow-sm">
             <Card.Body>
-              <h5 className="mb-3">Reading Mode</h5>
+              <h5 className="mb-3">{t('reader.readingMode') || 'Reading Mode'}</h5>
               
               <div className="form-check form-switch mb-3">
                 <input
@@ -708,8 +799,8 @@ const ReaderPage = ({ userId }) => {
                 <label className="form-check-label" htmlFor="modeToggle">
                   <strong>
                     {pronunciationMode 
-                      ? "🎤 Student Reads (STT Mode)" 
-                      : "🔊 Computer Reads (TTS Mode)"}
+                      ? `🎤 ${t('reader.studentReads') || 'Student Reads (STT Mode)'}` 
+                      : `🔊 ${t('reader.computerReads') || 'Computer Reads (TTS Mode)'}`}
                   </strong>
                 </label>
               </div>
@@ -717,12 +808,12 @@ const ReaderPage = ({ userId }) => {
               {pronunciationMode ? (
                 <div>
                   <Alert variant="info" className="small mb-3">
-                    💡 <strong>How it works:</strong>
+                    💡 <strong>{t('reader.howItWorks') || 'How it works'}:</strong>
                     <ul className="mb-0 mt-2">
-                      <li>Speak each word clearly when prompted</li>
-                      <li>✅ Correct → +{POINT_SYSTEM.CORRECT_PRONUNCIATION} points</li>
-                      <li>❌ Wrong → hear correct version, try again</li>
-                      <li>🎉 Complete all → +{POINT_SYSTEM.COMPLETE_READING} bonus!</li>
+                      <li>{t('reader.speakClearly') || 'Speak each word clearly when prompted'}</li>
+                      <li>✅ {t('reader.correctPoints', { points: POINT_SYSTEM.CORRECT_PRONUNCIATION }) || `Correct → +${POINT_SYSTEM.CORRECT_PRONUNCIATION} points`}</li>
+                      <li>❌ {t('reader.wrongRetry') || 'Wrong → hear correct version, try again'}</li>
+                      <li>🎉 {t('reader.completeBonus', { bonus: POINT_SYSTEM.COMPLETE_READING }) || `Complete all → +${POINT_SYSTEM.COMPLETE_READING} bonus!`}</li>
                     </ul>
                   </Alert>
                   {!isSTTActive ? (
@@ -733,7 +824,7 @@ const ReaderPage = ({ userId }) => {
                       onClick={startSTTReading}
                     >
                       <Play size={20} className="me-2" />
-                      Start Reading Practice
+                      {t('reader.startReadingPractice') || 'Start Reading Practice'}
                     </Button>
                   ) : (
                     <Button
@@ -743,7 +834,7 @@ const ReaderPage = ({ userId }) => {
                       onClick={stopSTTReading}
                     >
                       <Square size={20} className="me-2" />
-                      Stop Practice
+                      {t('reader.stopPractice') || 'Stop Practice'}
                     </Button>
                   )}
                 </div>
@@ -775,12 +866,15 @@ const ReaderPage = ({ userId }) => {
           {isSTTActive && currentWord && (
             <Card className="mb-3 bg-light">
               <Card.Body className="text-center">
-                <h6 className="text-muted">Current Word:</h6>
+                <h6 className="text-muted">{t('reader.currentWord') || 'Current Word'}:</h6>
                 <h2 style={{ fontSize: "2.5rem" }}>
                   {renderColoredWord(currentWord)}
                 </h2>
                 <small className="text-muted">
-                  Word {currentWordIndex + 1} of {wordsArray.length}
+                  {t('reader.wordCount', { 
+                    current: currentWordIndex + 1, 
+                    total: wordsArray.length 
+                  }) || `Word ${currentWordIndex + 1} of ${wordsArray.length}`}
                 </small>
               </Card.Body>
             </Card>
@@ -788,7 +882,7 @@ const ReaderPage = ({ userId }) => {
 
           <Card className="shadow-sm">
             <Card.Header className="bg-light">
-              <h5 className="mb-0">📄 Reading Text</h5>
+              <h5 className="mb-0">📄 {t('reader.readingText') || 'Reading Text'}</h5>
             </Card.Header>
             <Card.Body style={{ backgroundColor: '#f8f9fa', padding: '2rem' }}>
               <ColorCoding 
@@ -803,7 +897,12 @@ const ReaderPage = ({ userId }) => {
           </Card>
 
           <Alert variant="info" className="mt-2 small">
-            Text Loaded: <strong>{contentSource}</strong>
+            {t('reader.textLoaded') || 'Text Loaded'}: <strong>{contentSource}</strong>
+            {languageConfig && (
+              <span className="ms-2">
+                | {t('reader.language') || 'Language'}: <strong>{languageConfig.name}</strong>
+              </span>
+            )}
           </Alert>
 
           {/* Difficult Words Alert */}
@@ -811,7 +910,7 @@ const ReaderPage = ({ userId }) => {
             <Alert variant="warning" className="mt-3">
               <div className="d-flex justify-content-between align-items-center">
                 <div>
-                  <strong>🎯 Practice These Words:</strong>
+                  <strong>🎯 {t('reader.practiceWords') || 'Practice These Words'}:</strong>
                   <div className="mt-2">
                     {difficultWords.map((word, index) => (
                       <span
@@ -847,7 +946,7 @@ const ReaderPage = ({ userId }) => {
                   size="sm"
                   onClick={() => setDifficultWords([])}
                 >
-                  Clear
+                  {t('common.buttons.clear') || 'Clear'}
                 </Button>
               </div>
             </Alert>

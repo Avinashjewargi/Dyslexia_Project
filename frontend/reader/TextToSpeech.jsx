@@ -1,8 +1,10 @@
-// frontend/reader/TextToSpeech.jsx - FIXED WITH COLOR CODING
+// frontend/reader/TextToSpeech.jsx - WITH LANGUAGE SUPPORT
 
 import React, { useState, useEffect } from "react";
 import { Card, Badge } from "react-bootstrap";
 import { Play, Pause, RotateCcw, Volume2, VolumeX, Sparkles } from "lucide-react";
+import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslation } from 'react-i18next';
 
 const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredWord }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -12,6 +14,27 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
   const [progress, setProgress] = useState(0);
   const [readingSpeed, setReadingSpeed] = useState(0.8);
   const [isMuted, setIsMuted] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState([]);
+
+  // Add language context and translation
+  const { currentLanguage, languageConfig } = useLanguage();
+  const { t } = useTranslation();
+
+  // Load available voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      setAvailableVoices(voices);
+      console.log('Available voices:', voices);
+    };
+
+    loadVoices();
+    
+    // Chrome loads voices asynchronously
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -19,9 +42,39 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
     };
   }, []);
 
+  // Get the best voice for current language
+  const getLanguageVoice = () => {
+    if (!languageConfig || !languageConfig.ttsCode) {
+      return null;
+    }
+
+    const voices = availableVoices;
+    
+    // Try to find exact match (e.g., 'hi-IN')
+    let voice = voices.find(v => v.lang === languageConfig.ttsCode);
+    
+    // If not found, try to find voice that starts with language code (e.g., 'hi')
+    if (!voice) {
+      voice = voices.find(v => v.lang.startsWith(currentLanguage));
+    }
+    
+    // Fallback to any voice containing the language code
+    if (!voice) {
+      voice = voices.find(v => v.lang.toLowerCase().includes(currentLanguage));
+    }
+
+    if (voice) {
+      console.log(`✅ Using voice for ${currentLanguage}:`, voice.name, voice.lang);
+    } else {
+      console.warn(`⚠️ No voice found for ${currentLanguage}, using default`);
+    }
+
+    return voice;
+  };
+
   const speakText = () => {
     if (!("speechSynthesis" in window)) {
-      alert("Sorry! Your browser doesn't support text-to-speech.");
+      alert(t('reader.browserNotSupported') || "Sorry! Your browser doesn't support text-to-speech.");
       return;
     }
 
@@ -45,11 +98,29 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
       setProgress(Math.floor((wordIndex / words.length) * 100));
 
       const utterance = new SpeechSynthesisUtterance(word);
+      
+      // Set language-specific voice
+      const languageVoice = getLanguageVoice();
+      if (languageVoice) {
+        utterance.voice = languageVoice;
+      }
+      
+      // Set language code
+      if (languageConfig && languageConfig.ttsCode) {
+        utterance.lang = languageConfig.ttsCode;
+      }
+      
       utterance.rate = readingSpeed;
       utterance.pitch = 1.1;
       utterance.volume = isMuted ? 0 : 1;
 
       utterance.onend = () => {
+        wordIndex++;
+        speakNextWord();
+      };
+
+      utterance.onerror = (event) => {
+        console.error('Speech synthesis error:', event);
         wordIndex++;
         speakNextWord();
       };
@@ -141,9 +212,11 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
               <Volume2 size={28} className="text-white" />
             </div>
             <div>
-              <h5 className="mb-0 text-white fw-bold">Computer Reads Aloud</h5>
+              <h5 className="mb-0 text-white fw-bold">
+                {t('reader.computerReadsAloud') || 'Computer Reads Aloud'}
+              </h5>
               <small className="text-white" style={{ opacity: 0.9 }}>
-                Listen and follow along
+                {t('reader.listenFollowAlong') || 'Listen and follow along'}
               </small>
             </div>
           </div>
@@ -156,6 +229,7 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
               border: "none",
               boxShadow: "0 4px 15px rgba(0, 0, 0, 0.2)",
             }}
+            title={isMuted ? t('reader.unmute') : t('reader.mute')}
           >
             {isMuted ? <VolumeX size={22} /> : <Volume2 size={22} />}
           </button>
@@ -183,7 +257,9 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
             </div>
             <div className="d-flex justify-content-between mt-2">
               <small className="text-white fw-bold">{progress}%</small>
-              <small className="text-white">Reading...</small>
+              <small className="text-white">
+                {t('reader.reading') || 'Reading...'}
+              </small>
             </div>
           </div>
         )}
@@ -222,7 +298,10 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
               {displayCurrentWord()}
             </h2>
             <small className="text-muted d-block mt-2">
-              Word {currentWordIndex + 1} of {text.split(" ").filter(w => w.trim()).length}
+              {t('reader.wordCount', { 
+                current: currentWordIndex + 1, 
+                total: text.split(" ").filter(w => w.trim()).length 
+              }) || `Word ${currentWordIndex + 1} of ${text.split(" ").filter(w => w.trim()).length}`}
             </small>
           </div>
         )}
@@ -231,7 +310,7 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
         <div className="mb-4">
           <div className="d-flex justify-content-between align-items-center mb-2">
             <label className="text-white fw-bold mb-0">
-              Reading Speed
+              {t('reader.readingSpeed') || 'Reading Speed'}
             </label>
             <Badge 
               bg="light" 
@@ -256,8 +335,8 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
             }}
           />
           <div className="d-flex justify-content-between mt-2">
-            <small className="text-white">🐢 Slow</small>
-            <small className="text-white">🐇 Fast</small>
+            <small className="text-white">🐢 {t('reader.slow') || 'Slow'}</small>
+            <small className="text-white">🐇 {t('reader.fast') || 'Fast'}</small>
           </div>
         </div>
 
@@ -284,7 +363,7 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
               }}
             >
               <Play size={24} />
-              Start Reading
+              {t('reader.startReading') || 'Start Reading'}
             </button>
           )}
 
@@ -311,7 +390,7 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
               }}
             >
               <Pause size={24} />
-              Pause
+              {t('common.buttons.pause') || 'Pause'}
             </button>
           )}
 
@@ -338,7 +417,7 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
               }}
             >
               <Play size={24} />
-              Resume
+              {t('common.buttons.resume') || 'Resume'}
             </button>
           )}
 
@@ -346,6 +425,7 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
             <button
               className="btn py-3 px-4 d-flex align-items-center justify-content-center"
               onClick={stopSpeech}
+              title={t('common.buttons.stop') || 'Stop'}
               style={{
                 borderRadius: "12px",
                 border: "none",
@@ -372,7 +452,18 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
         {!isPlaying && !isPaused && !currentWord && (
           <div className="text-center mt-3">
             <small className="text-white" style={{ opacity: 0.8 }}>
-              Click start to begin reading the text aloud
+              {t('reader.clickStartToRead') || 'Click start to begin reading the text aloud'}
+            </small>
+          </div>
+        )}
+
+        {/* Language Voice Info (Debug - can be removed in production) */}
+        {availableVoices.length > 0 && (
+          <div className="text-center mt-2">
+            <small className="text-white" style={{ opacity: 0.6, fontSize: '0.75rem' }}>
+              {languageConfig && languageConfig.name 
+                ? `${t('reader.using') || 'Using'} ${languageConfig.name} ${t('reader.voice') || 'voice'}`
+                : ''}
             </small>
           </div>
         )}
