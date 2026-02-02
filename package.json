@@ -10,6 +10,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "aframe": "^1.7.1",
+    "ar.js": "^2.2.2",
     "bootstrap": "^5.3.8",
     "lucide-react": "^0.562.0",
     "react-bootstrap": "^2.10.10"

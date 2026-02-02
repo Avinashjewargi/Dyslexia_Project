@@ -160,7 +160,6 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
                 Login
               </Button>
             )}
-
             {/* Accessibility Settings - TOP RIGHT CORNER */}
             <Button 
               variant="outline-primary" 
