@@ -1,2 +1,21 @@
-# ml/requirements.txt
+# Web framework
+flask
+flask-cors
+
+# OCR
+pytesseract
+Pillow
+
+# Text-to-Speech
+gtts
+
+# Speech-to-Text
+SpeechRecognition
+
+# NLP & Language Processing
 nltk
+langdetect
+indic-nlp-library
+
+# Audio processing (recommended)
+pydub

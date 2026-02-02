@@ -1,10 +1,10 @@
-// frontend/dashboard/StudentDashboard.jsx
+// frontend/dashboard/StudentDashboard.jsx (WITH TRANSLATIONS)
 
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Badge, ProgressBar, Alert, Table } from "react-bootstrap";
+import { Container, Row, Col, Card, Badge, ProgressBar, Alert, Table, Dropdown } from "react-bootstrap";
 import { 
   BookOpen, Trophy, Flame, Target, Clock, TrendingUp, 
-  Award, Star, Calendar, Brain, Zap, CheckCircle, BarChart3 
+  Award, Star, Calendar, Brain, Zap, CheckCircle, BarChart3, Globe 
 } from "lucide-react";
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, 
@@ -13,6 +13,8 @@ import {
   Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis 
 } from "recharts";
 import { fetchReadingSessions } from "../utils/firebase";
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 const GRADIENT_COLORS = {
@@ -23,8 +25,13 @@ const GRADIENT_COLORS = {
 };
 
 const StudentDashboard = ({ userId }) => {
+  const { t } = useTranslation();
+  const { currentLanguage, languageConfig } = useLanguage();
+  
   const [sessions, setSessions] = useState([]);
+  const [filteredSessions, setFilteredSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [languageFilter, setLanguageFilter] = useState('all'); // 'all' or specific language code
   
   // Realistic mock data based on actual activity
   const [stats, setStats] = useState({
@@ -43,11 +50,11 @@ const StudentDashboard = ({ userId }) => {
 
   const [weeklyData, setWeeklyData] = useState([]);
   const [skillsData, setSkillsData] = useState([
-    { skill: "Phonology", score: 0, fullMark: 100 },
-    { skill: "Fluency", score: 0, fullMark: 100 },
-    { skill: "Comprehension", score: 0, fullMark: 100 },
-    { skill: "Vocabulary", score: 0, fullMark: 100 },
-    { skill: "Accuracy", score: 0, fullMark: 100 },
+    { skill: t('dashboard.skills.phonology', 'Phonology'), score: 0, fullMark: 100 },
+    { skill: t('dashboard.skills.fluency', 'Fluency'), score: 0, fullMark: 100 },
+    { skill: t('dashboard.skills.comprehension', 'Comprehension'), score: 0, fullMark: 100 },
+    { skill: t('dashboard.skills.vocabulary', 'Vocabulary'), score: 0, fullMark: 100 },
+    { skill: t('dashboard.skills.accuracy', 'Accuracy'), score: 0, fullMark: 100 },
   ]);
 
   const [activityData, setActivityData] = useState([]);
@@ -58,6 +65,26 @@ const StudentDashboard = ({ userId }) => {
     loadDashboardData(uid);
   }, [userId]);
 
+  // Update filtered sessions when language filter changes
+  useEffect(() => {
+    if (languageFilter === 'all') {
+      setFilteredSessions(sessions);
+    } else {
+      const filtered = sessions.filter(s => s.language === languageFilter);
+      setFilteredSessions(filtered);
+    }
+  }, [languageFilter, sessions]);
+
+  // Recalculate stats when filtered sessions change
+  useEffect(() => {
+    if (filteredSessions.length > 0) {
+      calculateStatistics(filteredSessions);
+      generateWeeklyData(filteredSessions);
+      generateActivityData(filteredSessions);
+      generateDifficultyDistribution(filteredSessions);
+    }
+  }, [filteredSessions, t]);
+
   const loadDashboardData = async (uid) => {
     setLoading(true);
     try {
@@ -66,6 +93,7 @@ const StudentDashboard = ({ userId }) => {
         (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
       );
       setSessions(sorted);
+      setFilteredSessions(sorted);
       
       // Calculate real statistics from sessions
       calculateStatistics(sorted);
@@ -81,7 +109,23 @@ const StudentDashboard = ({ userId }) => {
   };
 
   const calculateStatistics = (sessions) => {
-    if (sessions.length === 0) return;
+    if (sessions.length === 0) {
+      // Reset stats if no sessions
+      setStats({
+        totalWordsRead: 0,
+        readingStreak: 0,
+        totalPoints: 0,
+        level: 1,
+        weeklyGoal: 75,
+        weeklyProgress: 0,
+        accuracyRate: 0,
+        averageWPM: 0,
+        totalMinutes: 0,
+        badgesEarned: 0,
+        sessionsCompleted: 0,
+      });
+      return;
+    }
 
     const totalWords = sessions.reduce((sum, s) => {
       const wpm = s.wpm || 0;
@@ -122,11 +166,11 @@ const StudentDashboard = ({ userId }) => {
 
     // Update skills based on performance
     setSkillsData([
-      { skill: "Phonology", score: Math.min(avgAccuracy + 5, 100), fullMark: 100 },
-      { skill: "Fluency", score: Math.min((avgWPM / 200) * 100, 100), fullMark: 100 },
-      { skill: "Comprehension", score: Math.min(avgAccuracy, 100), fullMark: 100 },
-      { skill: "Vocabulary", score: Math.min(avgAccuracy - 5, 100), fullMark: 100 },
-      { skill: "Accuracy", score: Math.min(avgAccuracy, 100), fullMark: 100 },
+      { skill: t('dashboard.skills.phonology', 'Phonology'), score: Math.min(avgAccuracy + 5, 100), fullMark: 100 },
+      { skill: t('dashboard.skills.fluency', 'Fluency'), score: Math.min((avgWPM / 200) * 100, 100), fullMark: 100 },
+      { skill: t('dashboard.skills.comprehension', 'Comprehension'), score: Math.min(avgAccuracy, 100), fullMark: 100 },
+      { skill: t('dashboard.skills.vocabulary', 'Vocabulary'), score: Math.min(avgAccuracy - 5, 100), fullMark: 100 },
+      { skill: t('dashboard.skills.accuracy', 'Accuracy'), score: Math.min(avgAccuracy, 100), fullMark: 100 },
     ]);
   };
 
@@ -163,7 +207,15 @@ const StudentDashboard = ({ userId }) => {
   };
 
   const generateWeeklyData = (sessions) => {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const days = [
+      t('dashboard.days.sun', 'Sun'),
+      t('dashboard.days.mon', 'Mon'),
+      t('dashboard.days.tue', 'Tue'),
+      t('dashboard.days.wed', 'Wed'),
+      t('dashboard.days.thu', 'Thu'),
+      t('dashboard.days.fri', 'Fri'),
+      t('dashboard.days.sat', 'Sat')
+    ];
     const weekData = days.map(day => ({ day, words: 0, accuracy: 0, time: 0, count: 0 }));
     
     const weekAgo = new Date();
@@ -204,9 +256,9 @@ const StudentDashboard = ({ userId }) => {
 
   const generateDifficultyDistribution = (sessions) => {
     const distribution = [
-      { name: 'Easy', value: 0, color: '#00C49F' },
-      { name: 'Medium', value: 0, color: '#FFBB28' },
-      { name: 'Hard', value: 0, color: '#FF8042' },
+      { name: t('dashboard.difficulty.easy', 'Easy'), value: 0, color: '#00C49F' },
+      { name: t('dashboard.difficulty.medium', 'Medium'), value: 0, color: '#FFBB28' },
+      { name: t('dashboard.difficulty.hard', 'Hard'), value: 0, color: '#FF8042' },
     ];
     
     sessions.forEach(s => {
@@ -226,11 +278,17 @@ const StudentDashboard = ({ userId }) => {
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
+  // Get unique languages from sessions
+  const getAvailableLanguages = () => {
+    const languages = new Set(sessions.map(s => s.language).filter(Boolean));
+    return Array.from(languages);
+  };
+
   if (loading) {
     return (
       <Container className="my-5 text-center">
         <div className="spinner-border text-primary" style={{ width: "3rem", height: "3rem" }}></div>
-        <h4 className="mt-3">Loading your dashboard...</h4>
+        <h4 className="mt-3">{t('dashboard.loading', 'Loading your dashboard...')}</h4>
       </Container>
     );
   }
@@ -240,11 +298,46 @@ const StudentDashboard = ({ userId }) => {
       {/* Header */}
       <Row className="mb-4">
         <Col>
-          <h1 className="display-4 fw-bold text-primary mb-2">
-            <Trophy className="me-3" size={48} />
-            My Learning Dashboard
-          </h1>
-          <p className="lead text-muted">Track your reading progress and achievements</p>
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h1 className="display-4 fw-bold text-primary mb-2">
+                <Trophy className="me-3" size={48} />
+                {t('dashboard.title', 'My Learning Dashboard')}
+              </h1>
+              <p className="lead text-muted">{t('dashboard.subtitle', 'Track your reading progress and achievements')}</p>
+            </div>
+            
+            {/* Language Filter */}
+            {sessions.length > 0 && (
+              <Dropdown>
+                <Dropdown.Toggle variant="outline-primary" id="language-filter">
+                  <Globe size={18} className="me-2" />
+                  {languageFilter === 'all' 
+                    ? t('dashboard.allLanguages', 'All Languages')
+                    : languageFilter.toUpperCase()
+                  }
+                </Dropdown.Toggle>
+                <Dropdown.Menu>
+                  <Dropdown.Item 
+                    active={languageFilter === 'all'} 
+                    onClick={() => setLanguageFilter('all')}
+                  >
+                    {t('dashboard.allLanguages', 'All Languages')}
+                  </Dropdown.Item>
+                  <Dropdown.Divider />
+                  {getAvailableLanguages().map(lang => (
+                    <Dropdown.Item 
+                      key={lang}
+                      active={languageFilter === lang}
+                      onClick={() => setLanguageFilter(lang)}
+                    >
+                      {lang.toUpperCase()}
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              </Dropdown>
+            )}
+          </div>
         </Col>
       </Row>
 
@@ -255,7 +348,7 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body className="text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <p className="mb-1 opacity-75">Total Words Read</p>
+                  <p className="mb-1 opacity-75">{t('dashboard.stats.totalWords', 'Total Words Read')}</p>
                   <h2 className="display-5 fw-bold mb-0">{stats.totalWordsRead.toLocaleString()}</h2>
                 </div>
                 <BookOpen size={40} className="opacity-50" />
@@ -269,8 +362,10 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body className="text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <p className="mb-1 opacity-75">Reading Streak</p>
-                  <h2 className="display-5 fw-bold mb-0">{stats.readingStreak} <small className="fs-5">days</small></h2>
+                  <p className="mb-1 opacity-75">{t('dashboard.stats.readingStreak', 'Reading Streak')}</p>
+                  <h2 className="display-5 fw-bold mb-0">
+                    {stats.readingStreak} <small className="fs-5">{t('dashboard.stats.days', 'days')}</small>
+                  </h2>
                 </div>
                 <Flame size={40} className="opacity-50" />
               </div>
@@ -283,7 +378,7 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body className="text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <p className="mb-1 opacity-75">Total Points</p>
+                  <p className="mb-1 opacity-75">{t('dashboard.stats.totalPoints', 'Total Points')}</p>
                   <h2 className="display-5 fw-bold mb-0">{stats.totalPoints.toLocaleString()}</h2>
                 </div>
                 <Star size={40} className="opacity-50" />
@@ -297,7 +392,7 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body className="text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <p className="mb-1 opacity-75">Current Level</p>
+                  <p className="mb-1 opacity-75">{t('dashboard.stats.currentLevel', 'Current Level')}</p>
                   <h2 className="display-5 fw-bold mb-0">{stats.level}</h2>
                 </div>
                 <Trophy size={40} className="opacity-50" />
@@ -314,11 +409,11 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <Target className="me-2 text-primary" />
-                Weekly Goal Progress
+                {t('dashboard.weeklyGoal', 'Weekly Goal Progress')}
               </h5>
               <div className="mb-3">
                 <div className="d-flex justify-content-between mb-2">
-                  <span>Weekly Sessions</span>
+                  <span>{t('dashboard.weeklySessions', 'Weekly Sessions')}</span>
                   <strong className="text-primary">{Math.round(stats.weeklyProgress)}%</strong>
                 </div>
                 <ProgressBar 
@@ -335,14 +430,14 @@ const StudentDashboard = ({ userId }) => {
                   <div className="text-center p-3 bg-light rounded">
                     <Clock className="mb-2 text-info" size={32} />
                     <h4 className="mb-0">{stats.totalMinutes}</h4>
-                    <small className="text-muted">Total Minutes</small>
+                    <small className="text-muted">{t('dashboard.totalMinutes', 'Total Minutes')}</small>
                   </div>
                 </Col>
                 <Col xs={6}>
                   <div className="text-center p-3 bg-light rounded">
                     <Zap className="mb-2 text-warning" size={32} />
                     <h4 className="mb-0">{stats.averageWPM}</h4>
-                    <small className="text-muted">Avg WPM</small>
+                    <small className="text-muted">{t('dashboard.avgWPM', 'Avg WPM')}</small>
                   </div>
                 </Col>
               </Row>
@@ -355,14 +450,14 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <Brain className="me-2 text-success" />
-                Reading Skills Radar
+                {t('dashboard.skillsRadar', 'Reading Skills Radar')}
               </h5>
               <ResponsiveContainer width="100%" height={250}>
                 <RadarChart data={skillsData}>
                   <PolarGrid stroke="#e0e0e0" />
                   <PolarAngleAxis dataKey="skill" tick={{ fontSize: 12 }} />
                   <PolarRadiusAxis angle={90} domain={[0, 100]} />
-                  <Radar name="Skills" dataKey="score" stroke="#667eea" fill="#667eea" fillOpacity={0.6} />
+                  <Radar name={t('dashboard.skills.label', 'Skills')} dataKey="score" stroke="#667eea" fill="#667eea" fillOpacity={0.6} />
                   <Tooltip />
                 </RadarChart>
               </ResponsiveContainer>
@@ -378,7 +473,7 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <TrendingUp className="me-2 text-primary" />
-                Weekly Reading Activity
+                {t('dashboard.weeklyActivity', 'Weekly Reading Activity')}
               </h5>
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={weeklyData}>
@@ -392,7 +487,7 @@ const StudentDashboard = ({ userId }) => {
                   <XAxis dataKey="day" />
                   <YAxis />
                   <Tooltip contentStyle={{ borderRadius: "10px", border: "none", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }} />
-                  <Area type="monotone" dataKey="words" stroke="#667eea" fillOpacity={1} fill="url(#colorWords)" />
+                  <Area type="monotone" dataKey="words" stroke="#667eea" fillOpacity={1} fill="url(#colorWords)" name={t('dashboard.words', 'Words')} />
                 </AreaChart>
               </ResponsiveContainer>
             </Card.Body>
@@ -404,7 +499,7 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <BarChart3 className="me-2 text-warning" />
-                Content Difficulty
+                {t('dashboard.contentDifficulty', 'Content Difficulty')}
               </h5>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
@@ -437,7 +532,7 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <Calendar className="me-2 text-info" />
-                Performance Over Time (Last 30 Sessions)
+                {t('dashboard.performanceOverTime', 'Performance Over Time (Last 30 Sessions)')}
               </h5>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={activityData}>
@@ -448,7 +543,7 @@ const StudentDashboard = ({ userId }) => {
                   <Tooltip contentStyle={{ borderRadius: "10px", border: "none", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }} />
                   <Legend />
                   <Line yAxisId="left" type="monotone" dataKey="wpm" stroke="#667eea" strokeWidth={3} name="WPM" />
-                  <Line yAxisId="right" type="monotone" dataKey="accuracy" stroke="#00C49F" strokeWidth={3} name="Accuracy %" />
+                  <Line yAxisId="right" type="monotone" dataKey="accuracy" stroke="#00C49F" strokeWidth={3} name={t('dashboard.accuracy', 'Accuracy %')} />
                 </LineChart>
               </ResponsiveContainer>
             </Card.Body>
@@ -463,48 +558,48 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <Award className="me-2 text-warning" />
-                Achievements
+                {t('dashboard.achievements', 'Achievements')}
               </h5>
               <div className="d-flex flex-wrap gap-2">
                 {stats.badgesEarned >= 1 && (
                   <Badge bg="warning" className="p-3" style={{ fontSize: "1rem" }}>
-                    🏆 First 5 Sessions
+                    🏆 {t('dashboard.badges.first5', 'First 5 Sessions')}
                   </Badge>
                 )}
                 {stats.badgesEarned >= 2 && (
                   <Badge bg="success" className="p-3" style={{ fontSize: "1rem" }}>
-                    ⭐ 10 Sessions Master
+                    ⭐ {t('dashboard.badges.master10', '10 Sessions Master')}
                   </Badge>
                 )}
                 {stats.badgesEarned >= 3 && (
                   <Badge bg="info" className="p-3" style={{ fontSize: "1rem" }}>
-                    🚀 Speed Reader
+                    🚀 {t('dashboard.badges.speedReader', 'Speed Reader')}
                   </Badge>
                 )}
                 {stats.badgesEarned >= 4 && (
                   <Badge bg="danger" className="p-3" style={{ fontSize: "1rem" }}>
-                    🎯 Accuracy Pro
+                    🎯 {t('dashboard.badges.accuracyPro', 'Accuracy Pro')}
                   </Badge>
                 )}
                 {stats.badgesEarned === 0 && (
                   <Alert variant="light">
-                    <small>Keep reading to unlock achievements!</small>
+                    <small>{t('dashboard.noBadges', 'Keep reading to unlock achievements!')}</small>
                   </Alert>
                 )}
               </div>
               
               <div className="mt-4">
-                <h6 className="mb-3">Quick Stats</h6>
+                <h6 className="mb-3">{t('dashboard.quickStats', 'Quick Stats')}</h6>
                 <div className="d-flex justify-content-between mb-2">
-                  <span>Sessions Completed</span>
+                  <span>{t('dashboard.sessionsCompleted', 'Sessions Completed')}</span>
                   <strong>{stats.sessionsCompleted}</strong>
                 </div>
                 <div className="d-flex justify-content-between mb-2">
-                  <span>Accuracy Rate</span>
+                  <span>{t('dashboard.accuracyRate', 'Accuracy Rate')}</span>
                   <strong>{stats.accuracyRate}%</strong>
                 </div>
                 <div className="d-flex justify-content-between">
-                  <span>Badges Earned</span>
+                  <span>{t('dashboard.badgesEarned', 'Badges Earned')}</span>
                   <strong>{stats.badgesEarned} / 4</strong>
                 </div>
               </div>
@@ -517,20 +612,20 @@ const StudentDashboard = ({ userId }) => {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <CheckCircle className="me-2 text-success" />
-                Recent Reading Sessions
+                {t('dashboard.recentSessions', 'Recent Reading Sessions')}
               </h5>
               <Table hover responsive>
                 <thead className="table-light">
                   <tr>
-                    <th>Date</th>
-                    <th>Source</th>
-                    <th>WPM</th>
-                    <th>Time</th>
-                    <th>Difficulty</th>
+                    <th>{t('dashboard.table.date', 'Date')}</th>
+                    <th>{t('dashboard.table.source', 'Source')}</th>
+                    <th>{t('dashboard.table.wpm', 'WPM')}</th>
+                    <th>{t('dashboard.table.time', 'Time')}</th>
+                    <th>{t('dashboard.table.difficulty', 'Difficulty')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {sessions.slice(0, 5).map((s, idx) => (
+                  {filteredSessions.slice(0, 5).map((s, idx) => (
                     <tr key={idx}>
                       <td>
                         {new Date(s.timestamp).toLocaleDateString()}<br />
@@ -538,7 +633,16 @@ const StudentDashboard = ({ userId }) => {
                           {new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </small>
                       </td>
-                      <td>{s.analysis?.source || "Unknown"}</td>
+                      <td>
+                        {s.analysis?.source || t('dashboard.unknown', 'Unknown')}
+                        {s.language && (
+                          <div>
+                            <Badge bg="secondary" className="mt-1">
+                              {s.language.toUpperCase()}
+                            </Badge>
+                          </div>
+                        )}
+                      </td>
                       <td>
                         <Badge bg={s.wpm > 150 ? "success" : s.wpm > 100 ? "info" : "warning"}>
                           {Math.round(s.wpm || 0)} WPM
@@ -554,9 +658,14 @@ const StudentDashboard = ({ userId }) => {
                   ))}
                 </tbody>
               </Table>
-              {sessions.length === 0 && (
+              {filteredSessions.length === 0 && (
                 <Alert variant="info">
-                  <p className="mb-0">No reading sessions yet. Start reading to see your progress!</p>
+                  <p className="mb-0">
+                    {languageFilter === 'all' 
+                      ? t('dashboard.noSessions', 'No reading sessions yet. Start reading to see your progress!')
+                      : t('dashboard.noSessionsFiltered', 'No sessions found for the selected language.')
+                    }
+                  </p>
                 </Alert>
               )}
             </Card.Body>

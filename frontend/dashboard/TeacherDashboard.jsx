@@ -1,4 +1,4 @@
-// frontend/dashboard/TeacherDashboard.jsx
+// frontend/dashboard/TeacherDashboard.jsx (WITH TRANSLATIONS)
 
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Badge, ProgressBar, Button, Alert } from 'react-bootstrap';
@@ -11,6 +11,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, AreaChart, Area, ComposedChart
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 const GRADIENT_COLORS = {
@@ -21,6 +22,7 @@ const GRADIENT_COLORS = {
 };
 
 function TeacherDashboard() {
+  const { t } = useTranslation();
   const teacherName = "Ms. Eleanor Vance";
   
   const [classStats, setClassStats] = useState({
@@ -44,27 +46,27 @@ function TeacherDashboard() {
   ]);
 
   const [weeklyEngagement, setWeeklyEngagement] = useState([
-    { day: "Mon", students: 18, sessions: 28, avgTime: 45 },
-    { day: "Tue", students: 20, sessions: 32, avgTime: 48 },
-    { day: "Wed", students: 17, sessions: 25, avgTime: 42 },
-    { day: "Thu", students: 22, sessions: 38, avgTime: 52 },
-    { day: "Fri", students: 19, sessions: 30, avgTime: 46 },
-    { day: "Sat", students: 12, sessions: 18, avgTime: 38 },
-    { day: "Sun", students: 10, sessions: 15, avgTime: 35 },
+    { day: t('dashboard.days.mon', 'Mon'), students: 18, sessions: 28, avgTime: 45 },
+    { day: t('dashboard.days.tue', 'Tue'), students: 20, sessions: 32, avgTime: 48 },
+    { day: t('dashboard.days.wed', 'Wed'), students: 17, sessions: 25, avgTime: 42 },
+    { day: t('dashboard.days.thu', 'Thu'), students: 22, sessions: 38, avgTime: 52 },
+    { day: t('dashboard.days.fri', 'Fri'), students: 19, sessions: 30, avgTime: 46 },
+    { day: t('dashboard.days.sat', 'Sat'), students: 12, sessions: 18, avgTime: 38 },
+    { day: t('dashboard.days.sun', 'Sun'), students: 10, sessions: 15, avgTime: 35 },
   ]);
 
   const [skillsDistribution, setSkillsDistribution] = useState([
-    { name: "Excellent (85-100%)", value: 8, color: "#00C49F" },
-    { name: "Good (70-84%)", value: 10, color: "#0088FE" },
-    { name: "Average (55-69%)", value: 4, color: "#FFBB28" },
-    { name: "Needs Help (<55%)", value: 2, color: "#FF8042" },
+    { name: t('teacher.performance.excellent', 'Excellent (85-100%)'), value: 8, color: "#00C49F" },
+    { name: t('teacher.performance.good', 'Good (70-84%)'), value: 10, color: "#0088FE" },
+    { name: t('teacher.performance.average', 'Average (55-69%)'), value: 4, color: "#FFBB28" },
+    { name: t('teacher.performance.needsHelp', 'Needs Help (<55%)'), value: 2, color: "#FF8042" },
   ]);
 
   const [progressTrend, setProgressTrend] = useState([
-    { week: "Week 1", avgWPM: 115, accuracy: 78, engagement: 65 },
-    { week: "Week 2", avgWPM: 120, accuracy: 80, engagement: 70 },
-    { week: "Week 3", avgWPM: 125, accuracy: 82, engagement: 75 },
-    { week: "Week 4", avgWPM: 128, accuracy: 85, engagement: 80 },
+    { week: t('teacher.week', 'Week') + ' 1', avgWPM: 115, accuracy: 78, engagement: 65 },
+    { week: t('teacher.week', 'Week') + ' 2', avgWPM: 120, accuracy: 80, engagement: 70 },
+    { week: t('teacher.week', 'Week') + ' 3', avgWPM: 125, accuracy: 82, engagement: 75 },
+    { week: t('teacher.week', 'Week') + ' 4', avgWPM: 128, accuracy: 85, engagement: 80 },
   ]);
 
   const getStatusColor = (status) => {
@@ -94,9 +96,11 @@ function TeacherDashboard() {
         <Col>
           <h1 className="display-4 fw-bold text-primary mb-2">
             <Users className="me-3" size={48} />
-            Teacher Dashboard
+            {t('teacher.title', 'Teacher Dashboard')}
           </h1>
-          <p className="lead text-muted">Welcome back, {teacherName}! Monitor your class progress and student performance.</p>
+          <p className="lead text-muted">
+            {t('teacher.welcome', 'Welcome back')}, {teacherName}! {t('teacher.subtitle', 'Monitor your class progress and student performance.')}
+          </p>
         </Col>
       </Row>
 
@@ -107,9 +111,11 @@ function TeacherDashboard() {
             <Card.Body className="text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <p className="mb-1 opacity-75">Total Students</p>
+                  <p className="mb-1 opacity-75">{t('teacher.stats.totalStudents', 'Total Students')}</p>
                   <h2 className="display-5 fw-bold mb-0">{classStats.totalStudents}</h2>
-                  <small className="opacity-75">{classStats.activeToday} active today</small>
+                  <small className="opacity-75">
+                    {classStats.activeToday} {t('teacher.stats.activeToday', 'active today')}
+                  </small>
                 </div>
                 <Users size={40} className="opacity-50" />
               </div>
@@ -122,9 +128,9 @@ function TeacherDashboard() {
             <Card.Body className="text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <p className="mb-1 opacity-75">Class Avg WPM</p>
+                  <p className="mb-1 opacity-75">{t('teacher.stats.classAvgWPM', 'Class Avg WPM')}</p>
                   <h2 className="display-5 fw-bold mb-0">{classStats.classAvgWPM}</h2>
-                  <small className="opacity-75">+12% from last week</small>
+                  <small className="opacity-75">{t('teacher.stats.improvement', '+12% from last week')}</small>
                 </div>
                 <TrendingUp size={40} className="opacity-50" />
               </div>
@@ -137,9 +143,9 @@ function TeacherDashboard() {
             <Card.Body className="text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <p className="mb-1 opacity-75">Avg Accuracy</p>
+                  <p className="mb-1 opacity-75">{t('teacher.stats.avgAccuracy', 'Avg Accuracy')}</p>
                   <h2 className="display-5 fw-bold mb-0">{classStats.classAvgAccuracy}%</h2>
-                  <small className="opacity-75">Class performance</small>
+                  <small className="opacity-75">{t('teacher.stats.classPerformance', 'Class performance')}</small>
                 </div>
                 <Target size={40} className="opacity-50" />
               </div>
@@ -152,9 +158,9 @@ function TeacherDashboard() {
             <Card.Body className="text-white">
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <p className="mb-1 opacity-75">Total Minutes</p>
+                  <p className="mb-1 opacity-75">{t('teacher.stats.totalMinutes', 'Total Minutes')}</p>
                   <h2 className="display-5 fw-bold mb-0">{classStats.totalReadingMinutes}</h2>
-                  <small className="opacity-75">This month</small>
+                  <small className="opacity-75">{t('teacher.stats.thisMonth', 'This month')}</small>
                 </div>
                 <Clock size={40} className="opacity-50" />
               </div>
@@ -170,7 +176,7 @@ function TeacherDashboard() {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <BarChart3 className="me-2 text-primary" />
-                Weekly Engagement Overview
+                {t('teacher.charts.weeklyEngagement', 'Weekly Engagement Overview')}
               </h5>
               <ResponsiveContainer width="100%" height={300}>
                 <ComposedChart data={weeklyEngagement}>
@@ -180,8 +186,8 @@ function TeacherDashboard() {
                   <YAxis yAxisId="right" orientation="right" />
                   <Tooltip contentStyle={{ borderRadius: "10px", border: "none", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }} />
                   <Legend />
-                  <Bar yAxisId="left" dataKey="sessions" fill="#667eea" name="Total Sessions" />
-                  <Line yAxisId="right" type="monotone" dataKey="students" stroke="#00C49F" strokeWidth={3} name="Active Students" />
+                  <Bar yAxisId="left" dataKey="sessions" fill="#667eea" name={t('teacher.charts.totalSessions', 'Total Sessions')} />
+                  <Line yAxisId="right" type="monotone" dataKey="students" stroke="#00C49F" strokeWidth={3} name={t('teacher.charts.activeStudents', 'Active Students')} />
                 </ComposedChart>
               </ResponsiveContainer>
             </Card.Body>
@@ -193,7 +199,7 @@ function TeacherDashboard() {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <PieChartIcon className="me-2 text-warning" />
-                Student Performance
+                {t('teacher.charts.studentPerformance', 'Student Performance')}
               </h5>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
@@ -226,7 +232,7 @@ function TeacherDashboard() {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <TrendingUp className="me-2 text-success" />
-                Class Progress Trend (Last 4 Weeks)
+                {t('teacher.charts.progressTrend', 'Class Progress Trend (Last 4 Weeks)')}
               </h5>
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={progressTrend}>
@@ -245,8 +251,8 @@ function TeacherDashboard() {
                   <YAxis />
                   <Tooltip contentStyle={{ borderRadius: "10px", border: "none", boxShadow: "0 4px 6px rgba(0,0,0,0.1)" }} />
                   <Legend />
-                  <Area type="monotone" dataKey="avgWPM" stroke="#667eea" fillOpacity={1} fill="url(#colorWPM)" name="Avg WPM" />
-                  <Area type="monotone" dataKey="accuracy" stroke="#00C49F" fillOpacity={1} fill="url(#colorAccuracy)" name="Avg Accuracy %" />
+                  <Area type="monotone" dataKey="avgWPM" stroke="#667eea" fillOpacity={1} fill="url(#colorWPM)" name={t('teacher.charts.avgWPM', 'Avg WPM')} />
+                  <Area type="monotone" dataKey="accuracy" stroke="#00C49F" fillOpacity={1} fill="url(#colorAccuracy)" name={t('teacher.charts.avgAccuracy', 'Avg Accuracy %')} />
                 </AreaChart>
               </ResponsiveContainer>
             </Card.Body>
@@ -261,7 +267,7 @@ function TeacherDashboard() {
             <div className="d-flex align-items-center">
               <AlertCircle size={24} className="me-3" />
               <div>
-                <strong>Students Requiring Attention:</strong> {studentPerformance.filter(s => s.status === "needs-attention").length} students need extra support
+                <strong>{t('teacher.alerts.studentsNeedAttention', 'Students Requiring Attention')}:</strong> {studentPerformance.filter(s => s.status === "needs-attention").length} {t('teacher.alerts.needSupport', 'students need extra support')}
               </div>
             </div>
           </Alert>
@@ -275,18 +281,18 @@ function TeacherDashboard() {
             <Card.Body>
               <h5 className="mb-4 d-flex align-items-center">
                 <UserCheck className="me-2 text-info" />
-                Individual Student Performance
+                {t('teacher.table.title', 'Individual Student Performance')}
               </h5>
               <Table hover responsive>
                 <thead className="table-light">
                   <tr>
-                    <th>Status</th>
-                    <th>Student Name</th>
-                    <th>Sessions</th>
-                    <th>Avg WPM</th>
-                    <th>Accuracy</th>
-                    <th>Overall Progress</th>
-                    <th>Action</th>
+                    <th>{t('teacher.table.status', 'Status')}</th>
+                    <th>{t('teacher.table.studentName', 'Student Name')}</th>
+                    <th>{t('teacher.table.sessions', 'Sessions')}</th>
+                    <th>{t('teacher.table.avgWPM', 'Avg WPM')}</th>
+                    <th>{t('teacher.table.accuracy', 'Accuracy')}</th>
+                    <th>{t('teacher.table.overallProgress', 'Overall Progress')}</th>
+                    <th>{t('teacher.table.action', 'Action')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -326,7 +332,7 @@ function TeacherDashboard() {
                           variant={student.status === "needs-attention" ? "danger" : "outline-primary"} 
                           size="sm"
                         >
-                          View Details
+                          {t('teacher.table.viewDetails', 'View Details')}
                         </Button>
                       </td>
                     </tr>
@@ -343,23 +349,23 @@ function TeacherDashboard() {
         <Col md={12}>
           <Card className="border-0 shadow-lg">
             <Card.Body>
-              <h5 className="mb-3">Quick Actions</h5>
+              <h5 className="mb-3">{t('teacher.quickActions.title', 'Quick Actions')}</h5>
               <div className="d-flex gap-3 flex-wrap">
                 <Button variant="primary" size="lg">
                   <BookOpen size={20} className="me-2" />
-                  Assign Reading Material
+                  {t('teacher.quickActions.assignReading', 'Assign Reading Material')}
                 </Button>
                 <Button variant="success" size="lg">
                   <Award size={20} className="me-2" />
-                  Generate Progress Reports
+                  {t('teacher.quickActions.generateReports', 'Generate Progress Reports')}
                 </Button>
                 <Button variant="info" size="lg">
                   <Users size={20} className="me-2" />
-                  Manage Students
+                  {t('teacher.quickActions.manageStudents', 'Manage Students')}
                 </Button>
                 <Button variant="warning" size="lg">
                   <Target size={20} className="me-2" />
-                  Set Class Goals
+                  {t('teacher.quickActions.setGoals', 'Set Class Goals')}
                 </Button>
               </div>
             </Card.Body>

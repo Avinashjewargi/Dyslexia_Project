@@ -1,79 +1,160 @@
-# ml/nlp/reading_analysis.py
-import json
 import sys
+import os
+import json
 import nltk
 import pyphen
+from nltk.tokenize import word_tokenize, sent_tokenize
 
-# Ensure nltk data is present
+# ---------------- PATH SETUP ----------------
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(PROJECT_ROOT)
+
+from config.languageConfig import (
+    is_valid_language,
+    DEFAULT_LANGUAGE
+)
+
+# Language-specific analyzers
+from nlp.language_models.hindi_analyzer import analyze_hindi_text
+from nlp.language_models.kannada_analyzer import analyze_kannada_text
+
+# ---------------- NLTK SETUP ----------------
 try:
-    nltk.data.find('tokenizers/punkt')
+    nltk.data.find("tokenizers/punkt")
 except LookupError:
-    nltk.download('punkt', quiet=True)
+    nltk.download("punkt", quiet=True)
 
-# Initialize Pyphen for syllable counting (English)
-dic = pyphen.Pyphen(lang='en')
+# ---------------- ENGLISH NLP SETUP ----------------
+dic = pyphen.Pyphen(lang="en")
 
-# Common easy words to ignore even if they have syllables
-EASY_WORDS = set([
-    'everything', 'everyone', 'information', 'understanding', 'available', 
-    'experience', 'something', 'different', 'important', 'the', 'and', 'that', 'have', 'for'
-])
+EASY_WORDS = {
+    "everything", "everyone", "information", "understanding",
+    "available", "experience", "something", "different",
+    "important", "the", "and", "that", "have", "for"
+}
 
+DIFFICULT_PATTERNS = ["tion", "sion", "ough", "augh", "eigh", "ph", "gh"]
+
+# ---------------- UTILITY FUNCTIONS ----------------
 def count_syllables(word):
-    """Count syllables in a word using Pyphen."""
-    return len(dic.inserted(word).split('-'))
+    """Count syllables using Pyphen"""
+    return len(dic.inserted(word).split("-"))
 
-def analyze_reading_content(text):
+def has_difficult_pattern(word):
+    return any(p in word for p in DIFFICULT_PATTERNS)
+
+# ---------------- MAIN ROUTER ----------------
+def analyze_text(text, language="en"):
     """
-    Advanced NLP analysis for Dyslexia assistance.
-    Identifies words based on syllable count (3+) and rarity.
+    Unified reading difficulty analysis with language support
+    """
+    try:
+        if not is_valid_language(language):
+            language = DEFAULT_LANGUAGE
+
+        if language == "hi":
+            return analyze_hindi_text(text)
+        elif language == "kn":
+            return analyze_kannada_text(text)
+        else:
+            return analyze_english_text(text)
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+# ---------------- ENGLISH ANALYZER ----------------
+def analyze_english_text(text):
+    """
+    Advanced English dyslexia-friendly analysis
     """
     if not text:
-        return {"challenging_words": [], "difficulty_score": 0.0}
-    
-    words = nltk.word_tokenize(text)
-    # Filter for actual alphabetic words
+        return {
+            "success": True,
+            "language": "en",
+            "challenging_words": [],
+            "difficulty_score": 0.0
+        }
+
+    words = word_tokenize(text.lower())
+    sentences = sent_tokenize(text)
+
+    # Keep only alphabetic words
     words = [w for w in words if w.isalpha()]
     total_words = len(words)
-    
-    difficult_candidates = []
+    unique_words = len(set(words))
+    sentence_count = len(sentences)
+
     total_syllables = 0
+    difficult_words = []
 
     for word in words:
-        clean_word = word.lower()
-        syllables = count_syllables(clean_word)
+        syllables = count_syllables(word)
         total_syllables += syllables
-        
-        # Logic: Words with > 2 syllables that aren't in the common list
-        # OR words that are long (> 7 chars)
-        if (syllables > 2 or len(clean_word) > 7) and clean_word not in EASY_WORDS:
-            difficult_candidates.append(word) 
 
-    # Get unique difficult words, limited to top 15
-    unique_difficult_words = list(set(difficult_candidates))[:15]
+        if (
+            (syllables > 2 or len(word) > 7 or has_difficult_pattern(word))
+            and word not in EASY_WORDS
+        ):
+            difficult_words.append(word)
 
-    # --- Calculate Flesch-Kincaid Readability Score ---
+    # Unique + limit
+    challenging_words = list(set(difficult_words))[:15]
+
+    avg_word_length = sum(len(w) for w in words) / total_words if total_words else 0
+    avg_sentence_length = total_words / sentence_count if sentence_count else 0
+
+    # -------- Flesch Reading Ease --------
     if total_words > 0:
-        score = 206.835 - 1.015 * (total_words) - 84.6 * (total_syllables / total_words)
-        normalized_difficulty = max(0.0, min(1.0, (100 - score) / 100))
+        flesch_score = (
+            206.835
+            - 1.015 * avg_sentence_length
+            - 84.6 * (total_syllables / total_words)
+        )
+        difficulty_score = max(0.0, min(1.0, (100 - flesch_score) / 100))
     else:
-        normalized_difficulty = 0.0
+        difficulty_score = 0.0
+
+    # Reading level
+    if difficulty_score < 0.3:
+        reading_level = "Easy (Grade 1–3)"
+    elif difficulty_score < 0.6:
+        reading_level = "Medium (Grade 4–6)"
+    else:
+        reading_level = "Hard (Grade 7+)"
 
     return {
-        "challenging_words": unique_difficult_words,
-        "difficulty_score": round(normalized_difficulty, 2),
-        "stats": {
+        "success": True,
+        "language": "en",
+        "script": "Latin",
+        "reading_level": reading_level,
+        "difficulty_score": round(difficulty_score, 2),
+        "challenging_words": challenging_words,
+        "statistics": {
             "total_words": total_words,
+            "unique_words": unique_words,
+            "sentence_count": sentence_count,
+            "average_word_length": round(avg_word_length, 2),
+            "average_sentence_length": round(avg_sentence_length, 2),
             "syllable_count": total_syllables
         }
     }
 
-if __name__ == '__main__':
-    # CLI Mode
+# ---------------- CLI SUPPORT ----------------
+if __name__ == "__main__":
+    """
+    CLI Usage:
+    python reading_analysis.py "Some text here" en
+    """
+
     if len(sys.argv) > 1:
         input_text = sys.argv[1]
-        results = analyze_reading_content(input_text)
-        print(json.dumps(results))
+        language = sys.argv[2] if len(sys.argv) > 2 else "en"
+        result = analyze_text(input_text, language)
+        print(json.dumps(result))
     else:
-        # Test default
-        print(json.dumps(analyze_reading_content("The physiological mechanisms of dyslexia are complex.")))
+        print(json.dumps(
+            analyze_text("The physiological mechanisms of dyslexia are complex.")
+        ))
