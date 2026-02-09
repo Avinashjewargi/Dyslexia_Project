@@ -7,23 +7,35 @@
   --accessibility-line-height: 1.5;
 }
 
-/* OpenDyslexic font - you'll need to add the font files */
+/* Local OpenDyslexic fonts */
 @font-face {
   font-family: 'OpenDyslexic';
-  src: url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/open-dyslexic-regular.woff2') format('woff2');
+  src: url('/fonts/OpenDyslexic/OpenDyslexic-Regular.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic/OpenDyslexic-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
 }
 
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic/OpenDyslexic-Italic.woff2') format('woff2');
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Apply OpenDyslexic globally */
 body {
+  font-family: 'OpenDyslexic', var(--accessibility-font-family);
   font-size: var(--accessibility-font-size);
-  font-family: var(--accessibility-font-family);
   letter-spacing: var(--accessibility-letter-spacing);
   line-height: var(--accessibility-line-height);
   transition: all 0.3s ease;

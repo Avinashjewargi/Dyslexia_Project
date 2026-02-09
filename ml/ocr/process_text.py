@@ -3,6 +3,12 @@ import os
 import json
 import traceback
 
+# Force UTF-8 encoding for stdout
+if sys.stdout.encoding != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
+if sys.stderr.encoding != 'utf-8':
+    sys.stderr.reconfigure(encoding='utf-8')
+
 # -------------------------------
 # Safe imports
 # -------------------------------
@@ -173,26 +179,26 @@ def process_image(image_path: str) -> dict:
 # -------------------------------
 if __name__ == "__main__":
     try:
-        sys.stdout.reconfigure(line_buffering=True)
-
         if len(sys.argv) < 2:
             print(json.dumps({
                 "success": False,
                 "error": "No image path provided"
-            }), flush=True)
+            }, ensure_ascii=False), flush=True)
             sys.exit(1)
 
         image_path = sys.argv[1]
         language = sys.argv[2] if len(sys.argv) > 2 else "en"
 
         result = extract_text_from_image(image_path, language)
-        print(json.dumps(result), flush=True)
+        
+        # Ensure proper UTF-8 JSON output
+        print(json.dumps(result, ensure_ascii=False, indent=None), flush=True)
 
     except Exception as e:
         print(json.dumps({
             "success": False,
             "error": f"Unexpected error: {str(e)}",
             "traceback": traceback.format_exc()
-        }), flush=True)
+        }, ensure_ascii=False), flush=True)
 
     sys.exit(0)

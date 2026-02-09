@@ -86,6 +86,7 @@ module.exports = (upload) => {
 
     console.log("File path:", filePath);
     console.log("Language:", language, `(${langConfig.name})`);
+    console.log("Tesseract Lang:", langConfig.ocrLang);
     console.log("OCR Script:", pythonScriptPath);
     console.log("Python executable:", pythonExecutable);
 
@@ -114,7 +115,7 @@ module.exports = (upload) => {
     }
 
     // ===============================
-    // PYTHON PROCESS
+    // PYTHON PROCESS WITH UTF-8 ENCODING
     // ===============================
     const pythonArgs = [
       pythonScriptPath,
@@ -124,7 +125,12 @@ module.exports = (upload) => {
 
     console.log("Spawning Python:", pythonExecutable, pythonArgs);
 
-    const pythonProcess = spawn(pythonExecutable, pythonArgs);
+    const pythonProcess = spawn(pythonExecutable, pythonArgs, {
+      env: { 
+        ...process.env,
+        PYTHONIOENCODING: 'utf-8'  // Force UTF-8 encoding
+      }
+    });
 
     let pythonOutput = "";
     let pythonError = "";
@@ -149,14 +155,17 @@ module.exports = (upload) => {
       }
     };
 
+    pythonProcess.stdout.setEncoding('utf8');  // Set UTF-8 encoding
+    pythonProcess.stderr.setEncoding('utf8');
+
     pythonProcess.stdout.on("data", (data) => {
-      const chunk = data.toString();
+      const chunk = data.toString('utf8');
       pythonOutput += chunk;
       console.log("Python stdout:", chunk);
     });
 
     pythonProcess.stderr.on("data", (data) => {
-      const msg = data.toString();
+      const msg = data.toString('utf8');
       pythonError += msg;
       console.error("Python stderr:", msg);
     });
@@ -282,10 +291,10 @@ module.exports = (upload) => {
           success: true,
           extractedText,
           language: detectedLanguage,
+          script: result.script || get_script_name(detectedLanguage),
           confidence: result.confidence || 0.95,
           processingTime: result.processingTime || 0,
-          wordCount: result.word_count || 0,
-          script: result.script || "Unknown"
+          wordCount: result.word_count || 0
         });
 
       } catch (err) {
@@ -317,3 +326,12 @@ module.exports = (upload) => {
 
   return router;
 };
+
+function get_script_name(language) {
+  const scripts = {
+    'en': 'Latin',
+    'hi': 'Devanagari',
+    'kn': 'Kannada'
+  };
+  return scripts[language] || 'Unknown';
+}

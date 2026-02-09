@@ -102,6 +102,9 @@ const readingRoutes = require("./routes/reading.js");
 // Chatbot / AI Assistant
 const chatRoutes = require("./routes/chat.js");
 
+// ✅ NEW: Translation routes
+const translateRoutes = require("./routes/translate.js");
+
 // Mount routes
 app.use("/api", apiRoutes);
 app.use("/api/ocr", ocrRoutes);
@@ -109,6 +112,7 @@ app.use("/api/speech", speechRoutes);
 app.use("/api/nlp", nlpRoutes);
 app.use("/api/reading", readingRoutes);
 app.use("/api", chatRoutes);
+app.use("/api/translate", translateRoutes); // ✅ NEW
 
 // =======================================
 // ROOT ROUTE
@@ -127,5 +131,6 @@ app.listen(port, () => {
   console.log(`✅ NLP API:        http://localhost:${port}/api/nlp`);
   console.log(`✅ Reading API:    http://localhost:${port}/api/reading`);
   console.log(`✅ Chat API:       http://localhost:${port}/api/chat`);
+  console.log(`✅ Translate API:  http://localhost:${port}/api/translate`);
   console.log(`✅ Chat Health:    http://localhost:${port}/api/chat/health`);
 });

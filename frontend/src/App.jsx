@@ -1,4 +1,4 @@
-// frontend/src/App.jsx
+// frontend/src/App.jsx - UPDATED (AR integrated into Reader, no separate route)
 
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
@@ -158,9 +158,10 @@ function App() {
     <LanguageProvider>
       <AccessibilityProvider>
         <Routes>
-
+          {/* Login */}
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
 
+          {/* Landing Page */}
           <Route
             path="/"
             element={
@@ -170,6 +171,7 @@ function App() {
             }
           />
 
+          {/* Reader - NOW WITH INTEGRATED AR */}
           <Route
             path="/reader"
             element={
@@ -179,38 +181,88 @@ function App() {
             }
           />
 
-          <Route path="/stories" element={<MainLayout user={user} onLogout={handleLogout}><StoriesReader /></MainLayout>} />
-          <Route path="/dashboard" element={<MainLayout user={user} onLogout={handleLogout}><StudentDashboard userId={userId} /></MainLayout>} />
-          <Route path="/teacher-dashboard" element={<MainLayout user={user} onLogout={handleLogout}><TeacherDashboard teacherId={userId} /></MainLayout>} />
+          {/* Stories */}
+          <Route 
+            path="/stories" 
+            element={
+              <MainLayout user={user} onLogout={handleLogout}>
+                <StoriesReader />
+              </MainLayout>
+            } 
+          />
 
-          <Route path="/phonology" element={<MainLayout user={user} onLogout={handleLogout}><PhonologyHub /></MainLayout>} />
-          <Route path="/phonology/spelling" element={<MainLayout user={user} onLogout={handleLogout}><SpellingTest /></MainLayout>} />
-          <Route path="/phonology/replacement" element={<MainLayout user={user} onLogout={handleLogout}><LetterReplacement /></MainLayout>} />
-          <Route path="/phonology/odd-one-out" element={<MainLayout user={user} onLogout={handleLogout}><OddOneOut /></MainLayout>} />
+          {/* Dashboards */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <MainLayout user={user} onLogout={handleLogout}>
+                <StudentDashboard userId={userId} />
+              </MainLayout>
+            } 
+          />
+          
+          <Route 
+            path="/teacher-dashboard" 
+            element={
+              <MainLayout user={user} onLogout={handleLogout}>
+                <TeacherDashboard teacherId={userId} />
+              </MainLayout>
+            } 
+          />
 
-          <Route path="/lexiai" element={<MainLayout user={user} onLogout={handleLogout}><LexiAIHub /></MainLayout>} />
+          {/* Phonology Routes */}
+          <Route 
+            path="/phonology" 
+            element={
+              <MainLayout user={user} onLogout={handleLogout}>
+                <PhonologyHub />
+              </MainLayout>
+            } 
+          />
+          
+          <Route 
+            path="/phonology/spelling" 
+            element={
+              <MainLayout user={user} onLogout={handleLogout}>
+                <SpellingTest />
+              </MainLayout>
+            } 
+          />
+          
+          <Route 
+            path="/phonology/replacement" 
+            element={
+              <MainLayout user={user} onLogout={handleLogout}>
+                <LetterReplacement />
+              </MainLayout>
+            } 
+          />
+          
+          <Route 
+            path="/phonology/odd-one-out" 
+            element={
+              <MainLayout user={user} onLogout={handleLogout}>
+                <OddOneOut />
+              </MainLayout>
+            } 
+          />
 
-<<<<<<< HEAD
-        <Route 
-          path="/phonology/odd-one-out" 
-          element={
-            <MainLayout user={user} onLogout={handleLogout}>
-              <OddOneOut 
-                onBack={() => window.location.href = '/phonology'} 
-                updateProgress={() => {}}
-              />
-            </MainLayout>
-          } 
-        />
-        
-=======
-          {/* ===== ALL 25 LEXIAI ROUTES KEPT ===== */}
+          {/* LexiAI Hub */}
+          <Route 
+            path="/lexiai" 
+            element={
+              <MainLayout user={user} onLogout={handleLogout}>
+                <LexiAIHub />
+              </MainLayout>
+            } 
+          />
+
+          {/* ===== ALL 25 LEXIAI ROUTES ===== */}
           <Route path="/lexiai/alphabet" element={<MainLayout user={user} onLogout={handleLogout}><AlphabetMaster /></MainLayout>} />
           <Route path="/lexiai/phonics" element={<MainLayout user={user} onLogout={handleLogout}><PhonicsAndSounds /></MainLayout>} />
           <Route path="/lexiai/numbers" element={<MainLayout user={user} onLogout={handleLogout}><NumbersAndDigits /></MainLayout>} />
           <Route path="/lexiai/sight-words" element={<MainLayout user={user} onLogout={handleLogout}><SightWords /></MainLayout>} />
           <Route path="/lexiai/rhymes" element={<MainLayout user={user} onLogout={handleLogout}><RhymesAndPatterns /></MainLayout>} />
->>>>>>> 2578de84e186b1d1d1075a3291025e4d267bd6ab
 
           <Route path="/lexiai/animals" element={<MainLayout user={user} onLogout={handleLogout}><AnimalsExplorer /></MainLayout>} />
           <Route path="/lexiai/birds" element={<MainLayout user={user} onLogout={handleLogout}><BirdsWorld /></MainLayout>} />
@@ -236,8 +288,8 @@ function App() {
           <Route path="/lexiai/symbols" element={<MainLayout user={user} onLogout={handleLogout}><SignsSymbols /></MainLayout>} />
           <Route path="/lexiai/safety" element={<MainLayout user={user} onLogout={handleLogout}><SafetySocial /></MainLayout>} />
 
+          {/* 404 */}
           <Route path="*" element={<h1>404: Page Not Found</h1>} />
-
         </Routes>
       </AccessibilityProvider>
     </LanguageProvider>

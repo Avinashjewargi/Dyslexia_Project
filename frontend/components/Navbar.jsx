@@ -1,4 +1,4 @@
-// frontend/components/Navbar.jsx (WITH TRANSLATIONS ADDED)
+// frontend/components/Navbar.jsx - UPDATED (AR button removed, now in Reader)
 
 import React from 'react';
 import { Navbar, Container, Nav, Button, NavDropdown, Badge } from 'react-bootstrap';
@@ -182,6 +182,7 @@ function AppNavbar({ onOpenSettings, user, onLogout }) {
                 {t('navbar.login', 'Login')}
               </Button>
             )}
+
             {/* Accessibility Settings - TOP RIGHT CORNER */}
             <Button 
               variant="outline-primary" 

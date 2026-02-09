@@ -39,7 +39,7 @@ const OCRUploader = ({ onTextExtracted }) => {
       return;
     }
 
-    onTextExtracted(text, "Manual Input", null);
+    onTextExtracted(text, "Manual Input", null, ocrLanguage);
     setManualText("");
     setFile(null);
     setStatus({ type: "success", message: t('reader.manualTextLoaded') || "Manual text loaded into preview." });
@@ -83,9 +83,17 @@ const OCRUploader = ({ onTextExtracted }) => {
       if (response.ok && result.success && result.extractedText) {
         console.log("✅ OCR Success:", result.extractedText);
         console.log("📝 Detected Language:", result.language || ocrLanguage);
+        console.log("📜 Script:", result.script);
         
         setStatus({ type: "success", message: t('reader.ocrSuccess') || "OCR successful!" });
-        onTextExtracted(result.extractedText, result.source || "OCR Upload", file);
+        
+        // Pass the language from OCR result
+        onTextExtracted(
+          result.extractedText, 
+          result.source || "OCR Upload", 
+          file,
+          result.language || ocrLanguage
+        );
       } else {
         console.error("❌ OCR Error:", result.error || "Unknown error");
         console.error("❌ Full Error Response:", result);

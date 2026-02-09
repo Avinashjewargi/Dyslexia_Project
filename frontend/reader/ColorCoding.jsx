@@ -1,13 +1,32 @@
-// frontend/reader/ColorCoding.jsx - COMPLETE WITH MULTI-LANGUAGE SUPPORT
+// frontend/reader/ColorCoding.jsx — FIXED: grapheme-safe splitting for Kannada/Hindi
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { getCompleteColorMap } from '../config/colorCodingConfig';
 import { CONFUSING_LETTERS } from '../config/languageConfig';
 
-const ColorCoding = ({ 
-  text, 
-  enabled = false, 
+// ── Grapheme-safe splitter ─────────────────────────────────────────────────
+// Intl.Segmenter is supported in Chrome 87+, Firefox 104+, Safari 16+, Edge 87+.
+// Fallback: a regex that keeps base + all following combining / dependent marks
+// together for Devanagari (0900-097F) and Kannada (0C80-0CFF).
+function splitGraphemes(str) {
+  if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+    const segmenter = new Intl.Segmenter('und', { granularity: 'grapheme' });
+    return [...segmenter.segment(str)].map(s => s.segment);
+  }
+
+  // Regex fallback — matches one base character + any number of combining marks
+  // that follow it.  Handles Devanagari, Kannada, and generic combining marks.
+  return (
+    str.match(
+      /[\u0900-\u097F\u0C80-\u0CFF][\u0900-\u097F\u0C80-\u0CFF\u0300-\u036F]*|./gs
+    ) || []
+  );
+}
+
+const ColorCoding = ({
+  text,
+  enabled = false,
   colorIntensity = 70,
   onWordClick = null,
   highlightDifficultWords = false,
@@ -15,100 +34,71 @@ const ColorCoding = ({
 }) => {
   const [hoveredWord, setHoveredWord] = useState(null);
   const { currentLanguage } = useLanguage();
-  
-  if (!text) {
-    return null;
-  }
 
-  // If not enabled OR intensity below 50%, show normal black text
+  // ── Build color map whenever language changes ──────────────────────────
+  const colorMap = useMemo(() => {
+    const langLetters = CONFUSING_LETTERS[currentLanguage] || {};
+
+    if (Object.keys(langLetters).length > 0) {
+      const map = {};
+      Object.keys(langLetters).forEach(letter => {
+        map[letter] = langLetters[letter].color;
+        // For English we also want case-insensitive lookup
+        map[letter.toLowerCase()] = langLetters[letter].color;
+        map[letter.toUpperCase()] = langLetters[letter].color;
+      });
+      console.log(`✅ ColorCoding: using ${currentLanguage} map`, map);
+      return map;
+    }
+
+    console.log(`⚠️ ColorCoding: no map for "${currentLanguage}", falling back to English`);
+    return getCompleteColorMap();
+  }, [currentLanguage]);
+
+  // ── Early returns ───────────────────────────────────────────────────────
+  if (!text) return null;
+
   if (!enabled || colorIntensity < 50) {
     return (
-      <div className="colored-text" style={{ 
-        lineHeight: '1.8', 
-        fontSize: '1.2rem',
-        color: '#000000'
-      }}>
+      <div className="colored-text" style={{ lineHeight: '1.8', fontSize: '1.2rem', color: '#000000' }}>
         {text}
       </div>
     );
   }
 
-  // Get color map based on language
-  const getColorMapForLanguage = () => {
-    // First, try to get language-specific confusing letters
-    const languageSpecificLetters = CONFUSING_LETTERS[currentLanguage] || {};
-    
-    // If language has specific confusing letters, create color map from them
-    if (Object.keys(languageSpecificLetters).length > 0) {
-      const languageColorMap = {};
-      Object.keys(languageSpecificLetters).forEach(letter => {
-        const config = languageSpecificLetters[letter];
-        languageColorMap[letter.toLowerCase()] = config.color;
-        languageColorMap[letter.toUpperCase()] = config.color;
-      });
-      
-      console.log(`✅ Using ${currentLanguage} color map:`, languageColorMap);
-      return languageColorMap;
-    }
-    
-    // Fallback to default English color map
-    console.log(`⚠️ No specific color map for ${currentLanguage}, using English default`);
-    return getCompleteColorMap();
-  };
-
-  const colorMap = getColorMapForLanguage();
-
-  // Apply color with brightness/contrast adjustment - SMOOTH TRANSITION TO BLACK
-  const applyColorWithIntensity = (baseColor, intensity) => {
-    // Calculate opacity based on intensity (smoothly fades from colored to black)
-    const colorStrength = intensity / 100; // 0.2 to 1.0
-    
-    // Convert hex to RGB
-    const r = parseInt(baseColor.slice(1, 3), 16);
-    const g = parseInt(baseColor.slice(3, 5), 16);
-    const b = parseInt(baseColor.slice(5, 7), 16);
-
-    // Interpolate between the color and black based on intensity
-    // At 100%: full color
-    // At 50%: 50% color, 50% black
-    // At 20%: 20% color, 80% black (very dark)
-    const finalR = Math.round(r * colorStrength);
-    const finalG = Math.round(g * colorStrength);
-    const finalB = Math.round(b * colorStrength);
+  // ── Intensity → RGB (smooth fade to black) ─────────────────────────────
+  const applyColorWithIntensity = (hexColor, intensity) => {
+    const strength = intensity / 100;
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
 
     return {
-      color: `rgb(${finalR}, ${finalG}, ${finalB})`,
-      opacity: 1, // Keep full opacity, color itself fades to black
-      fontWeight: intensity > 70 ? 'bold' : (intensity > 50 ? '600' : 'normal'),
+      color: `rgb(${Math.round(r * strength)}, ${Math.round(g * strength)}, ${Math.round(b * strength)})`,
+      fontWeight: intensity > 70 ? 'bold' : intensity > 50 ? '600' : 'normal',
       transition: 'all 0.3s ease'
     };
   };
 
-  // Get tooltip text for confusing letter
-  const getLetterTooltip = (char) => {
-    const lowerChar = char.toLowerCase();
-    const letterConfig = CONFUSING_LETTERS[currentLanguage]?.[lowerChar];
-    
-    if (letterConfig && letterConfig.confusedWith) {
-      return `Often confused with: ${letterConfig.confusedWith.join(', ')}`;
-    }
-    
-    return null;
+  // ── Tooltip for a base character ────────────────────────────────────────
+  const getLetterTooltip = (baseChar) => {
+    const cfg = CONFUSING_LETTERS[currentLanguage]?.[baseChar];
+    return cfg?.confusedWith ? `Often confused with: ${cfg.confusedWith.join(', ')}` : null;
   };
 
-  // Render single word with color coding and hover effects
+  // ── Render one word ─────────────────────────────────────────────────────
   const renderColoredWord = (word, wordIndex) => {
-    const cleanWord = word.trim().replace(/[.,!?;:'"]/g, '');
-    const isHovered = hoveredWord === wordIndex;
+    const cleanWord = word.trim().replace(/[.,!?;:'"।]/g, '');
+    const isHovered   = hoveredWord === wordIndex;
     const isDifficult = difficultWords.includes(cleanWord.toLowerCase());
-    
-    // Speak word on click if handler provided
+
     const handleWordClick = () => {
-      if (onWordClick && cleanWord) {
-        onWordClick(cleanWord);
-      }
+      if (onWordClick && cleanWord) onWordClick(cleanWord);
     };
-    
+
+    // Split into proper grapheme clusters — safe for Kannada / Hindi / English
+    const graphemes = splitGraphemes(word);
+
     return (
       <span
         key={wordIndex}
@@ -122,81 +112,64 @@ const ColorCoding = ({
           padding: '2px 4px',
           margin: '0 2px',
           borderRadius: '4px',
-          backgroundColor: isHovered ? '#FFF9C4' : (isDifficult && highlightDifficultWords ? '#FFE0E0' : 'transparent'),
+          backgroundColor: isHovered
+            ? '#FFF9C4'
+            : isDifficult && highlightDifficultWords ? '#FFE0E0' : 'transparent',
           transform: isHovered ? 'scale(1.05)' : 'scale(1)',
           transition: 'all 0.2s ease',
           position: 'relative',
           boxShadow: isHovered ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'
         }}
       >
-        {word.split('').map((char, charIndex) => {
-          const lowerChar = char.toLowerCase();
-          const tooltip = getLetterTooltip(char);
-          
-          if (colorMap[lowerChar]) {
-            const style = applyColorWithIntensity(colorMap[lowerChar], colorIntensity);
+        {graphemes.map((grapheme, gIdx) => {
+          // The COLOR KEY is the very first codepoint of the cluster.
+          // For "ಬಾ" that is "ಬ", for "कु" that is "क", for "b" that is "b".
+          const baseChar = grapheme[0];
+          const color    = colorMap[baseChar];
+          const tooltip  = getLetterTooltip(baseChar);
+
+          if (color) {
             return (
-              <span 
-                key={charIndex} 
-                style={style}
-                title={tooltip || undefined}
-              >
-                {char}
+              <span key={gIdx} style={applyColorWithIntensity(color, colorIntensity)} title={tooltip || undefined}>
+                {grapheme}
               </span>
             );
           }
-          return <span key={charIndex}>{char}</span>;
+          return <span key={gIdx}>{grapheme}</span>;
         })}
+
+        {/* Difficult-word badge */}
         {isDifficult && highlightDifficultWords && (
           <span style={{
-            position: 'absolute',
-            top: '-8px',
-            right: '-8px',
-            backgroundColor: '#ff4444',
-            color: 'white',
-            borderRadius: '50%',
-            width: '16px',
-            height: '16px',
-            fontSize: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            position: 'absolute', top: '-8px', right: '-8px',
+            backgroundColor: '#ff4444', color: 'white', borderRadius: '50%',
+            width: '16px', height: '16px', fontSize: '10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
           }}>!</span>
         )}
+
+        {/* "Click to hear" tooltip */}
         {isHovered && onWordClick && (
           <span style={{
-            position: 'absolute',
-            bottom: '-24px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: '#333',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            whiteSpace: 'nowrap',
-            zIndex: 10,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+            position: 'absolute', bottom: '-24px', left: '50%',
+            transform: 'translateX(-50%)', backgroundColor: '#333', color: 'white',
+            padding: '4px 8px', borderRadius: '4px', fontSize: '12px',
+            whiteSpace: 'nowrap', zIndex: 10, boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
           }}>🔊 Click to hear</span>
         )}
       </span>
     );
   };
 
-  // Split text into words while preserving spaces
+  // ── Split text into words, preserving whitespace spans ─────────────────
   const words = text.split(/(\s+)/);
 
   return (
     <div className="colored-text" style={{ lineHeight: '1.8', fontSize: '1.2rem' }}>
-      {words.map((word, index) => {
-        // Preserve whitespace
-        if (word.match(/^\s+$/)) {
-          return <span key={index}>{word}</span>;
-        }
-        return renderColoredWord(word, index);
-      })}
+      {words.map((word, index) =>
+        word.match(/^\s+$/) ? <span key={index}>{word}</span> : renderColoredWord(word, index)
+      )}
     </div>
   );
 };

@@ -1,8 +1,8 @@
-// frontend/reader/ReaderPage.jsx - COMPLETE WITH LANGUAGE SUPPORT
+// frontend/reader/ReaderPage.jsx - FIXED: Translation back to original language
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Container, Card, Alert, Row, Col, Button, Spinner, ProgressBar, Form } from "react-bootstrap";
-import { Play, Square } from "lucide-react";
+import { Play, Square, Eye } from "lucide-react";
 import TextToSpeech from "./TextToSpeech";
 import Gamification from "./Gamification";
 import OCRUploader from "./OCRUploader";
@@ -12,9 +12,16 @@ import { useAccessibility } from "../components/AccessibilityContext";
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTranslation } from 'react-i18next';
 import { getCompleteColorMap } from '../config/colorCodingConfig';
+import { CONFUSING_LETTERS } from '../config/languageConfig';
+import { translateText } from '../utils/translationService';
+import ARReaderDemo from '../components/ARReaderDemo';
 
-const DEFAULT_CONTENT =
-  "The boy and dog played with the ball in the park. They had fun together.";
+// ✅ Language-specific default content
+const DEFAULT_TEXTS = {
+  en: "The boy and dog played with the ball in the park. They had fun together.",
+  hi: "लड़का और कुत्ता पार्क में गेंद से खेले। उन्होंने साथ में खूब मजे किए।",
+  kn: "ಹುಡುಗ ಮತ್ತು ನಾಯಿ ಉದ್ಯಾನವನದಲ್ಲಿ ಚೆಂಡಿನೊಂದಿಗೆ ಆಟವಾಡಿದರು. ಅವರು ಒಟ್ಟಿಗೆ ಆನಂದಿಸಿದರು."
+};
 
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -43,11 +50,22 @@ const ReaderPage = ({ userId }) => {
   const { currentLanguage, languageConfig } = useLanguage();
   const { t } = useTranslation();
 
-  const [currentReadingContent, setCurrentReadingContent] = useState(DEFAULT_CONTENT);
+  // ✅ Initialize with language-specific default
+  const [currentReadingContent, setCurrentReadingContent] = useState(
+    DEFAULT_TEXTS[currentLanguage] || DEFAULT_TEXTS.en
+  );
   const [colorCodingEnabled, setColorCodingEnabled] = useState(true);
   const [colorIntensity, setColorIntensity] = useState(70);
   const [pronunciationMode, setPronunciationMode] = useState(false);
   const [contentSource, setContentSource] = useState("Default Sample");
+  
+  // ✅ Translation states (hidden - no UI changes)
+  const [originalText, setOriginalText] = useState(null);
+  const [originalLanguage, setOriginalLanguage] = useState(null);
+  const [isTranslating, setIsTranslating] = useState(false);
+  
+  // ✅ NEW: AR Mode state
+  const [showAR, setShowAR] = useState(false);
   
   // OCR Preview states
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -55,6 +73,7 @@ const ReaderPage = ({ userId }) => {
   const [previewFile, setPreviewFile] = useState(null);
   const [previewText, setPreviewText] = useState(null);
   const [previewSource, setPreviewSource] = useState(null);
+  const [previewLanguage, setPreviewLanguage] = useState(null);
   
   // STT mode states
   const [isSTTActive, setIsSTTActive] = useState(false);
@@ -84,10 +103,69 @@ const ReaderPage = ({ userId }) => {
 
   const recognitionRef = useRef(null);
   const shouldContinueRef = useRef(true);
+  const userLoadedTextRef = useRef(false);
 
-  React.useEffect(() => {
+  // ✅ Update words array when content changes
+  useEffect(() => {
     setWordsArray(currentReadingContent.split(" ").filter(w => w.trim()));
   }, [currentReadingContent]);
+
+  // ✅ Update default text when language changes (only if user hasn't loaded custom text)
+  useEffect(() => {
+    if (!userLoadedTextRef.current) {
+      setCurrentReadingContent(DEFAULT_TEXTS[currentLanguage] || DEFAULT_TEXTS.en);
+      setContentSource("Default Sample");
+    }
+  }, [currentLanguage]);
+
+  // ✅ FIXED: Auto-translate when language changes (SILENT - no UI changes)
+  useEffect(() => {
+    const handleLanguageChange = async () => {
+      // Only auto-translate if user has loaded their own text and original text exists
+      if (!userLoadedTextRef.current || !originalText || !originalLanguage || isTranslating) {
+        return;
+      }
+
+      console.log(`🌍 Language changed to: ${currentLanguage}`);
+      console.log(`📝 Original language: ${originalLanguage}`);
+      
+      // ✅ FIX: If switching back to original language, just show original text
+      if (originalLanguage === currentLanguage) {
+        console.log(`✅ Switching back to original ${originalLanguage.toUpperCase()} text`);
+        setCurrentReadingContent(originalText);
+        setContentSource(`OCR Upload (Original ${originalLanguage.toUpperCase()})`);
+        return; // Exit early, no translation needed
+      }
+
+      // ✅ Need to translate to a different language
+      console.log(`🔄 Translating from ${originalLanguage} to ${currentLanguage}...`);
+      setIsTranslating(true);
+
+      try {
+        const result = await translateText(originalText, currentLanguage, originalLanguage);
+
+        if (result.success && result.translatedText) {
+          setCurrentReadingContent(result.translatedText);
+          setContentSource(`OCR Upload (Translated to ${currentLanguage.toUpperCase()})`);
+          console.log('✅ Translation successful!');
+        } else {
+          console.error('❌ Translation failed:', result.error);
+          // Fallback to original
+          setCurrentReadingContent(originalText);
+          setContentSource(`OCR Upload (Original ${originalLanguage.toUpperCase()})`);
+        }
+      } catch (error) {
+        console.error('❌ Translation error:', error);
+        // Fallback to original
+        setCurrentReadingContent(originalText);
+        setContentSource(`OCR Upload (Original ${originalLanguage.toUpperCase()})`);
+      } finally {
+        setIsTranslating(false);
+      }
+    };
+
+    handleLanguageChange();
+  }, [currentLanguage, originalText, originalLanguage]); // ✅ FIXED: Include all dependencies
 
   const awardPoints = (points, reason) => {
     setGameStats(prev => {
@@ -136,22 +214,24 @@ const ReaderPage = ({ userId }) => {
     }
   };
 
-  const handleTextExtracted = (text, source, file) => {
+  const handleTextExtracted = (text, source, file, language) => {
     if (!text) return;
     setPreviewText(text);
     setPreviewSource(source);
     setPreviewFile(file);
+    setPreviewLanguage(language || 'en');
     setIsViewingPreview(true);
+    userLoadedTextRef.current = true;
   };
 
-  const analyzeText = async (text) => {
+  const analyzeText = async (text, language) => {
     try {
       const response = await fetch("http://localhost:5000/api/ml/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           text: text,
-          language: currentLanguage,  // Send current language
+          language: language || currentLanguage,
           saveToFile: true  
         }),
       });
@@ -165,7 +245,7 @@ const ReaderPage = ({ userId }) => {
         setReadingLevel(analysis.reading_level || 'Unknown');
         
         console.log('✅ Text analysis:', analysis);
-        console.log('📊 Language:', currentLanguage);
+        console.log('📊 Language:', language);
         console.log('🎯 Difficult words:', analysis.challenging_words);
       }
 
@@ -181,24 +261,38 @@ const ReaderPage = ({ userId }) => {
     setIsAnalyzing(true);
 
     try {
-      const analysisResult = await analyzeText(previewText);
+      const ocrLanguage = previewLanguage || 'en';
+      
+      console.log('🌍 Loading OCR text with language:', ocrLanguage);
+      
+      // ✅ Store original text and language for translation
+      setOriginalText(previewText);
+      setOriginalLanguage(ocrLanguage);
+      
+      const analysisResult = await analyzeText(previewText, ocrLanguage);
 
       if (analysisResult && analysisResult.success) {
         setCurrentReadingContent(previewText);
-        setContentSource(previewSource || "Uploaded / Manual");
+        setContentSource(`OCR Upload (Original ${ocrLanguage.toUpperCase()})`);
         setPreviewText(null);
         setPreviewFile(null);
+        setPreviewLanguage(null);
         setIsViewingPreview(false);
       } else {
-        // Even if analysis fails, still load the text
         setCurrentReadingContent(previewText);
-        setContentSource(previewSource || "Uploaded / Manual");
+        setContentSource(`OCR Upload (Original ${ocrLanguage.toUpperCase()})`);
+        setPreviewText(null);
+        setPreviewFile(null);
+        setPreviewLanguage(null);
         setIsViewingPreview(false);
       }
     } catch (error) {
       console.error("Error:", error);
       setCurrentReadingContent(previewText);
-      setContentSource(previewSource || "Uploaded / Manual");
+      setContentSource(`OCR Upload (Original ${ocrLanguage.toUpperCase()})`);
+      setPreviewText(null);
+      setPreviewFile(null);
+      setPreviewLanguage(null);
       setIsViewingPreview(false);
     } finally {
       setIsAnalyzing(false);
@@ -216,11 +310,11 @@ const ReaderPage = ({ userId }) => {
         userId: userId,
         sessionType: 'reading',
         content: currentReadingContent,
-        wpm: 0, // Calculate if needed
-        accuracy: 0, // Calculate if needed
-        readingTimeSec: 0, // Track if needed
+        wpm: 0,
+        accuracy: 0,
+        readingTimeSec: 0,
         difficultWords: difficultWords,
-        language: currentLanguage,  // Include current language
+        language: currentLanguage,
         timestamp: new Date().toISOString()
       };
       
@@ -245,6 +339,7 @@ const ReaderPage = ({ userId }) => {
   const handleCancelPreview = () => {
     setPreviewText(null);
     setPreviewFile(null);
+    setPreviewLanguage(null);
     setIsViewingPreview(false);
   };
 
@@ -258,7 +353,6 @@ const ReaderPage = ({ userId }) => {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(word);
       
-      // Use language-specific voice if available
       if (languageConfig && languageConfig.ttsCode) {
         utterance.lang = languageConfig.ttsCode;
       }
@@ -289,7 +383,6 @@ const ReaderPage = ({ userId }) => {
 
       const recognition = new SpeechRecognition();
       
-      // Set recognition language based on current language
       if (languageConfig && languageConfig.ttsCode) {
         recognition.lang = languageConfig.ttsCode;
       } else {
@@ -414,7 +507,6 @@ const ReaderPage = ({ userId }) => {
       } else {
         attempts++;
         
-        // Track difficult words after 2 failed attempts
         if (attempts >= 2 && !difficultWords.includes(word.toLowerCase())) {
           setDifficultWords(prev => [...prev, word.toLowerCase()]);
         }
@@ -465,7 +557,6 @@ const ReaderPage = ({ userId }) => {
       awardPoints(POINT_SYSTEM.COMPLETE_READING, 'reading');
       checkAchievements();
       
-      // Save session after completion
       await saveSession();
       
       setFeedback({
@@ -490,7 +581,7 @@ const ReaderPage = ({ userId }) => {
     setCurrentWord("");
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       shouldContinueRef.current = false;
       if (recognitionRef.current) {
@@ -506,41 +597,54 @@ const ReaderPage = ({ userId }) => {
     lineHeight: settings.lineHeight,
   };
 
-  // Helper function to render colored single word - SMOOTH FADE TO BLACK
+  const splitGraphemes = (str) => {
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      const seg = new Intl.Segmenter('und', { granularity: 'grapheme' });
+      return [...seg.segment(str)].map(s => s.segment);
+    }
+    return str.match(/[\u0900-\u097F\u0C80-\u0CFF][\u0900-\u097F\u0C80-\u0CFF\u0300-\u036F]*|./gs) || [];
+  };
+
   const renderColoredWord = (word) => {
-    // If not enabled OR below 50%, return PLAIN BLACK TEXT
     if (!colorCodingEnabled || colorIntensity < 50) {
       return <span style={{ color: '#000000' }}>{word}</span>;
     }
 
-    const colorMap = getCompleteColorMap();
+    const langLetters = CONFUSING_LETTERS[currentLanguage] || {};
+    let colorMap;
     
-    return word.split('').map((char, index) => {
-      const lowerChar = char.toLowerCase();
-      if (colorMap[lowerChar]) {
-        const color = colorMap[lowerChar];
-        
-        // Calculate color strength - smoothly fades to black
-        const colorStrength = colorIntensity / 100; // 0.5 to 1.0
-        
-        const r = parseInt(color.slice(1, 3), 16);
-        const g = parseInt(color.slice(3, 5), 16);
-        const b = parseInt(color.slice(5, 7), 16);
+    if (Object.keys(langLetters).length > 0) {
+      colorMap = {};
+      Object.keys(langLetters).forEach(l => {
+        colorMap[l] = langLetters[l].color;
+        colorMap[l.toLowerCase()] = langLetters[l].color;
+        colorMap[l.toUpperCase()] = langLetters[l].color;
+      });
+    } else {
+      colorMap = getCompleteColorMap();
+    }
 
-        // Interpolate between full color and black
-        const finalR = Math.round(r * colorStrength);
-        const finalG = Math.round(g * colorStrength);
-        const finalB = Math.round(b * colorStrength);
+    return splitGraphemes(word).map((grapheme, idx) => {
+      const baseChar = grapheme[0];
+      const hexColor = colorMap[baseChar];
 
-        const style = {
-          color: `rgb(${finalR}, ${finalG}, ${finalB})`,
-          fontWeight: colorIntensity > 70 ? 'bold' : (colorIntensity > 50 ? '600' : 'normal'),
-          transition: 'color 0.3s ease, font-weight 0.3s ease'
-        };
+      if (hexColor) {
+        const strength = colorIntensity / 100;
+        const r = Math.round(parseInt(hexColor.slice(1, 3), 16) * strength);
+        const g = Math.round(parseInt(hexColor.slice(3, 5), 16) * strength);
+        const b = Math.round(parseInt(hexColor.slice(5, 7), 16) * strength);
 
-        return <span key={index} style={style}>{char}</span>;
+        return (
+          <span key={idx} style={{
+            color: `rgb(${r}, ${g}, ${b})`,
+            fontWeight: colorIntensity > 70 ? 'bold' : colorIntensity > 50 ? '600' : 'normal',
+            transition: 'color 0.3s ease'
+          }}>
+            {grapheme}
+          </span>
+        );
       }
-      return <span key={index}>{char}</span>;
+      return <span key={idx}>{grapheme}</span>;
     });
   };
 
@@ -558,14 +662,12 @@ const ReaderPage = ({ userId }) => {
     }
   };
 
-  // Speak word when clicked
   const handleWordClick = (word) => {
     if (!("speechSynthesis" in window)) return;
     
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(word);
+    const utterance = new SpeechSpeechSynthesisUtterance(word);
     
-    // Use language-specific voice
     if (languageConfig && languageConfig.ttsCode) {
       utterance.lang = languageConfig.ttsCode;
     }
@@ -575,6 +677,28 @@ const ReaderPage = ({ userId }) => {
     utterance.volume = 1;
     window.speechSynthesis.speak(utterance);
   };
+
+  // ✅ NEW: AR Mode Fullscreen Render
+  if (showAR) {
+    return (
+      <ARReaderDemo
+        text={currentReadingContent}
+        colorCodingEnabled={colorCodingEnabled}
+        colorIntensity={colorIntensity}
+        onClose={() => setShowAR(false)}
+      />
+    );
+  }
+   if (showAR) {
+    return (
+      <ARReaderDemo
+        text={currentReadingContent}
+        colorCodingEnabled={colorCodingEnabled}
+        colorIntensity={colorIntensity}
+        onClose={() => setShowAR(false)}
+      />
+    );
+  }
 
   if (isViewingPreview) {
     return (
@@ -590,7 +714,9 @@ const ReaderPage = ({ userId }) => {
                 <Spinner animation="border" variant="info" className="mb-3" />
                 <h4>{t('reader.analyzingText') || 'Analyzing Text...'}</h4>
                 <small className="text-muted">
-                  {t('reader.analyzingLanguage') || 'Analyzing in'}: <strong>{languageConfig?.name || currentLanguage}</strong>
+                  {t('reader.analyzingLanguage') || 'Analyzing in'}: <strong>{previewLanguage ? 
+                    (previewLanguage === 'en' ? 'English' : previewLanguage === 'hi' ? 'Hindi' : 'Kannada') 
+                    : languageConfig?.name || currentLanguage}</strong>
                 </small>
               </Card.Body>
             </Card>
@@ -612,12 +738,13 @@ const ReaderPage = ({ userId }) => {
     <Container fluid>
       <Row>
         <Col lg={3}>
-          <OCRUploader onTextExtracted={handleTextExtracted} />
+          <OCRUploader 
+            onTextExtracted={handleTextExtracted}
+            currentLanguage={currentLanguage}
+          />
           
-          {/* Combined Color Coding Card with Toggle, Slider, and Guide */}
           <Card className="mb-3 shadow-sm border-primary">
             <Card.Body>
-              {/* Toggle Switch */}
               <Form.Check
                 type="switch"
                 id="color-coding-switch"
@@ -635,7 +762,6 @@ const ReaderPage = ({ userId }) => {
                 className="mb-3"
               />
 
-              {/* Brightness Slider - shown when enabled */}
               {colorCodingEnabled && (
                 <>
                   <hr />
@@ -649,7 +775,6 @@ const ReaderPage = ({ userId }) => {
                       </span>
                     </div>
                     
-                    {/* Custom Realistic Slider */}
                     <div className="position-relative mb-3" style={{ height: '40px' }}>
                       <div 
                         className="position-absolute w-100 rounded-pill"
@@ -695,7 +820,6 @@ const ReaderPage = ({ userId }) => {
 
                   <hr />
 
-                  {/* Color Guide */}
                   <div>
                     <h6 className="mb-3">
                       <strong>🎨 {t('reader.colorGuide') || 'Color Guide'}</strong>
@@ -880,11 +1004,49 @@ const ReaderPage = ({ userId }) => {
             </Card>
           )}
 
+          {/* ✅ NEW: AR Eye Button - Floats above Reading Text Card */}
+          <div className="position-relative mb-2">
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={() => setShowAR(true)}
+              className="position-absolute top-0 end-0"
+              style={{
+                zIndex: 10,
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                padding: '0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                transition: 'all 0.3s ease'
+              }}
+              title={t('reader.tryAR', 'Try AR Reading')}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'scale(1.1)';
+                e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'scale(1)';
+                e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+              }}
+            >
+              <Eye size={20} />
+            </Button>
+          </div>
+
           <Card className="shadow-sm">
             <Card.Header className="bg-light">
               <h5 className="mb-0">📄 {t('reader.readingText') || 'Reading Text'}</h5>
             </Card.Header>
-            <Card.Body style={{ backgroundColor: '#f8f9fa', padding: '2rem' }}>
+            <Card.Body style={{ 
+              backgroundColor: '#f8f9fa', 
+              padding: '2rem',
+              wordBreak: 'keep-all',
+              overflowWrap: 'anywhere'
+            }}>
               <ColorCoding 
                 text={currentReadingContent} 
                 enabled={colorCodingEnabled}
@@ -892,6 +1054,7 @@ const ReaderPage = ({ userId }) => {
                 onWordClick={handleWordClick}
                 highlightDifficultWords={true}
                 difficultWords={difficultWords}
+                currentLanguage={currentLanguage}
               />
             </Card.Body>
           </Card>
@@ -905,7 +1068,6 @@ const ReaderPage = ({ userId }) => {
             )}
           </Alert>
 
-          {/* Difficult Words Alert */}
           {difficultWords.length > 0 && (
             <Alert variant="warning" className="mt-3">
               <div className="d-flex justify-content-between align-items-center">
@@ -974,7 +1136,6 @@ const ReaderPage = ({ userId }) => {
           to { opacity: 1; }
         }
         
-        /* Custom Slider Styles */
         input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
