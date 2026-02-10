@@ -689,16 +689,6 @@ const ReaderPage = ({ userId }) => {
       />
     );
   }
-   if (showAR) {
-    return (
-      <ARReaderDemo
-        text={currentReadingContent}
-        colorCodingEnabled={colorCodingEnabled}
-        colorIntensity={colorIntensity}
-        onClose={() => setShowAR(false)}
-      />
-    );
-  }
 
   if (isViewingPreview) {
     return (
