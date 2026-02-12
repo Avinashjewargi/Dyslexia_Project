@@ -136,6 +136,9 @@
     "completed": "Completed",
     "greatJob": "Great job",
     "bonus": "bonus",
+    "translating": "Translating text...",
+    "uploadOrType": "Upload an image or type text to get started",
+    "instructions": "Use the OCR uploader on the left to extract text from images, or manually enter text.",
     "colorHelper": {
       "below50": "⚪ Below 50% - All text in normal black (No color support)",
       "50to60": "🌑 50-60% - Colors fading to dark (Almost independent)",
@@ -185,5 +188,6 @@
       "medium": "Medium",
       "hard": "Hard"
     }
+
   }
 }

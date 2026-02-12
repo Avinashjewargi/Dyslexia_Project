@@ -3,19 +3,22 @@
     "storyId": 1,
     "storyTitle": "The Thirsty Crow",
     "firstRead": "2026-01-26T16:28:43.690Z",
-    "timesRead": 4,
-    "totalDuration": 44,
-    "difficultWords": [],
-    "lastRead": "2026-01-27T11:10:21.758Z"
+    "timesRead": 5,
+    "totalDuration": 61,
+    "difficultWords": [
+      "a",
+      "water"
+    ],
+    "lastRead": "2026-02-11T17:49:15.200Z"
   },
   "2": {
     "storyId": 2,
     "storyTitle": "The Kind Dog",
     "firstRead": "2026-01-26T16:28:46.396Z",
-    "timesRead": 2,
-    "totalDuration": 6,
+    "timesRead": 3,
+    "totalDuration": 7,
     "difficultWords": [],
-    "lastRead": "2026-01-27T11:10:26.175Z"
+    "lastRead": "2026-02-11T17:49:16.506Z"
   },
   "3": {
     "storyId": 3,
