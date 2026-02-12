@@ -1,0 +1,74 @@
+{
+  "1": {
+    "storyId": 1,
+    "storyTitle": "The Thirsty Crow",
+    "firstRead": "2026-01-26T16:28:43.690Z",
+    "timesRead": 5,
+    "totalDuration": 51,
+    "difficultWords": [],
+    "lastRead": "2026-02-10T18:31:30.762Z"
+  },
+  "2": {
+    "storyId": 2,
+    "storyTitle": "The Kind Dog",
+    "firstRead": "2026-01-26T16:28:46.396Z",
+    "timesRead": 3,
+    "totalDuration": 13,
+    "difficultWords": [],
+    "lastRead": "2026-02-10T18:31:38.620Z"
+  },
+  "3": {
+    "storyId": 3,
+    "storyTitle": "The Honest Boy",
+    "firstRead": "2026-01-26T16:28:49.644Z",
+    "timesRead": 2,
+    "totalDuration": 4,
+    "difficultWords": [],
+    "lastRead": "2026-01-27T11:10:27.891Z"
+  },
+  "4": {
+    "storyId": 4,
+    "storyTitle": "The Lazy Cat",
+    "firstRead": "2026-01-26T16:28:51.999Z",
+    "timesRead": 2,
+    "totalDuration": 3,
+    "difficultWords": [],
+    "lastRead": "2026-01-27T11:10:29.849Z"
+  },
+  "5": {
+    "storyId": 5,
+    "storyTitle": "The Happy Bird",
+    "firstRead": "2026-01-27T11:10:31.514Z",
+    "timesRead": 1,
+    "totalDuration": 1,
+    "difficultWords": [],
+    "lastRead": "2026-01-27T11:10:31.514Z"
+  },
+  "6": {
+    "storyId": 6,
+    "storyTitle": "The Brave Ant",
+    "firstRead": "2026-01-27T11:10:33.083Z",
+    "timesRead": 1,
+    "totalDuration": 1,
+    "difficultWords": [],
+    "lastRead": "2026-01-27T11:10:33.083Z"
+  },
+  "7": {
+    "storyId": 7,
+    "storyTitle": "The Greedy Dog",
+    "firstRead": "2026-01-27T11:10:34.799Z",
+    "timesRead": 1,
+    "totalDuration": 1,
+    "difficultWords": [],
+    "lastRead": "2026-01-27T11:10:34.799Z"
+  },
+  "8": {
+    "storyId": 8,
+    "storyTitle": "The Small Seed",
+    "firstRead": "2026-01-27T11:10:36.539Z",
+    "timesRead": 1,
+    "totalDuration": 1,
+    "difficultWords": [],
+    "lastRead": "2026-01-27T11:10:36.539Z"
+  }
+}

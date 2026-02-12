@@ -1,0 +1,19 @@
+{
+  "name": "adaptive-reading-assistant-for-dyslexia-main",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "aframe": "^1.7.1",
+    "ar.js": "^2.2.2",
+    "bootstrap": "^5.3.8",
+    "lucide-react": "^0.562.0",
+    "react-bootstrap": "^2.10.10"
+  }
+}

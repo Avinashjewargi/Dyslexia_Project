@@ -1,0 +1,108 @@
+/* frontend/src/index.css */
+
+:root {
+  --accessibility-font-size: 16px;
+  --accessibility-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --accessibility-letter-spacing: normal;
+  --accessibility-line-height: 1.5;
+}
+
+/* Local OpenDyslexic fonts */
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic/OpenDyslexic-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic/OpenDyslexic-Bold.woff2') format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('/fonts/OpenDyslexic/OpenDyslexic-Italic.woff2') format('woff2');
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Apply OpenDyslexic globally */
+body {
+  font-family: 'OpenDyslexic', var(--accessibility-font-family);
+  font-size: var(--accessibility-font-size);
+  letter-spacing: var(--accessibility-letter-spacing);
+  line-height: var(--accessibility-line-height);
+  transition: all 0.3s ease;
+}
+
+/* Apply accessibility settings to all text elements */
+body, p, h1, h2, h3, h4, h5, h6, span, div, button, input, textarea, select {
+  font-size: inherit;
+  font-family: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+}
+
+/* High contrast mode */
+body.high-contrast-mode {
+  background-color: #000 !important;
+  color: #fff !important;
+  filter: contrast(1.2);
+}
+
+body.high-contrast-mode * {
+  border-color: #fff !important;
+}
+
+body.high-contrast-mode button,
+body.high-contrast-mode input,
+body.high-contrast-mode select,
+body.high-contrast-mode textarea {
+  background-color: #222 !important;
+  color: #fff !important;
+  border: 2px solid #fff !important;
+}
+
+body.high-contrast-mode a {
+  color: #4dabf7 !important;
+}
+
+body.high-contrast-mode .btn-primary {
+  background-color: #0066cc !important;
+  border-color: #0066cc !important;
+}
+
+body.high-contrast-mode .btn-secondary {
+  background-color: #444 !important;
+  border-color: #666 !important;
+}
+
+/* Ensure modal content follows high contrast */
+body.high-contrast-mode .modal-content {
+  background-color: #1a1a1a !important;
+  color: #fff !important;
+}
+
+body.high-contrast-mode .modal-header,
+body.high-contrast-mode .modal-footer {
+  border-color: #444 !important;
+}
+
+/* Bootstrap overrides for accessibility */
+.flex-grow-1 {
+  flex-grow: 1;
+}
+
+.container-fluid {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}

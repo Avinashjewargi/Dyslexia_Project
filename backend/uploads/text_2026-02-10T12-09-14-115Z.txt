@@ -1,0 +1,6 @@
+Assig nment
+Problem 1: Write a program sorts an array in ascending order using the bubble sort
+algorithm.
+Problem 2: Write a program counts the number of even and odd numbers in an array.
+Problem 3: Write a program performs basic arithmetic operations (like Addition,
+Subtraction, Multiplication & Division).
