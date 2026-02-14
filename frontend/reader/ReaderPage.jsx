@@ -914,7 +914,11 @@ const ReaderPage = ({ userId }) => {
                   <strong>
                     {pronunciationMode 
                       ? `🎤 ${t('reader.studentReads') || 'Student Reads (STT Mode)'}` 
+<<<<<<< HEAD
                       : `🔊 ${t('Computer Reads') || 'Computer Reads (TTS Mode)'}`}
+=======
+                      : `🔊 ${t('reader.computerReads') || 'Computer Reads (TTS Mode)'}`}
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
                   </strong>
                 </label>
               </div>

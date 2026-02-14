@@ -8,7 +8,11 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
+<<<<<<< HEAD
 set "VIRTUAL_ENV=E:\Dyslexia_project\Dyslexia_project\ml\venv"
+=======
+set "VIRTUAL_ENV=F:\Dyslexia\Adaptive-Reading-Assistant-for-Dyslexia-main\ml\venv"
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
 
 if not defined PROMPT set PROMPT=$P$G
 

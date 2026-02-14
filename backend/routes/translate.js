@@ -1,4 +1,8 @@
 // backend/routes/translate.js
+<<<<<<< HEAD
+=======
+// FIXED: Proper Hindi and Kannada translation with Google Translate API
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
 
 const express = require('express');
 const router = express.Router();
@@ -21,6 +25,10 @@ router.post('/', async (req, res) => {
     }
 
     console.log(`🌍 Translation request: ${sourceLanguage} → ${targetLanguage}`);
+<<<<<<< HEAD
+=======
+    console.log(`📝 Text preview: ${text.substring(0, 100)}...`);
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
 
     // Use Google Translate API (free tier)
     const url = 'https://translate.googleapis.com/translate_a/single';
@@ -34,10 +42,20 @@ router.post('/', async (req, res) => {
 
     const response = await axios.get(url, { 
       params,
+<<<<<<< HEAD
       timeout: 10000,
       headers: {
         'User-Agent': 'Mozilla/5.0'
       }
+=======
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      // Ensure proper encoding for Hindi/Kannada
+      responseType: 'json',
+      responseEncoding: 'utf8'
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
     });
 
     // Parse Google Translate response
@@ -49,6 +67,13 @@ router.post('/', async (req, res) => {
 
       const detectedSourceLang = response.data[2] || sourceLanguage;
 
+<<<<<<< HEAD
+=======
+      console.log(`✅ Translation successful`);
+      console.log(`📝 Result preview: ${translatedText.substring(0, 100)}...`);
+      console.log(`🔍 Detected source: ${detectedSourceLang}`);
+
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
       return res.json({
         success: true,
         originalText: text,
@@ -76,7 +101,11 @@ router.post('/', async (req, res) => {
 /**
  * Batch translation endpoint
  * POST /api/translate/batch
+<<<<<<< HEAD
  * Body: { texts: string[], targetLanguage: string }
+=======
+ * Body: { texts: string[], targetLanguage: string, sourceLanguage?: string }
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
  */
 router.post('/batch', async (req, res) => {
   try {
@@ -108,7 +137,12 @@ router.post('/batch', async (req, res) => {
           timeout: 10000,
           headers: {
             'User-Agent': 'Mozilla/5.0'
+<<<<<<< HEAD
           }
+=======
+          },
+          responseEncoding: 'utf8'
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
         });
 
         if (response.data && response.data[0]) {
@@ -143,6 +177,11 @@ router.post('/batch', async (req, res) => {
 
     const results = await Promise.all(translationPromises);
 
+<<<<<<< HEAD
+=======
+    console.log(`✅ Batch translation complete: ${results.filter(r => r.success).length}/${results.length} successful`);
+
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
     return res.json({
       success: true,
       translations: results,
@@ -177,6 +216,11 @@ router.post('/detect', async (req, res) => {
       });
     }
 
+<<<<<<< HEAD
+=======
+    console.log(`🔍 Detecting language for: ${text.substring(0, 100)}...`);
+
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
     const url = 'https://translate.googleapis.com/translate_a/single';
     const params = {
       client: 'gtx',
@@ -191,12 +235,22 @@ router.post('/detect', async (req, res) => {
       timeout: 5000,
       headers: {
         'User-Agent': 'Mozilla/5.0'
+<<<<<<< HEAD
       }
+=======
+      },
+      responseEncoding: 'utf8'
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
     });
 
     if (response.data && response.data[2]) {
       const detectedLanguage = response.data[2];
       
+<<<<<<< HEAD
+=======
+      console.log(`✅ Detected language: ${detectedLanguage}`);
+
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
       return res.json({
         success: true,
         detectedLanguage,

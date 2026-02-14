@@ -1,5 +1,9 @@
 // frontend/components/ARReaderDemo.jsx
+<<<<<<< HEAD
 // COMPLETE FIX: Hides navbar, footer, and all interfering elements
+=======
+// ULTIMATE CAMERA FIX: Forces camera display with proper WebGL and AR.js initialization
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Button, Alert, Card, Spinner } from 'react-bootstrap';
@@ -41,6 +45,7 @@ const ARReaderDemo = ({
 
   useEffect(() => {
     if (arMode) {
+<<<<<<< HEAD
       console.log('🎥 AR Mode activated - applying fullscreen styles');
       
       // ✅ CRITICAL: Hide ALL interfering elements
@@ -58,12 +63,22 @@ const ARReaderDemo = ({
         '.container-fluid'
       ];
 
+=======
+      console.log('🎥 AR Mode activated');
+      
+      // Hide interfering elements
+      const elementsToHide = ['nav', 'header', 'footer', '.navbar', '.app-navbar', '.footer', '.app-footer', '.chatbot', '.settings'];
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
       const hiddenElements = [];
       
       elementsToHide.forEach(selector => {
         const elements = document.querySelectorAll(selector);
         elements.forEach(el => {
+<<<<<<< HEAD
           if (el && !el.querySelector('a-scene')) { // Don't hide if it contains AR scene
+=======
+          if (el && !el.querySelector('a-scene')) {
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
             el.style.display = 'none';
             hiddenElements.push({ element: el, originalDisplay: el.style.display });
           }
@@ -74,10 +89,13 @@ const ARReaderDemo = ({
       const originalStyles = {
         bodyOverflow: document.body.style.overflow,
         bodyPosition: document.body.style.position,
+<<<<<<< HEAD
         bodyWidth: document.body.style.width,
         bodyHeight: document.body.style.height,
         bodyTop: document.body.style.top,
         bodyLeft: document.body.style.left,
+=======
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
         htmlOverflow: document.documentElement.style.overflow
       };
       
@@ -87,6 +105,7 @@ const ARReaderDemo = ({
       document.body.style.height = '100%';
       document.body.style.top = '0';
       document.body.style.left = '0';
+<<<<<<< HEAD
       document.body.style.margin = '0';
       document.body.style.padding = '0';
       document.documentElement.style.overflow = 'hidden';
@@ -99,12 +118,23 @@ const ARReaderDemo = ({
       
       setIsLoading(true);
       
+=======
+      document.documentElement.style.overflow = 'hidden';
+      
+      const root = document.getElementById('root');
+      if (root) root.style.background = 'black';
+      
+      setIsLoading(true);
+      
+      // Wait for A-Frame and AR.js to initialize
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
       const timer = setTimeout(() => {
         setIsLoading(false);
         
         if (typeof window.AFRAME === 'undefined') {
           setError('A-Frame library failed to load. Please refresh the page.');
           console.error('❌ A-Frame not loaded');
+<<<<<<< HEAD
         } else {
           console.log('✅ A-Frame loaded successfully');
           
@@ -127,11 +157,61 @@ const ARReaderDemo = ({
           }, 500);
         }
       }, 3000);
+=======
+        } else if (typeof window.THREEx === 'undefined') {
+          setError('AR.js library failed to load. Please refresh the page.');
+          console.error('❌ AR.js not loaded');
+        } else {
+          console.log('✅ A-Frame and AR.js loaded');
+          
+          // Force camera to start after scene is ready
+          setTimeout(() => {
+            const scene = document.querySelector('a-scene');
+            if (scene) {
+              console.log('🎬 Scene found, checking camera...');
+              
+              // Get the AR.js system
+              if (scene.systems && scene.systems.arjs) {
+                console.log('✅ AR.js system active');
+              }
+              
+              // Check for video element
+              const checkVideo = setInterval(() => {
+                const video = document.querySelector('video');
+                if (video) {
+                  console.log('✅ Video element found:', video);
+                  console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+                  console.log('Video playing:', !video.paused);
+                  
+                  // Force video to be visible
+                  video.style.display = 'block';
+                  video.style.position = 'fixed';
+                  video.style.top = '0';
+                  video.style.left = '0';
+                  video.style.width = '100%';
+                  video.style.height = '100%';
+                  video.style.objectFit = 'cover';
+                  video.style.zIndex = '0';
+                  
+                  clearInterval(checkVideo);
+                } else {
+                  console.log('⏳ Waiting for video element...');
+                }
+              }, 500);
+              
+              // Clear interval after 10 seconds
+              setTimeout(() => clearInterval(checkVideo), 10000);
+            }
+          }, 1000);
+        }
+      }, 2000);
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
 
       return () => {
         console.log('🔄 Cleaning up AR mode');
         clearTimeout(timer);
         
+<<<<<<< HEAD
         // Restore hidden elements
         hiddenElements.forEach(({ element, originalDisplay }) => {
           if (element) {
@@ -154,18 +234,39 @@ const ARReaderDemo = ({
         if (root) {
           root.style.background = '';
         }
+=======
+        hiddenElements.forEach(({ element, originalDisplay }) => {
+          if (element) element.style.display = originalDisplay;
+        });
+        
+        document.body.style.overflow = originalStyles.bodyOverflow;
+        document.body.style.position = originalStyles.bodyPosition;
+        document.body.style.width = '';
+        document.body.style.height = '';
+        document.body.style.top = '';
+        document.body.style.left = '';
+        document.documentElement.style.overflow = originalStyles.htmlOverflow;
+        
+        if (root) root.style.background = '';
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
       };
     }
   }, [arMode]);
 
   const getColorForLetter = (letter) => {
     const langLetters = CONFUSING_LETTERS[currentLanguage] || {};
+<<<<<<< HEAD
     
+=======
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
     if (Object.keys(langLetters).length > 0) {
       const letterConfig = langLetters[letter] || langLetters[letter.toLowerCase()];
       return letterConfig ? letterConfig.color : '#FFFFFF';
     }
+<<<<<<< HEAD
     
+=======
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
     const colorMap = getCompleteColorMap();
     return colorMap[letter] || colorMap[letter.toLowerCase()] || '#FFFFFF';
   };
@@ -177,6 +278,7 @@ const ARReaderDemo = ({
     
     for (let i = 0; i < word.length; i++) {
       currentSyllable += word[i];
+<<<<<<< HEAD
       
       if (vowels.test(word[i]) && i < word.length - 1) {
         if (!vowels.test(word[i + 1])) {
@@ -190,15 +292,27 @@ const ARReaderDemo = ({
       syllables.push(currentSyllable);
     }
     
+=======
+      if (vowels.test(word[i]) && i < word.length - 1 && !vowels.test(word[i + 1])) {
+        syllables.push(currentSyllable);
+        currentSyllable = '';
+      }
+    }
+    if (currentSyllable) syllables.push(currentSyllable);
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
     return syllables.length > 0 ? syllables : [word];
   };
 
   const processTextForAR = () => {
     const words = text.split(' ').slice(0, 5);
+<<<<<<< HEAD
     return words.map(word => ({
       original: word,
       syllables: syllabify(word)
     }));
+=======
+    return words.map(word => ({ original: word, syllables: syllabify(word) }));
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
   };
 
   const startAR = async () => {
@@ -206,7 +320,11 @@ const ARReaderDemo = ({
       setError(null);
       
       if (typeof window.AFRAME === 'undefined') {
+<<<<<<< HEAD
         setError('AR libraries are still loading. Please wait a moment and try again.');
+=======
+        setError('AR libraries are still loading. Please wait and try again.');
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
         return;
       }
 
@@ -224,9 +342,14 @@ const ARReaderDemo = ({
       setArMode(true);
     } catch (error) {
       console.error('❌ Camera error:', error);
+<<<<<<< HEAD
       
       if (error.name === 'NotAllowedError') {
         setError('Camera access denied. Please allow camera permissions in your browser settings.');
+=======
+      if (error.name === 'NotAllowedError') {
+        setError('Camera access denied. Please allow camera permissions.');
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
       } else if (error.name === 'NotFoundError') {
         setError('No camera found on this device.');
       } else {
@@ -238,9 +361,13 @@ const ARReaderDemo = ({
   const closeAR = () => {
     setArMode(false);
     setError(null);
+<<<<<<< HEAD
     if (onClose) {
       onClose();
     }
+=======
+    if (onClose) onClose();
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
   };
 
   if (!arMode) {
@@ -252,9 +379,15 @@ const ARReaderDemo = ({
           <Alert variant="info" className="mt-3">
             <h5>{t('ar.whatYouNeed', "What you'll need:")}</h5>
             <ol>
+<<<<<<< HEAD
               <li>{t('ar.requirement1', 'A device with camera (smartphone, tablet, or webcam)')}</li>
               <li>{t('ar.requirement2', 'Printed HIRO marker (download below)')}</li>
               <li>{t('ar.requirement3', 'A well-lit room')}</li>
+=======
+              <li>Device with camera</li>
+              <li>Printed HIRO marker (download below)</li>
+              <li>Well-lit room</li>
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
             </ol>
           </Alert>
 
@@ -265,13 +398,18 @@ const ARReaderDemo = ({
           )}
 
           <div className="mb-3">
+<<<<<<< HEAD
             <h5>📥 {t('ar.step1', 'Step 1: Download & Print Marker')}</h5>
+=======
+            <h5>📥 Step 1: Download & Print Marker</h5>
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
             <a 
               href="https://ar-js-org.github.io/AR.js/data/images/hiro.png" 
               target="_blank" 
               rel="noopener noreferrer"
               className="btn btn-primary mb-2"
             >
+<<<<<<< HEAD
               {t('ar.downloadMarker', 'Download HIRO Marker')}
             </a>
             <p className="text-muted">
@@ -298,12 +436,27 @@ const ARReaderDemo = ({
               <small className="d-block text-muted mt-1">
                 (First 5 words for better AR performance)
               </small>
+=======
+              Download HIRO Marker
+            </a>
+            <p className="text-muted">Print on white paper (A4 or Letter size)</p>
+          </div>
+
+          <div className="mb-3">
+            <h6 className="text-primary">📝 Text to Display:</h6>
+            <div className="p-3 bg-light rounded border">
+              <strong>{text.split(' ').slice(0, 5).join(' ')}</strong>
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
             </div>
           </div>
 
           {cameraPermission === false && (
             <Alert variant="warning">
+<<<<<<< HEAD
               ⚠️ {t('ar.cameraPermissionDenied', 'Camera access denied. Please enable camera permissions in your browser settings.')}
+=======
+              ⚠️ Camera access denied. Please enable camera permissions.
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
             </Alert>
           )}
 
@@ -320,6 +473,7 @@ const ARReaderDemo = ({
               onClick={startAR}
               disabled={cameraPermission === false || typeof window.AFRAME === 'undefined'}
             >
+<<<<<<< HEAD
               🚀 {t('ar.startAR', 'Start AR Reading Assistant')}
             </Button>
 
@@ -329,14 +483,24 @@ const ARReaderDemo = ({
               onClick={closeAR}
             >
               ← {t('ar.backToReader', 'Back to Reader')}
+=======
+              🚀 Start AR Reading
+            </Button>
+            <Button variant="secondary" size="lg" onClick={closeAR}>
+              ← Back to Reader
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
             </Button>
           </div>
 
           <Alert variant="info" className="mt-3 mb-0">
             <small>
+<<<<<<< HEAD
               <strong>{t('ar.language', 'Language')}:</strong> {languageConfig?.name || currentLanguage.toUpperCase()}
               <br />
               <strong>{t('ar.colorCoding', 'Color Coding')}:</strong> {colorCodingEnabled ? 'Enabled' : 'Disabled'} ({colorIntensity}%)
+=======
+              <strong>Language:</strong> {languageConfig?.name || currentLanguage.toUpperCase()}
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
               <br />
               <strong>Status:</strong> {typeof window.AFRAME !== 'undefined' ? '✅ AR Ready' : '⏳ Loading...'}
             </small>
@@ -353,13 +517,17 @@ const ARReaderDemo = ({
       position: 'fixed',
       top: 0,
       left: 0,
+<<<<<<< HEAD
       right: 0,
       bottom: 0,
+=======
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
       width: '100vw',
       height: '100vh',
       margin: 0,
       padding: 0,
       zIndex: 999999,
+<<<<<<< HEAD
       background: 'black'
     }}>
       {/* Global styles */}
@@ -375,10 +543,24 @@ const ARReaderDemo = ({
         }
 
         /* A-Frame scene fullscreen */
+=======
+      background: '#000'
+    }}>
+      {/* Critical CSS for camera display */}
+      <style>{`
+        body, html {
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+        }
+
+        /* Scene container - transparent background */
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
         a-scene {
           position: fixed !important;
           top: 0 !important;
           left: 0 !important;
+<<<<<<< HEAD
           right: 0 !important;
           bottom: 0 !important;
           width: 100vw !important;
@@ -389,10 +571,20 @@ const ARReaderDemo = ({
         }
         
         /* A-Frame canvas fullscreen */
+=======
+          width: 100vw !important;
+          height: 100vh !important;
+          z-index: 1 !important;
+          background: transparent !important;
+        }
+        
+        /* WebGL canvas - must be visible */
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
         a-scene canvas.a-canvas {
           position: fixed !important;
           top: 0 !important;
           left: 0 !important;
+<<<<<<< HEAD
           right: 0 !important;
           bottom: 0 !important;
           width: 100vw !important;
@@ -405,6 +597,42 @@ const ARReaderDemo = ({
         /* Hide default A-Frame UI */
         .a-loader-title,
         .a-enter-vr,
+=======
+          width: 100vw !important;
+          height: 100vh !important;
+          z-index: 1 !important;
+          display: block !important;
+          opacity: 1 !important;
+        }
+
+        /* Video element - CRITICAL for camera feed */
+        a-scene video,
+        video {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          z-index: 0 !important;
+          display: block !important;
+        }
+
+        /* AR.js specific video class */
+        .arjs-video {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          z-index: 0 !important;
+        }
+        
+        /* Hide A-Frame UI */
+        .a-loader-title,
+        .a-enter-vr,
+        .a-enter-ar,
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
         .a-orientation-modal {
           display: none !important;
         }
@@ -424,12 +652,20 @@ const ARReaderDemo = ({
           justifyContent: 'center',
           backgroundColor: 'rgba(0, 0, 0, 0.95)',
           color: 'white',
+<<<<<<< HEAD
           zIndex: 1000000,
           pointerEvents: 'auto'
         }}>
           <Spinner animation="border" variant="light" style={{ width: '4rem', height: '4rem' }} />
           <h4 className="mt-3">Initializing AR Camera...</h4>
           <p>Please allow camera access when prompted</p>
+=======
+          zIndex: 1000000
+        }}>
+          <Spinner animation="border" variant="light" style={{ width: '4rem', height: '4rem' }} />
+          <h4 className="mt-3">Starting AR Camera...</h4>
+          <p>Initializing AR.js and camera feed</p>
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
         </div>
       )}
 
@@ -480,7 +716,11 @@ const ARReaderDemo = ({
         fontSize: '13px',
         backdropFilter: 'blur(10px)',
         pointerEvents: 'none',
+<<<<<<< HEAD
         zIndex: 1000000
+=======
+        zIndex: 100
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
       }}>
         <h6 style={{ margin: '0 0 8px 0', color: '#4CC417', fontSize: '14px' }}>
           📷 AR Reading Mode Active
@@ -488,8 +728,13 @@ const ARReaderDemo = ({
         <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '12px' }}>
           <li>Point camera at HIRO marker</li>
           <li>Words appear in 3D above marker</li>
+<<<<<<< HEAD
           <li>Yellow = reading flow sequence</li>
           <li>Colors = confusing letter pairs</li>
+=======
+          <li>Yellow = reading flow</li>
+          <li>Colors = confusing letters</li>
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
         </ul>
         <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #555', fontSize: '11px' }}>
           <strong>Language:</strong> {languageConfig?.name || currentLanguage}
@@ -513,14 +758,22 @@ const ARReaderDemo = ({
           cursor: 'pointer',
           boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
           fontWeight: 'bold',
+<<<<<<< HEAD
           zIndex: 1000000,
+=======
+          zIndex: 100,
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
           pointerEvents: 'auto'
         }}
       >
         ❌ Exit AR Mode
       </button>
 
+<<<<<<< HEAD
       {/* AR Beta Badge */}
+=======
+      {/* Beta Badge */}
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
       <div style={{
         position: 'fixed',
         top: '20px',
@@ -533,7 +786,11 @@ const ARReaderDemo = ({
         fontWeight: 'bold',
         boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
         pointerEvents: 'none',
+<<<<<<< HEAD
         zIndex: 1000000
+=======
+        zIndex: 100
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
       }}>
         ✨ AR BETA
       </div>
@@ -542,6 +799,7 @@ const ARReaderDemo = ({
       <a-scene
         ref={sceneRef}
         embedded
+<<<<<<< HEAD
         arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
         vr-mode-ui="enabled: false"
         renderer="logarithmicDepthBuffer: true; precision: medium; alpha: true; antialias: true;"
@@ -549,6 +807,14 @@ const ARReaderDemo = ({
       >
         <a-assets timeout="30000"></a-assets>
 
+=======
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1280; sourceHeight: 720; displayWidth: 1280; displayHeight: 720;"
+        vr-mode-ui="enabled: false"
+        renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: false;"
+        loading-screen="enabled: false"
+        device-orientation-permission-ui="enabled: false"
+      >
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
         <a-marker preset="hiro" id="hiro-marker">
           {processedWords.map((wordData, wordIndex) => {
             const yPosition = 1.0 - (wordIndex * 0.4);
