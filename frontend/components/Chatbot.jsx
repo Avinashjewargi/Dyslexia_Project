@@ -1,4 +1,4 @@
-// frontend/components/Chatbot.jsx - Modern AI Assistant with Enhanced Offline Mode
+// frontend/components/Chatbot.jsx - Modern AI Assistant with Enhanced Offline Mode - FIXED FLOATING BUTTON
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 
@@ -459,19 +459,42 @@ export default function Chatbot() {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           }
 
+          /* CRITICAL FIX: Maximum z-index and isolation */
           .chatbot-container {
             position: fixed !important;
-            bottom: 24px !important;
-            right: 24px !important;
-            z-index: 999999 !important;
+            bottom: 30px !important;
+            right: 30px !important;
+            z-index: 2147483647 !important;
+            pointer-events: auto !important;
+            isolation: isolate !important;
+            transform: translateZ(0) !important;
+            will-change: transform !important;
           }
           
           .chatbot-window {
             position: fixed !important;
-            bottom: 100px !important;
-            right: 24px !important;
-            z-index: 999998 !important;
+            bottom: 110px !important;
+            right: 30px !important;
+            z-index: 2147483646 !important;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto !important;
+            isolation: isolate !important;
+            transform: translateZ(0) !important;
+            will-change: transform !important;
+          }
+
+          .calculator-popup {
+            position: fixed !important;
+            bottom: 110px !important;
+            right: 30px !important;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            animation: slideUp 0.3s ease;
+            z-index: 2147483645 !important;
+            pointer-events: auto !important;
+            isolation: isolate !important;
           }
 
           .chat-image {
@@ -613,18 +636,6 @@ export default function Chatbot() {
             animation: spin 0.8s linear infinite;
           }
 
-          .calculator-popup {
-            position: fixed;
-            bottom: 100px;
-            right: 24px;
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-            animation: slideUp 0.3s ease;
-            z-index: 999999;
-          }
-
           .modern-scrollbar::-webkit-scrollbar {
             width: 6px;
           }
@@ -653,6 +664,23 @@ export default function Chatbot() {
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+          }
+
+          /* PULSE ANIMATION FOR BUTTON */
+          @keyframes chatbot-pulse {
+            0% {
+              box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+            }
+            50% {
+              box-shadow: 0 8px 32px rgba(99, 102, 241, 0.6), 0 0 0 8px rgba(99, 102, 241, 0.1);
+            }
+            100% {
+              box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+            }
+          }
+
+          .chatbot-button-pulse {
+            animation: chatbot-pulse 2s infinite;
           }
         `}
       </style>
@@ -719,9 +747,10 @@ export default function Chatbot() {
       <div className="chatbot-container">
         <button
           onClick={() => setIsOpen(!isOpen)}
+          className="chatbot-button-pulse"
           style={{
-            width: "64px",
-            height: "64px",
+            width: "68px",
+            height: "68px",
             borderRadius: "50%",
             background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
             border: "none",
@@ -734,8 +763,8 @@ export default function Chatbot() {
             position: "relative",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.1)";
-            e.currentTarget.style.boxShadow = "0 12px 32px rgba(99, 102, 241, 0.5)";
+            e.currentTarget.style.transform = "scale(1.15) translateY(-3px)";
+            e.currentTarget.style.boxShadow = "0 16px 40px rgba(99, 102, 241, 0.6)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "scale(1)";
@@ -744,8 +773,8 @@ export default function Chatbot() {
         >
           {/* Robot Icon */}
           <svg
-            width="36"
-            height="36"
+            width="38"
+            height="38"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -768,13 +797,13 @@ export default function Chatbot() {
           {/* Status Dot */}
           <span style={{
             position: "absolute",
-            bottom: "8px",
-            right: "8px",
-            width: "12px",
-            height: "12px",
+            bottom: "10px",
+            right: "10px",
+            width: "14px",
+            height: "14px",
             background: isOnline ? "#10b981" : "#ef4444",
             borderRadius: "50%",
-            border: "2px solid white",
+            border: "2.5px solid white",
             boxShadow: isOnline 
               ? "0 2px 8px rgba(16, 185, 129, 0.4)" 
               : "0 2px 8px rgba(239, 68, 68, 0.4)",
@@ -784,19 +813,19 @@ export default function Chatbot() {
           {chat.length > 0 && !isOpen && (
             <span style={{
               position: "absolute",
-              top: "-4px",
-              right: "-4px",
+              top: "-6px",
+              right: "-6px",
               background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
               color: "white",
               borderRadius: "50%",
-              width: "22px",
-              height: "22px",
-              fontSize: "11px",
+              width: "26px",
+              height: "26px",
+              fontSize: "12px",
               fontWeight: "700",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: "2px solid white",
+              border: "3px solid white",
               boxShadow: "0 2px 8px rgba(239, 68, 68, 0.4)",
               zIndex: 4,
             }}>
@@ -806,7 +835,7 @@ export default function Chatbot() {
         </button>
       </div>
 
-      {/* Chat Window */}
+      {/* Chat Window - REST OF THE CODE REMAINS THE SAME */}
       {isOpen && (
         <div className="chatbot-window" style={{
           width: chatWidth,
@@ -1030,7 +1059,7 @@ export default function Chatbot() {
             </div>
           </div>
 
-          {/* Chat Area */}
+          {/* Chat Area - CONTINUED IN NEXT MESSAGE DUE TO LENGTH... */}
           <div className="modern-scrollbar" style={{
             flex: 1,
             overflowY: "auto",
