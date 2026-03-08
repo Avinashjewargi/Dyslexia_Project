@@ -1,6 +1,4 @@
-// frontend/components/Chatbot.jsx
-// Uses ReactDOM.createPortal to render directly into document.body
-// This GUARANTEES fixed positioning works regardless of parent CSS
+// frontend/components/Chatbot.jsx - Modern AI Assistant with Enhanced Offline Mode
 import React, { useState, useRef, useEffect } from "react";
 import ReactDOM from "react-dom";
 import axios from "axios";
@@ -142,196 +140,228 @@ function injectStyles() {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    .dcb-msg-enter { animation: dcb-fadeIn 0.28s ease; }
+          .chatbot-container {
+            position: fixed !important;
+            bottom: 24px !important;
+            right: 24px !important;
+            z-index: 999999 !important;
+          }
+          
+          .chatbot-window {
+            position: fixed !important;
+            bottom: 100px !important;
+            right: 24px !important;
+            z-index: 999998 !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          }
 
-    .dcb-title-box {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      color: #fff; padding: 11px 15px; border-radius: 10px; margin: 8px 0;
-      font-weight: 600; font-size: 14px; text-align: center;
-      box-shadow: 0 4px 12px rgba(99,102,241,0.25);
-    }
-    .dcb-facts-box {
-      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-      border-left: 3px solid #0ea5e9;
-      padding: 14px; margin: 10px 0; border-radius: 12px;
-    }
-    .dcb-fact-item {
-      padding: 7px 0; font-size: 13px; line-height: 1.6; color: #1e293b;
-      border-bottom: 1px dashed #bae6fd;
-    }
-    .dcb-fact-item:last-child { border-bottom: none; }
-    .dcb-fact-item::before { content: "•"; color: #0ea5e9; font-weight: bold; margin-right: 7px; }
+          .chat-image {
+            width: 100%;
+            height: auto;
+            max-height: 280px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin: 12px 0;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+          }
+          
+          .chat-image:hover {
+            transform: scale(1.02);
+          }
 
-    .dcb-calc-box {
-      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-      border: 2px solid #e2e8f0; border-radius: 14px; padding: 18px; margin: 10px 0;
-    }
-    .dcb-calc-btn {
-      width: 54px; height: 54px; margin: 4px; font-size: 19px; font-weight: 600;
-      border: 2px solid #e2e8f0; border-radius: 50%; background: #fff; color: #1e293b;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .dcb-calc-btn:hover {
-      background: #6366f1; color: #fff; border-color: #6366f1;
-      transform: translateY(-2px);
-    }
+          .facts-box {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-left: 3px solid #0ea5e9;
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 12px;
+          }
 
-    .dcb-spinner {
-      width: 26px; height: 26px; border: 3px solid #e2e8f0;
-      border-top-color: #6366f1; border-radius: 50%;
-      animation: dcb-spin 0.8s linear infinite;
-    }
+          .fact-item {
+            padding: 8px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #1e293b;
+            border-bottom: 1px dashed #bae6fd;
+          }
 
-    .dcb-status-dot {
-      position: absolute; bottom: 7px; right: 7px;
-      width: 13px; height: 13px; border-radius: 50%;
-      border: 2px solid #fff;
-    }
-    .dcb-badge {
-      position: absolute; top: -4px; right: -4px;
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: #fff; border-radius: 50%;
-      width: 22px; height: 22px; font-size: 11px; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      border: 2px solid #fff;
-    }
+          .fact-item:last-child {
+            border-bottom: none;
+          }
 
-    @keyframes dcb-slideUp {
-      from { transform: translateY(28px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
-    }
-    @keyframes dcb-fadeIn {
-      from { transform: translateY(10px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
-    }
-    @keyframes dcb-spin {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
-    @keyframes dcb-pulse {
-      0%,100% { box-shadow: 0 8px 24px rgba(99,102,241,0.45); }
-      50%      { box-shadow: 0 8px 36px rgba(99,102,241,0.75); }
-    }
-  `;
-  document.head.appendChild(style);
-}
+          .fact-item::before {
+            content: "•";
+            color: #0ea5e9;
+            font-weight: bold;
+            margin-right: 8px;
+            font-size: 18px;
+          }
 
-// ─── Offline responses ────────────────────────────────────────────────────────
-function getOfflineResponse(message) {
-  const msg = message.toLowerCase();
-  if (msg.match(/\b(hi|hello|hey)\b/))
-    return { reply: "Hello! 👋 I'm your Dyslexia Reading Assistant.\n\nI can help with:\n• Reading practice\n• Text-to-speech\n• OCR uploads\n• Progress tracking\n• Accessibility settings", emoji: "👋" };
-  if (msg.includes("how are you"))
-    return { reply: "I'm great! 😊 Ready to help with your reading practice!", emoji: "😊" };
-  if (msg.includes("dyslexia") || msg.includes("reading tip"))
-    return { reply: "Our platform offers:\n✅ Color-coded letters (b/d/p/q)\n✅ OpenDyslexic font\n✅ Text-to-speech\n✅ OCR text extraction\n✅ Games & rewards", title: "Dyslexia Support Features", emoji: "📚", facts: ["Color coding helps b/d/p/q", "OpenDyslexic font for easier reading", "TTS helps pronunciation", "OCR reads images instantly", "Games make learning fun"] };
-  if (msg.includes("ocr") || msg.includes("upload") || msg.includes("image"))
-    return { reply: "OCR turns pictures into text!\n\n1. Go to Reader page\n2. Click Upload Image\n3. Select your photo\n4. Text appears in seconds!", title: "OCR Guide", emoji: "📸", facts: ["Reads text from any photo", "Works with books & papers", "Takes ~3-5 seconds", "Listen to extracted text", "Clear images work best"] };
-  if (msg.includes("tts") || msg.includes("text to speech") || msg.includes("listen"))
-    return { reply: "Text-to-Speech reads text aloud!\n\n1. Load text in Reader\n2. Click the 🔊 speaker icon\n3. Listen and follow along!", title: "Text-to-Speech Guide", emoji: "🔊", facts: ["Reads words out loud", "Highlights each word", "Pause and replay anytime", "Adjustable speed", "Great for pronunciation"] };
-  if (msg.includes("color") || msg.includes("colour"))
-    return { reply: "Color Coding for letters:\n\nb = Blue 🔵\nd = Red 🔴\np = Green 🟢\nq = Orange 🟠\n\nTurn it on in the Reader!", title: "Color Coding", emoji: "🎨", facts: ["Each confusing letter gets a color", "Brain remembers colors easily", "Less confusion while reading", "Toggle on/off anytime", "Works with all text"] };
-  if (msg.includes("game") || msg.includes("phonology"))
-    return { reply: "Fun Learning Games!\n\n🎯 Spelling Tests\n🔄 Letter Replacement\n🎲 Odd One Out\n\nFind them in the Phonology Hub!", title: "Learning Games", emoji: "🎮", facts: ["3 different games", "Practice spelling & sounds", "Instant feedback", "Earn badges", "Play unlimited times"] };
-  if (msg.includes("progress") || msg.includes("dashboard"))
-    return { reply: "Track Your Progress!\n\n📊 Reading speed (WPM)\n🎯 Accuracy %\n🏆 Points & badges\n⏱️ Time spent reading", title: "Progress Dashboard", emoji: "📊", facts: ["See reading speed over time", "View completed stories", "Monitor hard words", "Check achievements", "Teachers can view too"] };
-  if (msg.includes("help") || msg.includes("guide"))
-    return { reply: "I can help with:\n\n🔊 Text-to-Speech\n📸 OCR\n🎨 Color Coding\n📖 Stories\n🎮 Games\n📊 Progress\n⚙️ Settings\n\nJust ask!", title: "App Guide", emoji: "📚", facts: ["All features for dyslexia", "Upload images for OCR", "Colors for similar letters", "Listen to any text", "Track progress"] };
-  if (msg.includes("thank"))
-    return { reply: "You're welcome! 😊 Keep practicing!", emoji: "😊" };
-  if (msg.match(/\b(bye|goodbye)\b/))
-    return { reply: "Goodbye! 👋 Happy reading!", emoji: "👋" };
-  return { reply: "I'm offline right now 📴\n\nTry asking:\n• 'How does OCR work?'\n• 'Tell me about color coding'\n• 'How to use text-to-speech?'\n• 'What games are available?'", emoji: "💡" };
-}
+          .title-box {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin: 8px 0;
+            font-weight: 600;
+            font-size: 15px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+          }
 
-// ─── Main component ───────────────────────────────────────────────────────────
-export default function Chatbot() {
-  const [input, setInput] = useState("");
-  const [chat, setChat] = useState([]);
-  const [isListening, setIsListening] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const chatEndRef = useRef(null);
-  const recognitionRef = useRef(null);
-  const abortControllerRef = useRef(null);
+          .calculator-box {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 12px 0;
+          }
 
-  useEffect(() => { injectStyles(); }, []);
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chat]);
+          .calc-button {
+            width: 56px;
+            height: 56px;
+            margin: 4px;
+            font-size: 20px;
+            font-weight: 600;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            background: white;
+            color: #1e293b;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          }
 
-  const speak = (text) => {
-    if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
-    const clean = text.replace(/[\u{1F300}-\u{1FFFF}]/gu, "").replace(/\*\*/g, "").replace(/\n/g, " ").trim();
-    const s = new SpeechSynthesisUtterance(clean);
-    s.lang = "en-US"; s.rate = 0.85; s.pitch = 1.1;
-    window.speechSynthesis.speak(s);
-  };
+          .calc-button:hover {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+          }
 
-  const startListening = () => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { alert("Voice input needs Chrome or Edge!"); return; }
-    if (recognitionRef.current) recognitionRef.current.stop();
-    const r = new SR();
-    r.lang = "en-US"; r.continuous = false;
-    r.onstart = () => setIsListening(true);
-    r.onresult = (e) => { setInput(e.results[0][0].transcript); setIsListening(false); };
-    r.onerror = r.onend = () => setIsListening(false);
-    recognitionRef.current = r;
-    r.start();
-  };
+          .calc-button:active {
+            transform: scale(0.95);
+          }
 
-  const stopGeneration = () => {
-    abortControllerRef.current?.abort();
-    setIsGenerating(false); setIsLoading(false);
-  };
+          @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+          }
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-    const text = input;
-    setChat(p => [...p, { sender: "User", text, timestamp: new Date() }]);
-    setInput(""); setIsLoading(true); setIsGenerating(true); setShowCalculator(false);
+          @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(99, 102, 241, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+          }
 
-    if (!isOnline) {
-      await new Promise(r => setTimeout(r, 500));
-      const res = getOfflineResponse(text);
-      setChat(p => [...p, { sender: "Bot", ...res, facts: res.facts || [], timestamp: new Date() }]);
-      speak(res.reply.split("\n")[0]);
-      setIsLoading(false); setIsGenerating(false);
-      return;
-    }
+          @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+          }
 
-    abortControllerRef.current = new AbortController();
-    try {
-      const { data } = await axios.post("http://localhost:5000/api/chat", { message: text }, { signal: abortControllerRef.current.signal });
-      setChat(p => [...p, { sender: "Bot", text: data.reply || "Here's what I found!", ...data, facts: data.facts || [], timestamp: new Date() }]);
-      speak(data.simplifiedText || data.reply?.split("\n")[0] || "");
-    } catch (err) {
-      const msg = err.name === "CanceledError" ? "Generation stopped." : "Oops! Something went wrong. Try again!";
-      setChat(p => [...p, { sender: "Bot", text: msg, timestamp: new Date() }]);
-    } finally {
-      setIsLoading(false); setIsGenerating(false); abortControllerRef.current = null;
-    }
-  };
+          @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+          }
 
-  const handleKey = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
-  const clearChat = () => { setChat([]); window.speechSynthesis.cancel(); };
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
 
-  const W = isExpanded ? "680px" : "440px";
-  const H = isExpanded ? "85vh" : "700px";
-  const calcRows = [["7","8","9","+"],["4","5","6","-"],["1","2","3","*"],["0",".","=","/"]];
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
 
-  return (
-    <Portal>
-      {/* ── CALCULATOR ── */}
-      {showCalculator && isOpen && (
-        <div className="dcb-calc-wrap">
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
-            <span style={{ fontWeight:700, fontSize:15, color:"#1e293b" }}>🔢 Calculator</span>
-            <button onClick={() => setShowCalculator(false)}
-              style={{ background:"none", border:"none", fontSize:20, cursor:"pointer", color:"#64748b" }}>✕</button>
+          .message-enter {
+            animation: fadeIn 0.3s ease;
+          }
+
+          .robot-icon {
+            position: relative;
+            font-size: 28px;
+          }
+
+          .loading-spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+          }
+
+          .calculator-popup {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            animation: slideUp 0.3s ease;
+            z-index: 999999;
+          }
+
+          .modern-scrollbar::-webkit-scrollbar {
+            width: 6px;
+          }
+
+          .modern-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+
+          .modern-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+          }
+
+          .modern-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+          }
+
+          .glass-effect {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+          }
+
+          .gradient-text {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          }
+        `}
+      </style>
+
+      {/* Calculator Popup (Circular) */}
+      {showCalculator && (
+        <div className="calculator-popup">
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            marginBottom: '16px'
+          }}>
+            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1e293b' }}>
+              🔢 Calculator
+            </h4>
+            <button 
+              onClick={() => setShowCalculator(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer',
+                color: '#64748b'
+              }}
+            >
+              ✕
+            </button>
           </div>
           {calcRows.map((row, i) => (
             <div key={i} style={{ display:"flex", justifyContent:"center" }}>
@@ -347,22 +377,98 @@ export default function Chatbot() {
         </div>
       )}
 
-      {/* ── FAB ── */}
-      <div className="dcb-fab-wrap">
-        <button className="dcb-fab" onClick={() => setIsOpen(o => !o)}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ position:"relative", zIndex:2 }}>
-            <path d="M12 2C10.9 2 10 2.9 10 4H14C14 2.9 13.1 2 12 2Z" fill="white"/>
-            <path d="M20 8H4C2.9 8 2 8.9 2 10V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V10C22 8.9 21.1 8 20 8ZM8 16C6.9 16 6 15.1 6 14C6 12.9 6.9 12 8 12C9.1 12 10 12.9 10 14C10 15.1 9.1 16 8 16ZM16 16C14.9 16 14 15.1 14 14C14 12.9 14.9 12 16 12C17.1 12 18 12.9 18 14C18 15.1 17.1 16 16 16Z" fill="white"/>
+      {/* Floating Button */}
+      <div className="chatbot-container">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          style={{
+            width: "64px",
+            height: "64px",
+            borderRadius: "50%",
+            background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+            border: "none",
+            boxShadow: "0 8px 24px rgba(99, 102, 241, 0.4)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all 0.3s ease",
+            position: "relative",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.1)";
+            e.currentTarget.style.boxShadow = "0 12px 32px rgba(99, 102, 241, 0.5)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "0 8px 24px rgba(99, 102, 241, 0.4)";
+          }}
+        >
+          {/* Robot Icon */}
+          <svg
+            width="36"
+            height="36"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{
+              filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))",
+              position: 'relative',
+              zIndex: 2
+            }}
+          >
+            <path
+              d="M12 2C10.9 2 10 2.9 10 4H14C14 2.9 13.1 2 12 2Z"
+              fill="white"
+            />
+            <path
+              d="M20 8H4C2.9 8 2 8.9 2 10V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V10C22 8.9 21.1 8 20 8ZM8 16C6.9 16 6 15.1 6 14C6 12.9 6.9 12 8 12C9.1 12 10 12.9 10 14C10 15.1 9.1 16 8 16ZM16 16C14.9 16 14 15.1 14 14C14 12.9 14.9 12 16 12C17.1 12 18 12.9 18 14C18 15.1 17.1 16 16 16Z"
+              fill="white"
+            />
           </svg>
-          <span className="dcb-status-dot"
-            style={{ background: isOnline?"#10b981":"#ef4444", boxShadow:`0 0 8px ${isOnline?"#10b981":"#ef4444"}` }}/>
+
+          {/* Status Dot */}
+          <span style={{
+            position: "absolute",
+            bottom: "8px",
+            right: "8px",
+            width: "12px",
+            height: "12px",
+            background: isOnline ? "#10b981" : "#ef4444",
+            borderRadius: "50%",
+            border: "2px solid white",
+            boxShadow: isOnline 
+              ? "0 2px 8px rgba(16, 185, 129, 0.4)" 
+              : "0 2px 8px rgba(239, 68, 68, 0.4)",
+            zIndex: 3,
+          }}/>
+
           {chat.length > 0 && !isOpen && (
-            <span className="dcb-badge">{chat.length > 9 ? "9+" : chat.length}</span>
+            <span style={{
+              position: "absolute",
+              top: "-4px",
+              right: "-4px",
+              background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+              color: "white",
+              borderRadius: "50%",
+              width: "22px",
+              height: "22px",
+              fontSize: "11px",
+              fontWeight: "700",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "2px solid white",
+              boxShadow: "0 2px 8px rgba(239, 68, 68, 0.4)",
+              zIndex: 4,
+            }}>
+              {chat.length > 9 ? "9+" : chat.length}
+            </span>
           )}
         </button>
       </div>
 
-      {/* ── CHAT PANEL ── */}
+      {/* Chat Window */}
       {isOpen && (
         <div className="dcb-panel-wrap">
           <div className="dcb-panel" style={{ width:W, height:H }}>
@@ -417,12 +523,34 @@ export default function Chatbot() {
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="dcb-messages">
-              {chat.length === 0 && (
-                <div style={{ textAlign:"center", marginTop:60, padding:"0 16px" }}>
-                  <div style={{ width:78, height:78, borderRadius:"50%", margin:"0 auto 18px", background:"linear-gradient(135deg,#6366f1,#8b5cf6)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 8px 24px rgba(99,102,241,0.3)" }}>
-                    <svg width="42" height="42" viewBox="0 0 24 24" fill="none">
+          {/* Chat Area */}
+          <div className="modern-scrollbar" style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "24px",
+            background: "linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}>
+            {chat.length === 0 && (
+              <div style={{ textAlign: "center", marginTop: "80px" }}>
+                <div style={{ 
+                  marginBottom: "24px",
+                  display: "flex",
+                  justifyContent: "center"
+                }}>
+                  <div style={{
+                    width: "90px",
+                    height: "90px",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 8px 24px rgba(99, 102, 241, 0.3)"
+                  }}>
+                    <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 2C10.9 2 10 2.9 10 4H14C14 2.9 13.1 2 12 2Z" fill="white"/>
                       <path d="M20 8H4C2.9 8 2 8.9 2 10V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V10C22 8.9 21.1 8 20 8ZM8 16C6.9 16 6 15.1 6 14C6 12.9 6.9 12 8 12C9.1 12 10 12.9 10 14C10 15.1 9.1 16 8 16ZM16 16C14.9 16 14 15.1 14 14C14 12.9 14.9 12 16 12C17.1 12 18 12.9 18 14C18 15.1 17.1 16 16 16Z" fill="white"/>
                     </svg>
@@ -526,4 +654,8 @@ export default function Chatbot() {
       )}
     </Portal>
   );
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
