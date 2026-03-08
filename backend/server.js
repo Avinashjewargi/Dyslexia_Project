@@ -11,6 +11,12 @@ const axios = require("axios");
 const port = process.env.PORT || 5000;
 
 // =======================================
+// MONGODB DATABASE CONNECTION
+// =======================================
+const connectDB = require("./config/database");
+connectDB();
+
+// =======================================
 // GLOBAL MIDDLEWARE
 // =======================================
 app.use(cors());
@@ -105,8 +111,16 @@ const chatRoutes = require("./routes/chat.js");
 // ✅ NEW: Translation routes
 const translateRoutes = require("./routes/translate.js");
 
+// ✅ NEW: Authentication routes
+const authRoutes = require("./routes/auth.js");
+
+// ✅ NEW: Storage routes (MongoDB)
+const storageRoutes = require("./routes/storage.js");
+
 // Mount routes
 app.use("/api", apiRoutes);
+app.use("/api/auth", authRoutes); // ✅ NEW: Authentication
+app.use("/api/storage", storageRoutes); // ✅ NEW: MongoDB Storage
 app.use("/api/ocr", ocrRoutes);
 app.use("/api/speech", speechRoutes);
 app.use("/api/nlp", nlpRoutes);
@@ -126,6 +140,9 @@ app.get("/", (req, res) => {
 // =======================================
 app.listen(port, () => {
   console.log(`✅ Server running at http://localhost:${port}`);
+  console.log(`✅ MongoDB:        Connected`);
+  console.log(`✅ Auth API:       http://localhost:${port}/api/auth`);
+  console.log(`✅ Storage API:    http://localhost:${port}/api/storage`);
   console.log(`✅ OCR API:        http://localhost:${port}/api/ocr`);
   console.log(`✅ Speech API:     http://localhost:${port}/api/speech`);
   console.log(`✅ NLP API:        http://localhost:${port}/api/nlp`);

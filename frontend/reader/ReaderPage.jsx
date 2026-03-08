@@ -666,7 +666,7 @@ const ReaderPage = ({ userId }) => {
     if (!("speechSynthesis" in window)) return;
     
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSpeechSynthesisUtterance(word);
+    const utterance = new SpeechSynthesisUtterance(word);
     
     if (languageConfig && languageConfig.ttsCode) {
       utterance.lang = languageConfig.ttsCode;

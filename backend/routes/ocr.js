@@ -33,23 +33,78 @@ module.exports = (upload) => {
   // PYTHON EXECUTABLE - USE VENV
   // ===============================
   const getPythonExecutable = () => {
-    // Try virtual environment first (Windows)
-    const venvPythonWin = path.join(__dirname, "..", "..", "ml", "venv311", "Scripts", "python.exe");
-    
-    // Try virtual environment (Linux/Mac)
-    const venvPythonUnix = path.join(__dirname, "..", "..", "ml", "venv311", "bin", "python");
-    
+    // 1) Allow explicit override via env var (recommended for debugging)
+    const envPython = process.env.ML_PYTHON;
+    if (envPython && fs.existsSync(envPython)) {
+      console.log("✅ Using Python from ML_PYTHON env:", envPython);
+      return envPython;
+    }
+
+    // 2) Try current venv folder: ml/venv (Windows)
+    const venvPythonWin = path.join(
+      __dirname,
+      "..",
+      "..",
+      "ml",
+      "venv",
+      "Scripts",
+      "python.exe"
+    );
+
+    // 3) Try current venv folder: ml/venv (Linux/Mac)
+    const venvPythonUnix = path.join(
+      __dirname,
+      "..",
+      "..",
+      "ml",
+      "venv",
+      "bin",
+      "python"
+    );
+
+    // 4) Backward‑compat: older venv name ml/venv311 (Windows)
+    const venv311PythonWin = path.join(
+      __dirname,
+      "..",
+      "..",
+      "ml",
+      "venv311",
+      "Scripts",
+      "python.exe"
+    );
+
+    // 5) Backward‑compat: older venv name ml/venv311 (Linux/Mac)
+    const venv311PythonUnix = path.join(
+      __dirname,
+      "..",
+      "..",
+      "ml",
+      "venv311",
+      "bin",
+      "python"
+    );
+
     if (fs.existsSync(venvPythonWin)) {
       console.log("✅ Using virtual environment Python:", venvPythonWin);
       return venvPythonWin;
     }
-    
+
     if (fs.existsSync(venvPythonUnix)) {
       console.log("✅ Using virtual environment Python:", venvPythonUnix);
       return venvPythonUnix;
     }
-    
-    // Fallback to system Python
+
+    if (fs.existsSync(venv311PythonWin)) {
+      console.log("✅ Using virtual environment Python (venv311):", venv311PythonWin);
+      return venv311PythonWin;
+    }
+
+    if (fs.existsSync(venv311PythonUnix)) {
+      console.log("✅ Using virtual environment Python (venv311):", venv311PythonUnix);
+      return venv311PythonUnix;
+    }
+
+    // 6) Fallback to system Python
     console.warn("⚠️ Virtual environment not found, using system Python");
     const platform = process.platform;
     return platform === "win32" ? "python" : "python3";
