@@ -25,6 +25,12 @@ const leaderboardSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  /** Reader / STT practice points (added via API; preserved when recomputing base score) */
+  readerBonusPoints: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   // Reading metrics
   totalReadingTime: {
     type: Number, // in seconds

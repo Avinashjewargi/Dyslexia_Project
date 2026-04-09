@@ -3,6 +3,7 @@
 
 const PhonologyGame = require('../models/PhonologyGame');
 const { checkAchievements } = require('./achievementController');
+const { updateLeaderboard } = require('./leaderboardController');
 
 // Save game session
 const saveGameSession = async (req, res) => {
@@ -50,6 +51,11 @@ const saveGameSession = async (req, res) => {
 
     // Check for achievements
     await checkAchievements(userId);
+
+    // Update leaderboard
+    updateLeaderboard(userId).catch(err => {
+      console.error('Leaderboard update error after game session:', err);
+    });
 
     res.status(201).json({
       success: true,

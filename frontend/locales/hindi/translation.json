@@ -109,6 +109,7 @@
     "redValleys": "लाल - नीचे घाटियां",
     "readingMode": "पढ़ने का मोड",
     "studentReads": "छात्र पढ़ता है (STT मोड)",
+    "computerReads": "कंप्यूटर पढ़ता है (TTS मोड)",
     "howItWorks": "यह कैसे काम करता है",
     "speakClearly": "संकेत मिलने पर प्रत्येक शब्द स्पष्ट रूप से बोलें",
     "correctPoints": "सही → +{{points}} अंक",
@@ -136,60 +137,59 @@
     "completed": "पूर्ण किया",
     "greatJob": "बहुत बढ़िया",
     "bonus": "बोनस",
-<<<<<<< HEAD
-=======
     "translating": "पाठ अनुवाद किया जा रहा है...",
     "uploadOrType": "शुरू करने के लिए एक छवि अपलोड करें या पाठ टाइप करें",
     "instructions": "छवियों से पाठ निकालने के लिए बाईं ओर OCR अपलोडर का उपयोग करें, या मैन्युअल रूप से पाठ दर्ज करें।",
->>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
+    "selectImageLanguage": "छवि भाषा चुनें",
+    "ocrLanguageHint": "सटीक OCR के लिए अपनी छवि में पाठ की भाषा चुनें",
     "colorHelper": {
       "below50": "⚪ 50% से नीचे - सामान्य काले रंग में सभी टेक्स्ट (कोई रंग समर्थन नहीं)",
       "50to60": "🌑 50-60% - रंग गहरे में फीके हो रहे हैं (लगभग स्वतंत्र)",
       "60to70": "🌓 60-70% - मध्यम रंग (क्रमिक फीका)",
       "70to80": "🌕 70-80% - चमकीले रंग (अच्छा समर्थन)",
       "80to100": "⭐ 80-100% - अधिकतम रंग और बोल्ड (शुरुआती स्तर)"
-  },
-  "settings": {
-    "title": "सेटिंग्स",
-    "language": "भाषा",
-    "fontSize": "फ़ॉन्ट का आकार",
-    "fontFamily": "फ़ॉन्ट परिवार",
-    "lineSpacing": "पंक्ति रिक्ति",
-    "contrast": "कंट्रास्ट",
-    "theme": "थीम"
-  },
-  "dashboard": {
-    "student": {
-      "title": "मेरा डैशबोर्ड",
-      "readingSpeed": "पढ़ने की गति",
-      "accuracy": "सटीकता",
-      "sessionsCompleted": "पूर्ण सत्र",
-      "pointsEarned": "अर्जित अंक"
     },
-    "teacher": {
-      "title": "कक्षा डैशबोर्ड",
-      "totalStudents": "कुल छात्र",
-      "averageWPM": "औसत WPM",
-      "activeThisWeek": "इस सप्ताह सक्रिय",
-      "needHelp": "मदद चाहिए"
+    "settings": {
+      "title": "सेटिंग्स",
+      "language": "भाषा",
+      "fontSize": "फ़ॉन्ट का आकार",
+      "fontFamily": "फ़ॉन्ट परिवार",
+      "lineSpacing": "पंक्ति रिक्ति",
+      "contrast": "कंट्रास्ट",
+      "theme": "थीम"
+    },
+    "dashboard": {
+      "student": {
+        "title": "मेरा डैशबोर्ड",
+        "readingSpeed": "पढ़ने की गति",
+        "accuracy": "सटीकता",
+        "sessionsCompleted": "पूर्ण सत्र",
+        "pointsEarned": "अर्जित अंक"
+      },
+      "teacher": {
+        "title": "कक्षा डैशबोर्ड",
+        "totalStudents": "कुल छात्र",
+        "averageWPM": "औसत WPM",
+        "activeThisWeek": "इस सप्ताह सक्रिय",
+        "needHelp": "मदद चाहिए"
+      }
+    },
+    "games": {
+      "title": "ध्वनि विज्ञान खेल",
+      "spellingTest": "वर्तनी परीक्षण",
+      "letterReplacement": "अक्षर प्रतिस्थापन",
+      "oddOneOut": "भिन्न खोजें",
+      "startGame": "खेल शुरू करें",
+      "score": "स्कोर",
+      "level": "स्तर"
+    },
+    "stories": {
+      "title": "कहानी पुस्तकालय",
+      "selectStory": "एक कहानी चुनें",
+      "difficulty": "कठिनाई",
+      "easy": "आसान",
+      "medium": "मध्यम",
+      "hard": "कठिन"
     }
-  },
-  "games": {
-    "title": "ध्वनि विज्ञान खेल",
-    "spellingTest": "वर्तनी परीक्षण",
-    "letterReplacement": "अक्षर प्रतिस्थापन",
-    "oddOneOut": "भिन्न खोजें",
-    "startGame": "खेल शुरू करें",
-    "score": "स्कोर",
-    "level": "स्तर"
-  },
-  "stories": {
-    "title": "कहानी पुस्तकालय",
-    "selectStory": "एक कहानी चुनें",
-    "difficulty": "कठिनाई",
-    "easy": "आसान",
-    "medium": "मध्यम",
-    "hard": "कठिन"
   }
-}
 }

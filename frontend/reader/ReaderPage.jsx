@@ -45,7 +45,9 @@ const POINT_SYSTEM = {
   DAILY_STREAK: 20
 };
 
-const ReaderPage = ({ userId }) => {
+const API = 'http://localhost:5000/api';
+
+const ReaderPage = ({ userId, user }) => {
   const { settings } = useAccessibility();
   const { currentLanguage, languageConfig } = useLanguage();
   const { t } = useTranslation();
@@ -82,17 +84,19 @@ const ReaderPage = ({ userId }) => {
   const [feedback, setFeedback] = useState(null);
   const [wordsArray, setWordsArray] = useState([]);
 
-  // Game stats state
+  const [myRank, setMyRank] = useState(null);
+
+  // Game stats (total score synced from server for logged-in students)
   const [gameStats, setGameStats] = useState({
-    score: 1250,
-    badges: ["Focus Star"],
-    streak: 7,
+    score: 0,
+    badges: [],
+    streak: 0,
     sessionPoints: 0,
     pointsBreakdown: {
-      reading: 300,
-      pronunciation: 450,
-      stories: 400,
-      games: 100
+      reading: 0,
+      pronunciation: 0,
+      stories: 0,
+      games: 0
     }
   });
 
@@ -167,6 +171,55 @@ const ReaderPage = ({ userId }) => {
     handleLanguageChange();
   }, [currentLanguage, originalText, originalLanguage]); // ✅ FIXED: Include all dependencies
 
+  const syncReaderPointsToServer = async (delta) => {
+    if (!delta || delta < 1) return;
+    const token =
+      localStorage.getItem('dyslexia_token') || sessionStorage.getItem('dyslexia_token');
+    if (!token || !user || user.role !== 'student' || !user.id) return;
+    try {
+      const res = await fetch(`${API}/storage/leaderboard/reader-points`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ points: delta }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        console.warn('Leaderboard sync:', data.error);
+      }
+    } catch (e) {
+      console.warn('Leaderboard sync failed', e);
+    }
+  };
+
+  useEffect(() => {
+    const loadLeaderboardSelf = async () => {
+      const token =
+        localStorage.getItem('dyslexia_token') || sessionStorage.getItem('dyslexia_token');
+      if (!token || !user || user.role !== 'student') {
+        setMyRank(null);
+        return;
+      }
+      try {
+        const res = await fetch(`${API}/storage/leaderboard/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (typeof data.totalPoints === 'number') {
+            setGameStats((prev) => ({ ...prev, score: data.totalPoints }));
+          }
+          setMyRank(data.rank != null ? data.rank : null);
+        }
+      } catch (e) {
+        console.warn('Could not load leaderboard profile', e);
+      }
+    };
+    loadLeaderboardSelf();
+  }, [user]);
+
   const awardPoints = (points, reason) => {
     setGameStats(prev => {
       const newStats = {
@@ -189,6 +242,8 @@ const ReaderPage = ({ userId }) => {
 
       return newStats;
     });
+
+    void syncReaderPointsToServer(points);
 
     setPointsPopup(`+${points}`);
     setTimeout(() => setPointsPopup(null), 1000);
@@ -914,11 +969,7 @@ const ReaderPage = ({ userId }) => {
                   <strong>
                     {pronunciationMode 
                       ? `🎤 ${t('reader.studentReads') || 'Student Reads (STT Mode)'}` 
-<<<<<<< HEAD
-                      : `🔊 ${t('Computer Reads') || 'Computer Reads (TTS Mode)'}`}
-=======
                       : `🔊 ${t('reader.computerReads') || 'Computer Reads (TTS Mode)'}`}
->>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
                   </strong>
                 </label>
               </div>
@@ -1111,11 +1162,13 @@ const ReaderPage = ({ userId }) => {
 
         <Col lg={3}>
           <Gamification 
+            user={user}
             score={gameStats.score}
             badges={gameStats.badges}
             streak={gameStats.streak}
             sessionPoints={gameStats.sessionPoints}
             pointsBreakdown={gameStats.pointsBreakdown}
+            myRank={myRank}
           />
         </Col>
       </Row>

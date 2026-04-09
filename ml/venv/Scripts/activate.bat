@@ -8,23 +8,15 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-<<<<<<< HEAD
-set "VIRTUAL_ENV=E:\D_P\Dyslexia_Project\ml\venv"
-=======
-<<<<<<< HEAD
-set "VIRTUAL_ENV=E:\Dyslexia_project\Dyslexia_project\ml\venv"
-=======
-set "VIRTUAL_ENV=F:\Dyslexia\Adaptive-Reading-Assistant-for-Dyslexia-main\ml\venv"
->>>>>>> e7926c957313db43ed13e15305fef5ca7b817682
->>>>>>> c47a464ca5f886da4147d734e8915dd7dc5b3c47
+set VIRTUAL_ENV=E:\D_P\Dyslexia_Project\ml\venv
 
 if not defined PROMPT set PROMPT=$P$G
 
 if defined _OLD_VIRTUAL_PROMPT set PROMPT=%_OLD_VIRTUAL_PROMPT%
 if defined _OLD_VIRTUAL_PYTHONHOME set PYTHONHOME=%_OLD_VIRTUAL_PYTHONHOME%
 
-set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
-set "PROMPT=(venv) %PROMPT%"
+set _OLD_VIRTUAL_PROMPT=%PROMPT%
+set PROMPT=(venv) %PROMPT%
 
 if defined PYTHONHOME set _OLD_VIRTUAL_PYTHONHOME=%PYTHONHOME%
 set PYTHONHOME=
@@ -32,8 +24,8 @@ set PYTHONHOME=
 if defined _OLD_VIRTUAL_PATH set PATH=%_OLD_VIRTUAL_PATH%
 if not defined _OLD_VIRTUAL_PATH set _OLD_VIRTUAL_PATH=%PATH%
 
-set "PATH=%VIRTUAL_ENV%\Scripts;%PATH%"
-set "VIRTUAL_ENV_PROMPT=venv"
+set PATH=%VIRTUAL_ENV%\Scripts;%PATH%
+set VIRTUAL_ENV_PROMPT=(venv) 
 
 :END
 if defined _OLD_CODEPAGE (

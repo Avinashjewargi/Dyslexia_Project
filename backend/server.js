@@ -117,6 +117,9 @@ const authRoutes = require("./routes/auth.js");
 // ✅ NEW: Storage routes (MongoDB)
 const storageRoutes = require("./routes/storage.js");
 
+// Public feedback (landing page)
+const feedbackRoutes = require("./routes/feedback.js");
+
 // Mount routes
 app.use("/api", apiRoutes);
 app.use("/api/auth", authRoutes); // ✅ NEW: Authentication
@@ -127,6 +130,7 @@ app.use("/api/nlp", nlpRoutes);
 app.use("/api/reading", readingRoutes);
 app.use("/api", chatRoutes);
 app.use("/api/translate", translateRoutes); // ✅ NEW
+app.use("/api/feedback", feedbackRoutes);
 
 // =======================================
 // ROOT ROUTE
@@ -149,5 +153,6 @@ app.listen(port, () => {
   console.log(`✅ Reading API:    http://localhost:${port}/api/reading`);
   console.log(`✅ Chat API:       http://localhost:${port}/api/chat`);
   console.log(`✅ Translate API:  http://localhost:${port}/api/translate`);
+  console.log(`✅ Feedback API:   http://localhost:${port}/api/feedback`);
   console.log(`✅ Chat Health:    http://localhost:${port}/api/chat/health`);
 });

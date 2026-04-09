@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+const API_BASE = 'http://localhost:5000/api';
+
 // Feedback Section Component
 const FeedbackSection = () => {
   const [rating, setRating] = useState(0);
@@ -21,6 +23,7 @@ const FeedbackSection = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const feedbackTypes = [
     { value: 'bug', label: '🐛 Bug Report', color: '#FF8042' },
@@ -31,32 +34,44 @@ const FeedbackSection = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError('');
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      const res = await fetch(`${API_BASE}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rating,
+          feedbackType,
+          feedbackText: feedbackText.trim(),
+          name: name.trim(),
+          email: email.trim(),
+        }),
+      });
 
-    console.log({
-      rating,
-      feedbackType,
-      feedbackText,
-      name,
-      email,
-      timestamp: new Date().toISOString()
-    });
+      const data = await res.json().catch(() => ({}));
 
-    setSubmitted(true);
-    setIsSubmitting(false);
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Server error (${res.status})`);
+      }
 
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setSubmitted(false);
-      setRating(0);
-      setFeedbackType('');
-      setFeedbackText('');
-      setName('');
-      setEmail('');
-    }, 3000);
+      setSubmitted(true);
+
+      setTimeout(() => {
+        setSubmitted(false);
+        setRating(0);
+        setFeedbackType('');
+        setFeedbackText('');
+        setName('');
+        setEmail('');
+      }, 3000);
+    } catch (err) {
+      console.error('Feedback submit:', err);
+      setSubmitError(err.message || 'Could not send feedback. Is the backend running?');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -109,6 +124,11 @@ const FeedbackSection = () => {
               }}
             >
               <Form onSubmit={handleSubmit}>
+                {submitError && (
+                  <Alert variant="danger" className="mb-4" dismissible onClose={() => setSubmitError('')}>
+                    {submitError}
+                  </Alert>
+                )}
                 {/* Rating Stars */}
                 <div className="text-center mb-4">
                   <p className="text-white mb-3" style={{ fontSize: "1.1rem" }}>

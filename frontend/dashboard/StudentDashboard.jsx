@@ -1,6 +1,6 @@
 // frontend/dashboard/StudentDashboard.jsx (WITH TRANSLATIONS)
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Container, Row, Col, Card, Badge, ProgressBar, Alert, Table, Dropdown } from "react-bootstrap";
 import { 
   BookOpen, Trophy, Flame, Target, Clock, TrendingUp, 
@@ -12,7 +12,7 @@ import {
   ResponsiveContainer, AreaChart, Area, RadarChart, 
   Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis 
 } from "recharts";
-import { fetchReadingSessions } from "../utils/firebase";
+import { fetchStudentDashboardData } from "../utils/studentDashboardApi";
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -24,7 +24,7 @@ const GRADIENT_COLORS = {
   info: ['#4facfe', '#00f2fe'],
 };
 
-const StudentDashboard = ({ userId }) => {
+const StudentDashboard = ({ userId, user }) => {
   const { t } = useTranslation();
   const { currentLanguage, languageConfig } = useLanguage();
   
@@ -32,6 +32,12 @@ const StudentDashboard = ({ userId }) => {
   const [filteredSessions, setFilteredSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [languageFilter, setLanguageFilter] = useState('all'); // 'all' or specific language code
+  const [dashboardMeta, setDashboardMeta] = useState({
+    leaderboardPoints: null,
+    rank: null,
+    analytics: null,
+    loadErrors: [],
+  });
   
   // Realistic mock data based on actual activity
   const [stats, setStats] = useState({
@@ -60,10 +66,44 @@ const StudentDashboard = ({ userId }) => {
   const [activityData, setActivityData] = useState([]);
   const [difficultyDistribution, setDifficultyDistribution] = useState([]);
 
+  const loadDashboardData = useCallback(async (uid) => {
+    setLoading(true);
+    try {
+      const {
+        sessions: merged,
+        analytics,
+        leaderboardPoints,
+        rank,
+        loadErrors,
+      } = await fetchStudentDashboardData(uid, user);
+
+      setDashboardMeta({
+        leaderboardPoints,
+        rank,
+        analytics,
+        loadErrors,
+      });
+
+      setSessions(merged);
+    } catch (err) {
+      console.error("Dashboard error:", err);
+      setSessions([]);
+      setFilteredSessions([]);
+      setDashboardMeta({
+        leaderboardPoints: null,
+        rank: null,
+        analytics: null,
+        loadErrors: ["load-failed"],
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
-    const uid = userId || "local-dev-user";
+    const uid = userId || user?.id || "guest-user";
     loadDashboardData(uid);
-  }, [userId]);
+  }, [userId, user?.id, user?.role, loadDashboardData]);
 
   // Update filtered sessions when language filter changes
   useEffect(() => {
@@ -75,88 +115,101 @@ const StudentDashboard = ({ userId }) => {
     }
   }, [languageFilter, sessions]);
 
-  // Recalculate stats when filtered sessions change
+  // Recalculate stats when filtered sessions or server meta change
   useEffect(() => {
-    if (filteredSessions.length > 0) {
-      calculateStatistics(filteredSessions);
-      generateWeeklyData(filteredSessions);
-      generateActivityData(filteredSessions);
-      generateDifficultyDistribution(filteredSessions);
-    }
-  }, [filteredSessions, t]);
+    calculateStatistics(filteredSessions, dashboardMeta);
+    generateWeeklyData(filteredSessions);
+    generateActivityData(filteredSessions);
+    generateDifficultyDistribution(filteredSessions);
+  }, [filteredSessions, dashboardMeta, t]);
 
-  const loadDashboardData = async (uid) => {
-    setLoading(true);
-    try {
-      const fetched = await fetchReadingSessions(uid);
-      const sorted = [...fetched].sort(
-        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-      );
-      setSessions(sorted);
-      setFilteredSessions(sorted);
-      
-      // Calculate real statistics from sessions
-      calculateStatistics(sorted);
-      generateWeeklyData(sorted);
-      generateActivityData(sorted);
-      generateDifficultyDistribution(sorted);
-      
-    } catch (err) {
-      console.error("Dashboard error:", err);
-    } finally {
-      setLoading(false);
-    }
+  const sessionAccuracyPercent = (s) => {
+    if (typeof s.accuracy === "number" && s.accuracy > 0) return s.accuracy;
+    const diff = s.analysis?.difficulty_score;
+    if (diff == null) return null;
+    return Math.min(100, Math.max(0, (1 - diff) * 100));
   };
 
-  const calculateStatistics = (sessions) => {
+  const calculateStatistics = (sessions, meta = {}) => {
+    const lbPoints = meta.leaderboardPoints;
+    const analytics = meta.analytics;
+
     if (sessions.length === 0) {
-      // Reset stats if no sessions
+      const fallbackWpm = analytics?.averageWPM ?? 0;
+      const fallbackAcc = analytics?.averageAccuracy ?? 0;
+      const derivedPoints =
+        lbPoints != null
+          ? lbPoints
+          : Math.round(fallbackWpm * 2) + (analytics?.totalSessions || 0) * 50;
+
       setStats({
         totalWordsRead: 0,
         readingStreak: 0,
-        totalPoints: 0,
-        level: 1,
+        totalPoints: derivedPoints,
+        level: Math.max(1, Math.floor((derivedPoints || 0) / 500) + 1),
         weeklyGoal: 75,
         weeklyProgress: 0,
-        accuracyRate: 0,
-        averageWPM: 0,
-        totalMinutes: 0,
+        accuracyRate: Math.round(fallbackAcc),
+        averageWPM: Math.round(fallbackWpm),
+        totalMinutes: analytics ? Math.round((analytics.totalReadingTime || 0) / 60) : 0,
         badgesEarned: 0,
-        sessionsCompleted: 0,
+        sessionsCompleted: analytics?.totalSessions ?? 0,
       });
+
+      const acc = fallbackAcc || 50;
+      const wpm = fallbackWpm || 80;
+      setSkillsData([
+        { skill: t("dashboard.skills.phonology", "Phonology"), score: Math.min(acc + 5, 100), fullMark: 100 },
+        { skill: t("dashboard.skills.fluency", "Fluency"), score: Math.min((wpm / 200) * 100, 100), fullMark: 100 },
+        { skill: t("dashboard.skills.comprehension", "Comprehension"), score: Math.min(acc, 100), fullMark: 100 },
+        { skill: t("dashboard.skills.vocabulary", "Vocabulary"), score: Math.min(Math.max(acc - 5, 0), 100), fullMark: 100 },
+        { skill: t("dashboard.skills.accuracy", "Accuracy"), score: Math.min(acc, 100), fullMark: 100 },
+      ]);
       return;
     }
 
     const totalWords = sessions.reduce((sum, s) => {
       const wpm = s.wpm || 0;
       const time = (s.readingTimeSec || 0) / 60;
-      return sum + (wpm * time);
+      return sum + wpm * time;
     }, 0);
 
-    const avgWPM = sessions.reduce((sum, s) => sum + (s.wpm || 0), 0) / sessions.length;
+    const avgWPM =
+      sessions.reduce((sum, s) => sum + (s.wpm || 0), 0) / sessions.length;
     const totalTime = sessions.reduce((sum, s) => sum + (s.readingTimeSec || 0), 0);
-    const avgAccuracy = sessions.reduce((sum, s) => {
-      const diff = s.analysis?.difficulty_score || 0;
-      return sum + (1 - diff) * 100;
-    }, 0) / sessions.length;
 
-    // Calculate streak (sessions in consecutive days)
+    const accSamples = sessions.map(sessionAccuracyPercent).filter((v) => v != null);
+    const avgAccuracy =
+      accSamples.length > 0
+        ? accSamples.reduce((a, b) => a + b, 0) / accSamples.length
+        : sessions.reduce((sum, s) => {
+            const diff = s.analysis?.difficulty_score ?? 0.5;
+            return sum + (1 - diff) * 100;
+          }, 0) / sessions.length;
+
     const streak = calculateStreak(sessions);
-    
-    const weekProgress = (sessions.filter(s => {
-      const date = new Date(s.timestamp);
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      return date >= weekAgo;
-    }).length / 7) * 100;
+
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const minutesThisWeek = sessions
+      .filter((s) => new Date(s.timestamp) >= weekAgo)
+      .reduce((sum, s) => sum + (s.readingTimeSec || 0) / 60, 0);
+    const weeklyGoalMinutes = 75;
+    const weeklyProgress = Math.min(
+      100,
+      Math.round((minutesThisWeek / weeklyGoalMinutes) * 100)
+    );
+
+    const estimatedPoints = Math.round(totalWords / 10) + sessions.length * 50;
+    const totalPoints = lbPoints != null ? lbPoints : estimatedPoints;
 
     setStats({
       totalWordsRead: Math.round(totalWords),
       readingStreak: streak,
-      totalPoints: Math.round(totalWords / 10) + (sessions.length * 50),
-      level: Math.floor(sessions.length / 5) + 1,
-      weeklyGoal: 75,
-      weeklyProgress: Math.min(weekProgress, 100),
+      totalPoints,
+      level: Math.max(1, Math.floor(sessions.length / 5) + 1),
+      weeklyGoal: weeklyGoalMinutes,
+      weeklyProgress,
       accuracyRate: Math.round(avgAccuracy),
       averageWPM: Math.round(avgWPM),
       totalMinutes: Math.round(totalTime / 60),
@@ -164,36 +217,34 @@ const StudentDashboard = ({ userId }) => {
       sessionsCompleted: sessions.length,
     });
 
-    // Update skills based on performance
     setSkillsData([
-      { skill: t('dashboard.skills.phonology', 'Phonology'), score: Math.min(avgAccuracy + 5, 100), fullMark: 100 },
-      { skill: t('dashboard.skills.fluency', 'Fluency'), score: Math.min((avgWPM / 200) * 100, 100), fullMark: 100 },
-      { skill: t('dashboard.skills.comprehension', 'Comprehension'), score: Math.min(avgAccuracy, 100), fullMark: 100 },
-      { skill: t('dashboard.skills.vocabulary', 'Vocabulary'), score: Math.min(avgAccuracy - 5, 100), fullMark: 100 },
-      { skill: t('dashboard.skills.accuracy', 'Accuracy'), score: Math.min(avgAccuracy, 100), fullMark: 100 },
+      { skill: t("dashboard.skills.phonology", "Phonology"), score: Math.min(avgAccuracy + 5, 100), fullMark: 100 },
+      { skill: t("dashboard.skills.fluency", "Fluency"), score: Math.min((avgWPM / 200) * 100, 100), fullMark: 100 },
+      { skill: t("dashboard.skills.comprehension", "Comprehension"), score: Math.min(avgAccuracy, 100), fullMark: 100 },
+      { skill: t("dashboard.skills.vocabulary", "Vocabulary"), score: Math.min(Math.max(avgAccuracy - 5, 0), 100), fullMark: 100 },
+      { skill: t("dashboard.skills.accuracy", "Accuracy"), score: Math.min(avgAccuracy, 100), fullMark: 100 },
     ]);
   };
 
   const calculateStreak = (sessions) => {
     if (sessions.length === 0) return 0;
-    
-    const dates = sessions.map(s => new Date(s.timestamp).toDateString());
-    const uniqueDates = [...new Set(dates)].sort((a, b) => new Date(b) - new Date(a));
-    
+    const byDay = new Set(
+      sessions.map((s) => {
+        const d = new Date(s.timestamp);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+      })
+    );
     let streak = 0;
-    let currentDate = new Date();
-    
-    for (let dateStr of uniqueDates) {
-      const sessionDate = new Date(dateStr);
-      const diffDays = Math.floor((currentDate - sessionDate) / (1000 * 60 * 60 * 24));
-      
-      if (diffDays === streak) {
-        streak++;
-      } else {
-        break;
-      }
+    let cursor = new Date();
+    cursor.setHours(0, 0, 0, 0);
+    if (!byDay.has(cursor.getTime())) {
+      cursor.setDate(cursor.getDate() - 1);
     }
-    
+    while (byDay.has(cursor.getTime())) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
     return streak;
   };
 
@@ -202,7 +253,7 @@ const StudentDashboard = ({ userId }) => {
     if (sessions.length >= 5) badges++;
     if (sessions.length >= 10) badges++;
     if (sessions.some(s => (s.wpm || 0) > 150)) badges++;
-    if (sessions.filter(s => s.analysis?.difficulty_score < 0.3).length >= 3) badges++;
+    if (sessions.filter((s) => (s.analysis?.difficulty_score ?? 1) < 0.3).length >= 3) badges++;
     return badges;
   };
 
@@ -228,7 +279,8 @@ const StudentDashboard = ({ userId }) => {
       const words = wpm * time;
       
       weekData[dayIndex].words += words;
-      weekData[dayIndex].accuracy += (1 - (s.analysis?.difficulty_score || 0)) * 100;
+      const acc = sessionAccuracyPercent(s);
+      weekData[dayIndex].accuracy += acc != null ? acc : (1 - (s.analysis?.difficulty_score ?? 0.5)) * 100;
       weekData[dayIndex].time += s.readingTimeSec || 0;
       weekData[dayIndex].count++;
     });
@@ -246,11 +298,17 @@ const StudentDashboard = ({ userId }) => {
 
   const generateActivityData = (sessions) => {
     const last30Days = sessions.slice(0, 30).reverse();
-    const activity = last30Days.map((s, idx) => ({
-      session: `S${idx + 1}`,
-      wpm: Math.round(s.wpm || 0),
-      accuracy: Math.round((1 - (s.analysis?.difficulty_score || 0)) * 100),
-    }));
+    const activity = last30Days.map((s, idx) => {
+      const acc = sessionAccuracyPercent(s);
+      return {
+        session: `S${idx + 1}`,
+        wpm: Math.round(s.wpm || 0),
+        accuracy:
+          acc != null
+            ? Math.round(acc)
+            : Math.round((1 - (s.analysis?.difficulty_score ?? 0.5)) * 100),
+      };
+    });
     setActivityData(activity);
   };
 
@@ -261,14 +319,25 @@ const StudentDashboard = ({ userId }) => {
       { name: t('dashboard.difficulty.hard', 'Hard'), value: 0, color: '#FF8042' },
     ];
     
-    sessions.forEach(s => {
-      const diff = s.analysis?.difficulty_score || 0;
+    sessions.forEach((s) => {
+      const diff = s.analysis?.difficulty_score ?? 0.5;
       if (diff < 0.3) distribution[0].value++;
       else if (diff < 0.7) distribution[1].value++;
       else distribution[2].value++;
     });
-    
-    setDifficultyDistribution(distribution);
+
+    const total = distribution.reduce((sum, d) => sum + d.value, 0);
+    if (total === 0) {
+      setDifficultyDistribution([
+        {
+          name: t("dashboard.difficulty.none", "No sessions yet"),
+          value: 1,
+          color: "#e8e8e8",
+        },
+      ]);
+    } else {
+      setDifficultyDistribution(distribution);
+    }
   };
 
   const formatTime = (sec) => {
@@ -304,7 +373,17 @@ const StudentDashboard = ({ userId }) => {
                 <Trophy className="me-3" size={48} />
                 {t('dashboard.title', 'My Learning Dashboard')}
               </h1>
-              <p className="lead text-muted">{t('dashboard.subtitle', 'Track your reading progress and achievements')}</p>
+              <p className="lead text-muted mb-2">{t('dashboard.subtitle', 'Track your reading progress and achievements')}</p>
+              {dashboardMeta.rank != null && user?.role === 'student' && (
+                <Badge bg="primary" className="me-2 fs-6">
+                  {t('dashboard.leaderboardRank', 'Leaderboard')}: #{dashboardMeta.rank}
+                </Badge>
+              )}
+              {dashboardMeta.loadErrors?.includes('progress-unauthorized') && (
+                <Alert variant="warning" className="mt-2 mb-0 py-2">
+                  {t('dashboard.reauthHint', 'Sign in again to load reading progress saved on the server.')}
+                </Alert>
+              )}
             </div>
             
             {/* Language Filter */}
@@ -413,7 +492,7 @@ const StudentDashboard = ({ userId }) => {
               </h5>
               <div className="mb-3">
                 <div className="d-flex justify-content-between mb-2">
-                  <span>{t('dashboard.weeklySessions', 'Weekly Sessions')}</span>
+                  <span>{t('dashboard.weeklyMinutesGoal', 'This week vs 75 min goal')}</span>
                   <strong className="text-primary">{Math.round(stats.weeklyProgress)}%</strong>
                 </div>
                 <ProgressBar 
@@ -534,6 +613,11 @@ const StudentDashboard = ({ userId }) => {
                 <Calendar className="me-2 text-info" />
                 {t('dashboard.performanceOverTime', 'Performance Over Time (Last 30 Sessions)')}
               </h5>
+              {activityData.length === 0 ? (
+                <p className="text-muted text-center py-5 mb-0">
+                  {t('dashboard.noChartData', 'Complete a reading session to see WPM and accuracy over time.')}
+                </p>
+              ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={activityData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -546,6 +630,7 @@ const StudentDashboard = ({ userId }) => {
                   <Line yAxisId="right" type="monotone" dataKey="accuracy" stroke="#00C49F" strokeWidth={3} name={t('dashboard.accuracy', 'Accuracy %')} />
                 </LineChart>
               </ResponsiveContainer>
+              )}
             </Card.Body>
           </Card>
         </Col>
@@ -625,8 +710,8 @@ const StudentDashboard = ({ userId }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredSessions.slice(0, 5).map((s, idx) => (
-                    <tr key={idx}>
+                  {filteredSessions.slice(0, 5).map((s) => (
+                    <tr key={s.id || s.timestamp}>
                       <td>
                         {new Date(s.timestamp).toLocaleDateString()}<br />
                         <small className="text-muted">
@@ -634,7 +719,7 @@ const StudentDashboard = ({ userId }) => {
                         </small>
                       </td>
                       <td>
-                        {s.analysis?.source || t('dashboard.unknown', 'Unknown')}
+                        {s.analysis?.source || s.storyTitle || s.sessionType || t('dashboard.unknown', 'Unknown')}
                         {s.language && (
                           <div>
                             <Badge bg="secondary" className="mt-1">

@@ -3,6 +3,7 @@
 
 const ReadingProgress = require('../models/ReadingProgress');
 const StoryProgress = require('../models/StoryProgress');
+const { updateLeaderboard } = require('./leaderboardController');
 
 // Save reading progress
 const saveReadingProgress = async (req, res) => {
@@ -49,6 +50,11 @@ const saveReadingProgress = async (req, res) => {
     });
 
     await readingProgress.save();
+
+    // Update leaderboard asynchronously after progress save
+    updateLeaderboard(userId).catch(err => {
+      console.error('Leaderboard update error after reading progress:', err);
+    });
 
     res.status(201).json({
       success: true,

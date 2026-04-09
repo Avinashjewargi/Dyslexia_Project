@@ -4,6 +4,7 @@
 const Story = require('../models/Story');
 const StoryProgress = require('../models/StoryProgress');
 const ReadingProgress = require('../models/ReadingProgress');
+const { updateLeaderboard } = require('./leaderboardController');
 
 // Create story
 const createStory = async (req, res) => {
@@ -71,10 +72,13 @@ const getStories = async (req, res) => {
     if (difficulty) query.difficulty = difficulty;
     if (category) query.category = category;
     if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } }
-      ];
+      const textFilter = {
+        $or: [
+          { title: { $regex: search, $options: 'i' } },
+          { content: { $regex: search, $options: 'i' } }
+        ]
+      };
+      query.$and = query.$and ? [...query.$and, textFilter] : [textFilter];
     }
 
     const stories = await Story.find(query)
@@ -246,6 +250,10 @@ const saveStoryProgress = async (req, res) => {
     });
 
     await readingProgress.save();
+
+    updateLeaderboard(userId).catch(err => {
+      console.error('Leaderboard update error after story progress:', err);
+    });
 
     res.json({
       success: true,

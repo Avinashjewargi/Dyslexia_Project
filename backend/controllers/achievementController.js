@@ -6,6 +6,26 @@ const ReadingProgress = require('../models/ReadingProgress');
 const StoryProgress = require('../models/StoryProgress');
 const PhonologyGame = require('../models/PhonologyGame');
 
+// Helper to create or get an achievement record
+const createAchievement = async ({ userId, achievementType, title, description, icon, value, metadata }) => {
+  const existing = await Achievement.findOne({ userId, achievementType });
+  if (existing) return existing;
+
+  const ach = new Achievement({
+    userId,
+    achievementType,
+    title,
+    description: description || '',
+    icon: icon || '🏆',
+    value: value || 0,
+    metadata: metadata || {},
+    unlockedAt: new Date()
+  });
+
+  await ach.save();
+  return ach;
+};
+
 // Get user achievements
 const getUserAchievements = async (req, res) => {
   try {
@@ -28,7 +48,7 @@ const getUserAchievements = async (req, res) => {
   }
 };
 
-// Unlock achievement
+// Unlock achievement (HTTP endpoint)
 const unlockAchievement = async (req, res) => {
   try {
     const { userId, achievementType, title, description, icon, value, metadata } = req.body;
@@ -133,11 +153,13 @@ const checkAchievements = async (userId) => {
     }
 
     // Save achievements
+    const created = [];
     for (const ach of achievements) {
-      await unlockAchievement({ body: ach }, { json: () => {} });
+      const saved = await createAchievement(ach);
+      if (saved) created.push(saved);
     }
 
-    return achievements;
+    return created;
 
   } catch (error) {
     console.error('Achievement check error:', error);

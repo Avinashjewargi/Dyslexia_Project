@@ -67,7 +67,21 @@ router.get('/speech/:userId', authenticate, speechController.getUserSpeechSessio
 // =======================================================
 // Leaderboard Routes
 // =======================================================
+router.post('/leaderboard/update/:userId', authenticate, async (req, res) => {
+  try {
+    const leaderboard = await leaderboardController.updateLeaderboard(req.params.userId);
+    if (!leaderboard) {
+      return res.status(404).json({ success: false, error: 'Could not update leaderboard for user' });
+    }
+    res.json({ success: true, leaderboard });
+  } catch (error) {
+    console.error('leaderboard/update error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 router.get('/leaderboard', authenticate, leaderboardController.getLeaderboard);
+router.get('/leaderboard/me', authenticate, leaderboardController.getMyLeaderboard);
+router.post('/leaderboard/reader-points', authenticate, leaderboardController.addReaderPoints);
 router.get('/leaderboard/rank/:userId', authenticate, leaderboardController.getUserRank);
 
 module.exports = router;

@@ -37,14 +37,18 @@ const updateLeaderboard = async (userId) => {
     const gamesWon = games.filter(g => g.completed && g.accuracy >= 70).length;
     const achievementsCount = achievements.length;
 
-    // Calculate points (custom scoring system)
-    const totalPoints = 
+    // Calculate base points (custom scoring system)
+    const basePoints = 
       (totalStoriesRead * 10) +
       (Math.floor(totalReadingTime / 60) * 1) + // 1 point per minute
       (gamesWon * 5) +
       (achievementsCount * 20) +
       (averageWPM * 0.1) +
       (averageAccuracy * 0.1);
+
+    const existing = await Leaderboard.findOne({ userId, period: 'alltime' });
+    const readerBonus = existing?.readerBonusPoints || 0;
+    const totalPoints = Math.round(basePoints) + readerBonus;
 
     // Update or create leaderboard entry
     const leaderboard = await Leaderboard.findOneAndUpdate(
@@ -53,7 +57,8 @@ const updateLeaderboard = async (userId) => {
         userId,
         userName: user.name,
         userRole: user.role,
-        totalPoints: Math.round(totalPoints),
+        totalPoints,
+        readerBonusPoints: readerBonus,
         totalReadingTime,
         totalStoriesRead,
         averageWPM,
@@ -74,6 +79,93 @@ const updateLeaderboard = async (userId) => {
   }
 };
 
+// Add reader / STT gamification points (students only)
+const addReaderPoints = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'student') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only student accounts earn reader leaderboard points.'
+      });
+    }
+
+    const raw = req.body?.points;
+    const points = typeof raw === 'number' ? raw : parseInt(raw, 10);
+    if (!Number.isFinite(points) || points < 1 || points > 200) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid points value (1–200 per request).'
+      });
+    }
+
+    const user = req.user;
+    const entry = await Leaderboard.findOneAndUpdate(
+      { userId: user._id, period: 'alltime' },
+      {
+        $inc: { totalPoints: points, readerBonusPoints: points },
+        $set: {
+          userName: user.name,
+          userRole: user.role,
+          lastUpdated: new Date()
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    res.json({ success: true, entry });
+  } catch (error) {
+    console.error('addReaderPoints error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// Current user's leaderboard row + rank (students only)
+const getMyLeaderboard = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== 'student') {
+      return res.json({
+        success: true,
+        entry: null,
+        rank: null,
+        totalPoints: 0
+      });
+    }
+
+    const period = 'alltime';
+    const sortBy = 'totalPoints';
+    const entry = await Leaderboard.findOne({
+      userId: req.userId,
+      period
+    });
+
+    if (!entry) {
+      return res.json({
+        success: true,
+        entry: null,
+        rank: null,
+        totalPoints: 0
+      });
+    }
+
+    const sortOptions = { [sortBy]: -1 };
+    const entriesAbove = await Leaderboard.countDocuments({
+      period,
+      userRole: 'student',
+      [sortBy]: { $gt: entry[sortBy] }
+    });
+    const rank = entriesAbove + 1;
+
+    res.json({
+      success: true,
+      entry,
+      rank,
+      totalPoints: entry.totalPoints
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 // Get leaderboard
 const getLeaderboard = async (req, res) => {
   try {
@@ -82,10 +174,10 @@ const getLeaderboard = async (req, res) => {
     const sortOptions = {};
     sortOptions[sortBy] = -1; // Descending
 
-    const leaderboard = await Leaderboard.find({ period })
+    const leaderboard = await Leaderboard.find({ period, userRole: 'student' })
       .sort(sortOptions)
-      .limit(parseInt(limit))
-      .skip(parseInt(skip))
+      .limit(parseInt(limit, 10))
+      .skip(parseInt(skip, 10))
       .populate('userId', 'name email avatar');
 
     // Add rank
@@ -94,7 +186,7 @@ const getLeaderboard = async (req, res) => {
       rank: parseInt(skip) + index + 1
     }));
 
-    const total = await Leaderboard.countDocuments({ period });
+    const total = await Leaderboard.countDocuments({ period, userRole: 'student' });
 
     res.json({
       success: true,
@@ -133,6 +225,7 @@ const getUserRank = async (req, res) => {
 
     const entriesAbove = await Leaderboard.countDocuments({
       period,
+      userRole: 'student',
       [sortBy]: { $gt: userEntry[sortBy] }
     });
 
@@ -155,5 +248,7 @@ const getUserRank = async (req, res) => {
 module.exports = {
   updateLeaderboard,
   getLeaderboard,
-  getUserRank
+  getUserRank,
+  addReaderPoints,
+  getMyLeaderboard
 };

@@ -236,7 +236,7 @@ function App() {
               path="/reader"
               element={
                 <MainLayout user={user} onLogout={handleLogout}>
-                  <ReaderPage userId={userId} />
+                  <ReaderPage userId={userId} user={user} />
                 </MainLayout>
               }
             />
@@ -256,7 +256,7 @@ function App() {
               path="/dashboard" 
               element={
                 <MainLayout user={user} onLogout={handleLogout}>
-                  <StudentDashboard userId={userId} />
+                  <StudentDashboard userId={userId} user={user} />
                 </MainLayout>
               } 
             />
