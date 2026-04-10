@@ -3,9 +3,12 @@
 > **Empowering students with dyslexia through AI-powered reading tools, personalized learning, and engaging gamification.**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![React](https://img.shields.io/badge/React-18.2.0-61DAFB?logo=react)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-19.1.1-61DAFB?logo=react)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-339933?logo=node.js)](https://nodejs.org/)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)](https://python.org/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-8.x-47A248?logo=mongodb)](https://mongodb.com/)
+
+---
 
 ---
 
@@ -29,59 +32,90 @@
 
 The **Adaptive Reading Assistant** is a comprehensive web application designed to help students with dyslexia improve their reading skills through:
 
-- **🔊 Text-to-Speech (TTS)** - Natural voice reading with adjustable speed
-- **🎤 Speech-to-Text (STT)** - Real-time pronunciation feedback
-- **📸 OCR Technology** - Extract text from images instantly
+- **🔊 Text-to-Speech (TTS)** - Natural voice reading with adjustable speed and multi-language support
+- **🎤 Speech-to-Text (STT)** - Real-time pronunciation feedback and accuracy tracking
+- **📸 OCR Technology** - Extract text from images instantly (English, Hindi, Kannada)
 - **🎨 Color Coding** - Visual aids for confusing letter pairs (b/d/p/q)
-- **🏆 Gamification** - Points, badges, and leaderboards for motivation
-- **📊 Progress Tracking** - Detailed analytics for students and teachers
+- **🏆 Gamification** - Points, badges, achievements, and leaderboards for motivation
+- **📊 Progress Tracking** - Detailed analytics for students and teachers with MongoDB storage
+- **🤖 LexiAI** - Interactive learning with 24 specialized card types
+- **🎮 Phonology Games** - Spelling tests, letter replacement, odd-one-out challenges
+- **📖 Pre-loaded Stories** - Curated dyslexia-friendly stories with progress tracking
+- **🌐 Multi-language Support** - English, Hindi, and Kannada with translation features
+- **🔐 User Authentication** - Secure login system with role-based access (Student/Teacher/Admin)
 - **♿ Accessibility** - OpenDyslexic font, adjustable sizes, high contrast modes
 
 ---
 
-## ✨ Features
+## ✅ Current Status (April 2026)
+
+**🎉 Fully Functional Production-Ready Application**
+
+The Adaptive Reading Assistant is a complete, end-to-end solution with:
+
+- **🔐 Secure user authentication** with role-based access control
+- **💾 Persistent data storage** using MongoDB with 11 comprehensive models
+- **🌐 Multi-language support** for English, Hindi, and Kannada
+- **🤖 AI-powered features** including OCR, TTS, STT, and text analysis
+- **📊 Advanced analytics** with interactive dashboards and progress tracking
+- **🎮 Complete gamification** system with achievements and leaderboards
+- **📱 Responsive design** optimized for desktop and mobile devices
+
+**All major features are implemented and working.** The application successfully combines modern web technologies with machine learning to provide a comprehensive dyslexia support platform.
+
+---
 
 ### For Students
 
 | Feature | Description |
 |---------|-------------|
-| **Smart OCR Upload** | Upload images of textbooks, worksheets, or any printed text |
+| **Smart OCR Upload** | Upload images of textbooks, worksheets, or any printed text (English, Hindi, Kannada) |
 | **Adaptive Reading Interface** | Color-coded letters, dyslexia-friendly fonts, adjustable spacing |
 | **Interactive Learning** | Click words to hear pronunciation, see syllable breakdowns |
-| **Pronunciation Practice** | Speak words aloud and get instant feedback via STT |
-| **Gamification System** | Earn points, unlock badges, climb the leaderboard |
-| **Progress Dashboard** | Track reading speed (WPM), accuracy, and improvement over time |
-| **Pre-loaded Stories** | Practice with curated dyslexia-friendly stories |
-| **Phonology Games** | Spelling tests, letter replacement, odd-one-out challenges |
+| **Pronunciation Practice** | Speak words aloud and get instant feedback via STT with accuracy tracking |
+| **LexiAI Interactive Learning** | 24 specialized learning card types covering alphabet, numbers, colors, animals, and more |
+| **Gamification System** | Earn points, unlock achievements, climb leaderboards with MongoDB persistence |
+| **Progress Dashboard** | Track reading speed (WPM), accuracy, and improvement over time with detailed analytics |
+| **Pre-loaded Stories** | Practice with curated dyslexia-friendly stories with individual progress tracking |
+| **Phonology Games** | Spelling tests, letter replacement, odd-one-out challenges with score tracking |
+| **Multi-language Support** | Full support for English, Hindi, and Kannada with translation features |
+| **User Authentication** | Secure login system with personalized profiles and settings |
 
 ### For Teachers
 
 | Feature | Description |
 |---------|-------------|
-| **Class Overview** | Monitor overall class performance at a glance |
-| **Student Tracking** | View individual progress, reading speed, and accuracy |
-| **Identify Struggles** | Red flags for students who need extra support |
-| **Assign Content** | Share stories and exercises with students |
-| **Analytics Dashboard** | Beautiful charts showing trends and improvements |
+| **Class Overview** | Monitor overall class performance at a glance with real-time statistics |
+| **Student Tracking** | View individual progress, reading speed, and accuracy for each student |
+| **Identify Struggles** | Red flags for students who need extra support with detailed analytics |
+| **Assign Content** | Share stories and exercises with students through the system |
+| **Analytics Dashboard** | Beautiful charts showing trends and improvements using Recharts |
 | **Export Reports** | Generate progress reports for parent-teacher meetings |
+| **Achievement Monitoring** | Track student achievements and gamification progress |
+| **Game Statistics** | Monitor phonology game performance and LexiAI learning progress |
+| **Multi-language Oversight** | Support students learning in English, Hindi, and Kannada |
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Framework:** React 18.2 with Vite
-- **UI Library:** React Bootstrap 5
-- **Icons:** Lucide React
-- **Charts:** Recharts
-- **Routing:** React Router DOM
+- **Framework:** React 19.1.1 with Vite
+- **UI Library:** React Bootstrap 5.3.8
+- **Icons:** Lucide React 0.554.0
+- **Charts:** Recharts 3.7.0
+- **Routing:** React Router DOM 7.13.0
 - **State Management:** React Context API
+- **Internationalization:** i18next 25.8.0
 - **Styling:** CSS3, Bootstrap, Custom CSS
 
 ### Backend
 - **Runtime:** Node.js 18.x
-- **Framework:** Express.js
-- **File Upload:** Multer
+- **Framework:** Express.js 5.2.1
+- **Database:** MongoDB 8.x with Mongoose 8.23.0
+- **Authentication:** JWT (jsonwebtoken 9.0.2) + bcryptjs 2.4.3
+- **File Upload:** Multer 2.0.2
+- **CORS:** cors 2.8.5
 - **API Architecture:** RESTful
 
 ### Machine Learning
@@ -89,7 +123,8 @@ The **Adaptive Reading Assistant** is a comprehensive web application designed t
 - **NLP:** NLTK
 - **OCR:** Tesseract OCR
 - **TTS:** gTTS (Google Text-to-Speech)
-- **Framework:** Flask (ML API)
+- **Web Framework:** Flask with Flask-CORS
+- **Supported Languages:** English, Hindi, Kannada
 
 ### Additional Tools
 - **Version Control:** Git
@@ -101,17 +136,20 @@ The **Adaptive Reading Assistant** is a comprehensive web application designed t
 ## 📁 Project Structure
 
 ```
-Adaptive-Reading-Assistant-for-Dyslexia/
+Dyslexia_Project/
 │
 ├── 📂 frontend/                    # React Application
 │   ├── 📂 src/
 │   │   ├── App.jsx                # Main app component
+│   │   ├── AuthPage.jsx           # User authentication
 │   │   ├── LandingPage.jsx        # Homepage with user guides
 │   │   └── main.jsx               # Entry point
 │   ├── 📂 components/
 │   │   ├── Navbar.jsx             # Navigation bar
 │   │   ├── Footer.jsx             # Footer component
 │   │   ├── Settings.jsx           # Accessibility settings
+│   │   ├── Chatbot.jsx            # AI assistant chatbot
+│   │   ├── LanguageSelector.jsx   # Language selection
 │   │   └── AccessibilityContext.jsx  # Global settings state
 │   ├── 📂 reader/
 │   │   ├── ReaderPage.jsx         # Main reading interface
@@ -119,10 +157,19 @@ Adaptive-Reading-Assistant-for-Dyslexia/
 │   │   ├── OCRUploader.jsx        # Image upload & text extraction
 │   │   ├── ColorCoding.jsx        # Letter color coding
 │   │   ├── WordLearning.jsx       # Practice difficult words
-│   │   └── Gamification.jsx       # Points, badges, leaderboard
+│   │   ├── Gamification.jsx       # Points, badges, leaderboard
+│   │   └── Pronunciation.jsx      # Speech-to-text practice
 │   ├── 📂 dashboard/
 │   │   ├── StudentDashboard.jsx   # Student analytics
 │   │   └── TeacherDashboard.jsx   # Teacher overview
+│   ├── 📂 lexiai/
+│   │   ├── LexiAIHub.jsx          # LexiAI main hub
+│   │   ├── LearningCard.jsx       # Base learning card component
+│   │   └── 📂 cards/              # 24 specialized learning cards
+│   │       ├── AlphabetMaster.jsx
+│   │       ├── NumbersAndDigits.jsx
+│   │       ├── ColorsShades.jsx
+│   │       └── ... (21 more cards)
 │   ├── 📂 phonology/
 │   │   ├── PhonologyHub.jsx       # Games hub
 │   │   ├── SpellingTest.jsx       # Spelling practice
@@ -130,34 +177,50 @@ Adaptive-Reading-Assistant-for-Dyslexia/
 │   │   └── OddOneOut.jsx          # Find the different word
 │   ├── 📂 stories/
 │   │   └── StoriesReader.jsx      # Pre-written stories
-│   └── 📂 utils/
-│       └── firebase.js            # Firebase integration
+│   └── 📂 locales/                 # Internationalization files
 │
 ├── 📂 backend/                     # Node.js Express Server
 │   ├── server.js                  # Main server file
-│   ├── 📂 routes/
-│   │   ├── api.js                 # General API routes
+│   ├── 📂 config/
+│   │   ├── database.js            # MongoDB connection
+│   │   └── languageConfig.js      # Language settings
+│   ├── 📂 middleware/
+│   │   ├── auth.js                # JWT authentication
+│   │   └── languageMiddleware.js  # Language handling
+│   ├── 📂 models/                 # MongoDB Models (11 models)
+│   │   ├── User.js                # User accounts
+│   │   ├── OCRUpload.js           # OCR uploads
+│   │   ├── Story.js               # Reading stories
+│   │   ├── ReadingProgress.js     # Progress tracking
+│   │   └── ... (7 more models)
+│   ├── 📂 controllers/            # Business logic (8 controllers)
+│   │   ├── ocrController.js       # OCR operations
+│   │   ├── authController.js      # Authentication
+│   │   ├── storyController.js     # Story management
+│   │   └── ... (5 more controllers)
+│   ├── 📂 routes/                 # API routes
+│   │   ├── auth.js                # Authentication routes
+│   │   ├── storage.js             # MongoDB storage routes
 │   │   ├── ocr.js                 # OCR processing
-│   │   ├── nlp.js                 # Text analysis
-│   │   ├── speech.js              # TTS/STT endpoints
-│   │   └── reading.js             # Session management
-│   ├── 📂 uploads/                # Uploaded files
-│   └── 📂 data/
-│       └── reading-sessions/      # Saved sessions
+│   │   ├── speech.js              # TTS/STT routes
+│   │   ├── chat.js                # Chatbot routes
+│   │   └── ... (5 more route files)
+│   ├── 📂 uploads/                # User uploaded files
+│   └── 📂 audio_temp/             # Generated audio files
 │
 ├── 📂 ml/                          # Python ML Services
-│   ├── api.py                     # Flask ML API
+│   ├── api.py                     # Flask ML API server
 │   ├── 📂 ocr/
-│   │   └── process_text.py        # OCR processing
+│   │   └── process_text.py        # OCR text extraction
 │   ├── 📂 nlp/
 │   │   └── reading_analysis.py    # Text difficulty analysis
 │   ├── 📂 speech/
 │   │   └── recognition.py         # TTS/STT implementation
-│   └── 📂 backend/
-│       └── audio_temp/            # Generated audio files
+│   └── 📂 config/
+│       └── languageConfig.py      # Language configuration
 │
 ├── 📄 README.md                    # This file
-├── 📄 package.json                # Project dependencies
+├── 📄 package.json                # Root dependencies
 └── 📄 .gitignore                  # Git ignore rules
 ```
 
@@ -170,8 +233,31 @@ Adaptive-Reading-Assistant-for-Dyslexia/
 Ensure you have the following installed:
 - **Node.js** (v18.x or higher)
 - **Python** (v3.11 or higher)
+- **MongoDB** (v6.x or higher)
 - **npm** (comes with Node.js)
 - **Git**
+
+### Database Setup
+
+#### Install MongoDB
+
+**Windows:**
+- Download from: https://www.mongodb.com/try/download/community
+- Follow the installation wizard
+- MongoDB will run as a service automatically
+
+**macOS:**
+```bash
+brew install mongodb-community
+brew services start mongodb-community
+```
+
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt update
+sudo apt install mongodb
+sudo systemctl start mongodb
+```
 
 ### Step 1: Clone the Repository
 
@@ -195,6 +281,13 @@ npm run dev
 ```bash
 cd ../backend
 npm install
+
+# Create environment file
+cp .env.example .env
+# Edit .env with your MongoDB connection string:
+# MONGODB_URI=mongodb://localhost:27017/dyslexia_app
+# JWT_SECRET=your_jwt_secret_here
+
 npm run dev
 ```
 
@@ -286,6 +379,29 @@ sudo apt install tesseract-ocr
 
 ### Backend Endpoints
 
+#### Authentication
+```http
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+Body:
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123",
+  "role": "student" // "student", "teacher", or "admin"
+}
+
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+Body:
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
 #### OCR Upload
 ```http
 POST http://localhost:5000/api/ocr/upload
@@ -293,14 +409,35 @@ Content-Type: multipart/form-data
 
 Body:
 {
-  "image": <file>
+  "image": <file>,
+  "language": "en" // "en", "hi", "kn"
 }
 
 Response:
 {
   "success": true,
   "text": "Extracted text here",
-  "confidence": 0.95
+  "confidence": 0.95,
+  "language": "en"
+}
+```
+
+#### Text-to-Speech
+```http
+POST http://localhost:5000/api/speech/tts
+Content-Type: application/json
+
+Body:
+{
+  "text": "Hello world",
+  "language": "en", // "en", "hi", "kn"
+  "speed": 1.0
+}
+
+Response:
+{
+  "success": true,
+  "audioUrl": "/audio/12345.mp3"
 }
 ```
 
@@ -318,47 +455,55 @@ Response:
 {
   "success": true,
   "analysis": {
+    "language": "en",
+    "script": "Latin",
+    "reading_level": "Intermediate",
+    "difficulty_score": 0.65,
     "challenging_words": ["challenging", "analyze"],
-    "difficulty_score": 0.65
+    "statistics": {...}
   }
 }
 ```
 
-#### Text-to-Speech
+#### MongoDB Storage Endpoints
+
+##### Stories
 ```http
-POST http://localhost:5000/api/speech/tts
-Content-Type: application/json
-
-Body:
-{
-  "text": "Hello world"
-}
-
-Response:
-{
-  "success": true,
-  "audioUrl": "/audio/12345.mp3"
-}
+POST http://localhost:5000/api/storage/stories
+GET  http://localhost:5000/api/storage/stories
+GET  http://localhost:5000/api/storage/stories/:id
 ```
 
-#### Save Reading Session
+##### Reading Progress
 ```http
-POST http://localhost:5000/api/reading/sessions
-Content-Type: application/json
+POST http://localhost:5000/api/storage/progress
+GET  http://localhost:5000/api/storage/progress/:userId
+GET  http://localhost:5000/api/storage/progress/:userId/analytics
+```
 
-Body:
-{
-  "userId": "student-123",
-  "wpm": 125,
-  "readingTimeSec": 180,
-  "analysis": {...}
-}
+##### Achievements
+```http
+GET  http://localhost:5000/api/storage/achievements/:userId
+POST http://localhost:5000/api/storage/achievements/unlock
+```
 
-Response:
-{
-  "success": true,
-  "sessionId": "session_12345"
-}
+##### Leaderboard
+```http
+GET http://localhost:5000/api/storage/leaderboard
+GET http://localhost:5000/api/storage/leaderboard/rank/:userId
+```
+
+##### Phonology Games
+```http
+POST http://localhost:5000/api/storage/games
+GET  http://localhost:5000/api/storage/games/:userId
+GET  http://localhost:5000/api/storage/games/:userId/statistics
+```
+
+##### LexiAI Sessions
+```http
+POST http://localhost:5000/api/storage/lexiai
+GET  http://localhost:5000/api/storage/lexiai/:userId
 ```
 
 ---
@@ -417,54 +562,80 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 👥 Contact
 
-**Project Maintainer:** [Your Name]
+**Project Developer:** Avinash Jewargi
 
-- 📧 Email: your.email@example.com
-- 🌐 Website: [yourwebsite.com](https://yourwebsite.com)
-- 💼 LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- 🐙 GitHub: [@yourusername](https://github.com/yourusername)
+- 📧 Email: avinashjewargi@gmail.com
+- 🌐 GitHub: [@Avinashjewargi](https://github.com/Avinashjewargi)
+- 📱 LinkedIn: [Avinash Jewargi](https://linkedin.com/in/avinash-jewargi)
+- 🐙 Repository: [Dyslexia_Project](https://github.com/Avinashjewargi/Dyslexia_Project)
 
 ---
 
 ## 🙏 Acknowledgments
 
-- **Dyslexia Research:** Based on evidence-based practices for dyslexia intervention
-- **OpenDyslexic Font:** Created by Abelardo Gonzalez
-- **NLTK:** Natural Language Toolkit for text analysis
-- **React Community:** For excellent documentation and support
-- **Contributors:** Thanks to all who have contributed to this project
+- **Dyslexia Research Community** - Evidence-based practices for dyslexia intervention
+- **OpenDyslexic Font** - Created by Abelardo Gonzalez for dyslexia-friendly typography
+- **MongoDB** - NoSQL database for scalable data storage and management
+- **React Ecosystem** - React, React Router, Bootstrap, Recharts for modern UI development
+- **Node.js & Express** - Backend framework for robust API development
+- **Python & Flask** - ML service architecture for AI-powered features
+- **NLTK & Tesseract OCR** - Natural language processing and optical character recognition
+- **gTTS (Google Text-to-Speech)** - High-quality text-to-speech synthesis
+- **JWT & bcrypt** - Secure authentication and password hashing
+- **Open-source contributors** - Libraries and frameworks that made this project possible
 
 ---
 
 ## 🔮 Roadmap
 
-### Version 2.0 (Planned)
-- [ ] Mobile app (React Native)
-- [ ] Multilingual support (Spanish, French, German)
-- [ ] Advanced ML models for better text analysis
-- [ ] Parent portal for home tracking
-- [ ] Integration with Google Classroom
-- [ ] Voice commands ("Read this", "Next page")
-- [ ] AR features for interactive learning
+### ✅ Version 1.0 (Completed - April 2026)
+- [x] **Full-stack web application** with React, Node.js, Python ML
+- [x] **MongoDB integration** with 11 models and comprehensive data storage
+- [x] **User authentication system** with JWT and role-based access
+- [x] **Multi-language OCR support** (English, Hindi, Kannada)
+- [x] **Text-to-Speech** with adjustable speed and language support
+- [x] **Speech-to-Text** with pronunciation accuracy tracking
+- [x] **Color coding system** for dyslexia-friendly reading
+- [x] **LexiAI interactive learning** with 24 specialized card types
+- [x] **Phonology games** (spelling, letter replacement, odd-one-out)
+- [x] **Progress tracking** with detailed analytics and dashboards
+- [x] **Achievement system** with badges and gamification
+- [x] **Leaderboard functionality** with rankings and statistics
+- [x] **Story reading system** with progress tracking
+- [x] **Teacher dashboard** for class management and monitoring
+- [x] **Student dashboard** with personal analytics
+- [x] **Translation features** for multi-language support
+- [x] **Accessibility features** (OpenDyslexic font, high contrast, etc.)
+- [x] **Responsive design** with Bootstrap and mobile support
 
-### Version 1.5 (In Progress)
-- [x] Landing page with user guides
-- [x] Feedback system
-- [x] Enhanced dashboards with Recharts
-- [x] Leaderboard functionality
-- [ ] User authentication system
-- [ ] Database integration (MongoDB)
+### 🚧 Version 1.1 (In Development)
+- [ ] **AR/VR Features** - Augmented reality reading assistance (prototype in progress)
+- [ ] **Offline mode** - Core features work without internet
+- [ ] **Parent portal** - Home monitoring and communication
+- [ ] **Advanced analytics** - Machine learning insights for teachers
+- [ ] **Custom story creation** - Teacher-generated content tools
+
+### 📋 Version 2.0 (Planned)
+- [ ] **Mobile app** (React Native) for iOS and Android
+- [ ] **Additional languages** (Spanish, French, German, Arabic)
+- [ ] **School integration** - Google Classroom, Canvas LMS integration
+- [ ] **Advanced ML models** - Better text analysis and personalization
+- [ ] **Voice commands** - Hands-free operation ("Read this", "Next page")
+- [ ] **Collaborative features** - Group reading sessions and peer learning
 
 ---
 
 ## 📊 Project Stats
 
-- **Lines of Code:** ~15,000+
-- **Components:** 30+
-- **API Endpoints:** 10+
-- **Supported Features:** 20+
-- **Languages:** JavaScript, Python
-- **Development Time:** 3 months
+- **Lines of Code:** ~25,000+
+- **Components:** 50+ React components
+- **API Endpoints:** 25+ RESTful endpoints
+- **Database Models:** 11 MongoDB models
+- **Supported Features:** 25+ core features
+- **Languages Supported:** English, Hindi, Kannada
+- **LexiAI Cards:** 24 specialized learning cards
+- **Development Time:** 6+ months
+- **Technology Stack:** React, Node.js, Python, MongoDB
 
 ---
 
@@ -499,8 +670,10 @@ For bug reports, please [open an issue](https://github.com/yourusername/repo/iss
 
 **Made with ❤️ for students with dyslexia**
 
+*Developed in 2025-2026 • Empowering learners worldwide*
+
 If this project helped you, please ⭐ star the repository!
 
-[Report Bug](https://github.com/yourusername/repo/issues) · [Request Feature](https://github.com/yourusername/repo/issues) · [Documentation](https://github.com/yourusername/repo/wiki)
+[Report Bug](https://github.com/Avinashjewargi/Dyslexia_Project/issues) · [Request Feature](https://github.com/Avinashjewargi/Dyslexia_Project/issues) · [Documentation](https://github.com/Avinashjewargi/Dyslexia_Project#readme)
 
 </div>
