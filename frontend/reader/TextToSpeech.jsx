@@ -43,96 +43,147 @@ const TextToSpeech = ({ text, colorCodingEnabled, colorIntensity, renderColoredW
   }, []);
 
   // Get the best voice for current language
-  const getLanguageVoice = () => {
-    if (!languageConfig || !languageConfig.ttsCode) {
-      return null;
-    }
+  // Get the best voice for current language
+const getLanguageVoice = () => {
+  if (!languageConfig || !languageConfig.ttsCode) {
+    console.warn('⚠️ No language config found');
+    return null;
+  }
 
-    const voices = availableVoices;
-    
-    // Try to find exact match (e.g., 'hi-IN')
-    let voice = voices.find(v => v.lang === languageConfig.ttsCode);
-    
-    // If not found, try to find voice that starts with language code (e.g., 'hi')
-    if (!voice) {
-      voice = voices.find(v => v.lang.startsWith(currentLanguage));
-    }
-    
-    // Fallback to any voice containing the language code
-    if (!voice) {
-      voice = voices.find(v => v.lang.toLowerCase().includes(currentLanguage));
-    }
+  const voices = availableVoices;
+  const targetLang = languageConfig.ttsCode; // e.g., 'hi-IN', 'kn-IN'
+  const langPrefix = targetLang.split('-')[0]; // e.g., 'hi', 'kn'
+  
+  console.log(`🔍 Searching voice for: ${targetLang} (${languageConfig.name})`);
+  console.log(`📋 Available voices:`, voices.map(v => `${v.name} (${v.lang})`));
 
-    if (voice) {
-      console.log(`✅ Using voice for ${currentLanguage}:`, voice.name, voice.lang);
-    } else {
-      console.warn(`⚠️ No voice found for ${currentLanguage}, using default`);
-    }
-
+  // Priority 1: Exact match (hi-IN, kn-IN)
+  let voice = voices.find(v => v.lang === targetLang);
+  if (voice) {
+    console.log(`✅ Found exact match: ${voice.name}`);
     return voice;
-  };
+  }
 
-  const speakText = () => {
-    if (!("speechSynthesis" in window)) {
-      alert(t('reader.browserNotSupported') || "Sorry! Your browser doesn't support text-to-speech.");
+  // Priority 2: Same language, different region (hi-*, kn-*)
+  voice = voices.find(v => v.lang.startsWith(langPrefix + '-'));
+  if (voice) {
+    console.log(`✅ Found regional match: ${voice.name} (${voice.lang})`);
+    return voice;
+  }
+
+  // Priority 3: Just language code (hi, kn)
+  voice = voices.find(v => v.lang === langPrefix);
+  if (voice) {
+    console.log(`✅ Found language match: ${voice.name}`);
+    return voice;
+  }
+
+  // Priority 4: Voice name contains language
+  const langName = languageConfig.name.toLowerCase();
+  voice = voices.find(v => v.name.toLowerCase().includes(langName));
+  if (voice) {
+    console.log(`✅ Found by name match: ${voice.name}`);
+    return voice;
+  }
+
+  // Priority 5: For Hindi, try Devanagari-related voices
+  if (langPrefix === 'hi') {
+    voice = voices.find(v => 
+      v.name.toLowerCase().includes('hindi') ||
+      v.name.toLowerCase().includes('devanagari') ||
+      v.lang.toLowerCase().includes('hi')
+    );
+    if (voice) {
+      console.log(`✅ Found Hindi-related: ${voice.name}`);
+      return voice;
+    }
+  }
+
+  // Priority 6: For Kannada
+  if (langPrefix === 'kn') {
+    voice = voices.find(v => 
+      v.name.toLowerCase().includes('kannada') ||
+      v.lang.toLowerCase().includes('kn')
+    );
+    if (voice) {
+      console.log(`✅ Found Kannada-related: ${voice.name}`);
+      return voice;
+    }
+  }
+
+  console.warn(`❌ No voice found for ${targetLang}, will use browser default`);
+  return null;
+};
+
+const speakText = () => {
+  if (!("speechSynthesis" in window)) {
+    alert(t('reader.browserNotSupported') || "Sorry! Your browser doesn't support text-to-speech.");
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const words = text.split(" ").filter(w => w.trim());
+  let wordIndex = 0;
+
+  const speakNextWord = () => {
+    if (wordIndex >= words.length) {
+      setIsPlaying(false);
+      setProgress(100);
+      setCurrentWord("");
+      setCurrentWordIndex(-1);
       return;
     }
 
-    window.speechSynthesis.cancel();
+    const word = words[wordIndex];
+    setCurrentWord(word);
+    setCurrentWordIndex(wordIndex);
+    setProgress(Math.floor((wordIndex / words.length) * 100));
 
-    const words = text.split(" ").filter(w => w.trim());
-    let wordIndex = 0;
+    const utterance = new SpeechSynthesisUtterance(word);
+    
+    // ✅ FIX: Set language code FIRST before voice
+    if (languageConfig && languageConfig.ttsCode) {
+      utterance.lang = languageConfig.ttsCode;
+      console.log(`🔊 Speaking in: ${languageConfig.ttsCode}`);
+    } else {
+      utterance.lang = 'en-US'; // Fallback
+    }
+    
+    // ✅ FIX: Get voice AFTER setting language
+    const languageVoice = getLanguageVoice();
+    if (languageVoice) {
+      utterance.voice = languageVoice;
+      console.log(`🎤 Using voice: ${languageVoice.name} (${languageVoice.lang})`);
+    } else {
+      console.warn(`⚠️ No matching voice found for ${utterance.lang}, using default`);
+    }
+    
+    utterance.rate = readingSpeed;
+    utterance.pitch = 1.1;
+    utterance.volume = isMuted ? 0 : 1;
 
-    const speakNextWord = () => {
-      if (wordIndex >= words.length) {
-        setIsPlaying(false);
-        setProgress(100);
-        setCurrentWord("");
-        setCurrentWordIndex(-1);
-        return;
-      }
-
-      const word = words[wordIndex];
-      setCurrentWord(word);
-      setCurrentWordIndex(wordIndex);
-      setProgress(Math.floor((wordIndex / words.length) * 100));
-
-      const utterance = new SpeechSynthesisUtterance(word);
-      
-      // Set language-specific voice
-      const languageVoice = getLanguageVoice();
-      if (languageVoice) {
-        utterance.voice = languageVoice;
-      }
-      
-      // Set language code
-      if (languageConfig && languageConfig.ttsCode) {
-        utterance.lang = languageConfig.ttsCode;
-      }
-      
-      utterance.rate = readingSpeed;
-      utterance.pitch = 1.1;
-      utterance.volume = isMuted ? 0 : 1;
-
-      utterance.onend = () => {
-        wordIndex++;
-        speakNextWord();
-      };
-
-      utterance.onerror = (event) => {
-        console.error('Speech synthesis error:', event);
-        wordIndex++;
-        speakNextWord();
-      };
-
-      window.speechSynthesis.speak(utterance);
+    utterance.onend = () => {
+      wordIndex++;
+      speakNextWord();
     };
 
-    setIsPlaying(true);
-    setIsPaused(false);
-    speakNextWord();
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event);
+      console.error('Failed word:', word);
+      console.error('Language:', utterance.lang);
+      console.error('Voice:', utterance.voice?.name);
+      wordIndex++;
+      speakNextWord();
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
+  setIsPlaying(true);
+  setIsPaused(false);
+  speakNextWord();
+};
   const pauseSpeech = () => {
     if (window.speechSynthesis.speaking) {
       window.speechSynthesis.pause();
